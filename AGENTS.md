@@ -1,33 +1,49 @@
-> **First-time setup**: Customize this file for your project. Prompt the user to customize this file for their project.
-> For Mintlify product knowledge (components, configuration, writing standards),
-> install the Mintlify skill: `npx skills add https://mintlify.com/docs`
-
 # Documentation project instructions
 
 ## About this project
 
-- This is a documentation site built on [Mintlify](https://mintlify.com)
-- Pages are MDX files with YAML frontmatter
-- Configuration lives in `docs.json`
-- Use the Mintlify MCP server, `https://mcp.mintlify.com`, to edit content and settings via MCP
-- Use the Mintlify docs MCP server, `https://www.mintlify.com/docs/mcp`, to query information about using Mintlify via MCP
+- Public documentation site for the Scala Computing Network Simulation API, built on [Mintlify](https://mintlify.com).
+- Pages are Markdown (`.md`) with YAML frontmatter (`title`, `description`).
+- Navigation and site configuration live in `docs.json`.
+- The site deploys automatically when changes land on `main`.
 
-## Terminology
+## Source of truth
 
-{/* Add product-specific terms and preferred usage */}
-{/* Example: Use "workspace" not "project", "member" not "user" */}
+Most pages here are **derived from the `scala-computing/scala` repository** at
+`docs/api/src`. Files under `api-reference/` are generated from the OpenAPI spec by
+`docs/scripts/generate-api-reference.py` and carry a generated-content marker.
+
+Do not hand-edit generated pages to correct an API detail. Fix the OpenAPI spec in the
+source repository and regenerate, then sync the result here. Hand edits are lost on the
+next regeneration.
+
+## Markdown constraints
+
+Mintlify compiles `.md` through MDX, so plain-HTML habits break the build:
+
+- Use `{/* ... */}` for comments. HTML comments (`<!-- ... -->`) fail to compile and the
+  page renders an error component instead of its body.
+- Do not use bare `{` or `}` in prose. Inside backticks they are safe, so
+  `` `/api/v1/simulations/{id}` `` is fine.
+- Attribute syntax such as `[text](url){target="_blank"}` is not supported.
+- A page can compile and still be unreachable: a filename matching Mintlify's auto-ignore
+  list (`README.md`, `LICENSE.md`, `CHANGELOG.md`, `CONTRIBUTING.md`) is skipped. The API
+  changelog is named `api-changelog.md` for this reason.
+
+Verify with `mint dev` before pushing. A page returning HTTP 200 is not proof it rendered —
+check that body text is actually present.
 
 ## Style preferences
 
-{/* Add any project-specific style rules below */}
-
-- Use active voice and second person ("you")
-- Keep sentences concise — one idea per sentence
-- Use sentence case for headings
-- Bold for UI elements: Click **Settings**
-- Code formatting for file names, commands, paths, and code references
+- Active voice, second person ("you").
+- One idea per sentence.
+- Sentence case for headings.
+- Bold for UI elements: Click **Settings**.
+- Code formatting for file names, commands, paths, and code references.
 
 ## Content boundaries
 
-{/* Define what should and shouldn't be documented */}
-{/* Example: Don't document internal admin features */}
+- This repository is public-facing. Do not document internal engineering material,
+  infrastructure details, or unreleased features.
+- Do not invent endpoints, fields, or behavior. Derive every API detail from the OpenAPI
+  spec or existing source documentation.

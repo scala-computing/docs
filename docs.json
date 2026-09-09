@@ -1,54 +1,71 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mintlify Starter Kit",
+  "name": "Scala Computing",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#2563EB",
+    "light": "#60A5FA",
+    "dark": "#1D4ED8"
   },
   "favicon": "/favicon.svg",
   "navigation": {
-    "pages": [
+    "tabs": [
       {
-        "group": "Getting Started",
-        "pages": [
-          "index",
-          "quickstart"
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "index",
+              "authentication",
+              "examples/quickstart"
+            ]
+          },
+          {
+            "group": "API Reference",
+            "pages": [
+              "api-reference/index",
+              "api-reference/components",
+              "api-reference/configurations",
+              "api-reference/models",
+              "api-reference/simulations",
+              "api-reference/simple",
+              "api-reference/templates",
+              "api-reference/topology",
+              "api-reference/tracesets",
+              "api-reference/libraries",
+              "api-reference/workspaces",
+              "api-reference/billing",
+              "api-reference/charts"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "credits",
+              "simulation-output-files",
+              "api-changelog"
+            ]
+          },
+          {
+            "group": "Examples",
+            "pages": [
+              "examples/run-simulation"
+            ]
+          },
+          {
+            "group": "Tools",
+            "pages": [
+              "swagger-ui"
+            ]
+          }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
+    ]
   },
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://app.mintlify.com"
-    }
   },
   "contextual": {
     "options": [
@@ -56,17 +73,9 @@
       "view",
       "chatgpt",
       "claude",
-      "perplexity",
       "mcp",
       "cursor",
       "vscode"
     ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
   }
 }
