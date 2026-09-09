@@ -3,9 +3,9 @@
   "theme": "mint",
   "name": "Scala Computing",
   "colors": {
-    "primary": "#2563EB",
-    "light": "#60A5FA",
-    "dark": "#1D4ED8"
+    "primary": "#0092CC",
+    "light": "#A3E5FF",
+    "dark": "#00719F"
   },
   "favicon": "/favicon.svg",
   "navigation": {
