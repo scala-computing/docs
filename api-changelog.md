@@ -111,8 +111,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Parameters include group information (e.g., `Delay.CoordinatorAttributes`)
 
 ---
-
-## Changelog Guidelines
-
-See [API Changelog Template](../../templates/api-changelog.md) for formatting guidelines.
-

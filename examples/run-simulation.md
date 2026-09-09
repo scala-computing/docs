@@ -340,5 +340,4 @@ fi
 ## Next Steps
 
 - Explore the [API Reference](../api-reference/index.md) for all available endpoints
-- Try the [Interactive API Explorer](../swagger-ui.md) to experiment with requests
 - Check [available models](../api-reference/models.md) for specialized network components

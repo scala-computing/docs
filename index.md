@@ -69,4 +69,3 @@ Response:
 - Review the [Authentication](./authentication.md) documentation to obtain an API token
 - Follow the [Quickstart guide](./examples/quickstart.md) to run your first simulation
 - Explore the [API Reference](./api-reference/index.md) for detailed endpoint documentation
-- Try the [Interactive API Explorer](./swagger-ui.md) to test endpoints directly

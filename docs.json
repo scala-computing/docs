@@ -52,12 +52,6 @@
             "pages": [
               "examples/run-simulation"
             ]
-          },
-          {
-            "group": "Tools",
-            "pages": [
-              "swagger-ui"
-            ]
           }
         ]
       }

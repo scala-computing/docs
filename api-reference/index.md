@@ -16,7 +16,7 @@ This section provides detailed documentation for all Network Simulation API endp
 | [Charts](./charts.md) | Chart definitions served to the simulation UI | 1 |
 | [Components](./components.md) | Component schema discovery | 2 |
 | [Configurations](./configurations.md) | Workload configuration management | 34 |
-| [Health](./health.md) | Health and monitoring endpoints | 2 |
+| Health | Health and monitoring endpoints | 2 |
 | [Libraries](./libraries.md) | Content-addressed trace libraries (feature-gated: enable_trace_routes) | 2 |
 | [Models](./models.md) | Model catalog and discovery | 3 |
 | [Simple](./simple.md) | Simple collective-operation simulation | 3 |
@@ -60,7 +60,3 @@ All endpoints require bearer token authentication:
 ```bash
 curl -H "Authorization: Bearer YOUR_TOKEN" ...
 ```
-
----
-
-> For the interactive API explorer, see [Swagger UI](../swagger-ui.md).
