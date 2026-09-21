@@ -54,6 +54,29 @@
             ]
           }
         ]
+      },
+      {
+        "tab": "Models",
+        "groups": [
+          {
+            "group": "Scala Switch",
+            "pages": [
+              "models/scala-switch/index"
+            ]
+          },
+          {
+            "group": "Scala RoCE NIC",
+            "pages": [
+              "models/scala-roce-nic/index"
+            ]
+          },
+          {
+            "group": "MRC NIC",
+            "pages": [
+              "models/mrc-nic/index"
+            ]
+          }
+        ]
       }
     ]
   },
