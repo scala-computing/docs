@@ -1,0 +1,4 @@
+# Reviews on pull requests into main come from the site owners.
+# The monorepo sync (scala-computing/scala, ED-075) proposes updates as
+# pull requests; one of these owners approves each before it publishes.
+* @dmilleravid @jayvargas714
