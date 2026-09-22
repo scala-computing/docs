@@ -26,80 +26,61 @@ Validates the provided topology components, containers, applications, and links 
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `applications` | array[ApplicationDefinition] | Yes | Application definitions |
 | `components` | array[ComponentDeclaration] | Yes | Component declarations (switches, NICs, servers) |
 | `containers` | array[ContainerDefinition] | Yes | Container definitions (racks, pods) |
+| `applications` | array[ApplicationDefinition] | Yes | Application definitions |
 | `links` | array[ComponentDeclaration] | No | Layer components defining spine plane linking configuration |
 
 ```json
 {
-  "applications": [
-    {
-      "model": "ScalaTrafficGeneratorApplication",
-      "name": "TrafficGen",
-      "trafficType": "non-coordinated",
-      "type": "application",
-      "typedParameters": {
-        "MessageSize": {
-          "type": "bytes",
-          "unit": "KB",
-          "value": 16
-        },
-        "TrafficPattern": {
-          "type": "string",
-          "value": "uniform-random"
-        }
-      },
-      "version": "3.1.1"
-    }
-  ],
   "components": [
     {
-      "model": "ScalaSwitch",
       "name": "FabricSwitch",
       "type": "switch",
+      "model": "ScalaSwitch",
+      "version": "3.2.1",
       "typedParameters": {
-        "NumDownLinks": {
-          "type": "uint",
-          "value": 8
-        },
         "NumUpLinks": {
           "type": "uint",
           "value": 1
+        },
+        "NumDownLinks": {
+          "type": "uint",
+          "value": 8
         },
         "SwitchingCapacity": {
           "type": "datarate",
           "unit": "Gbps",
           "value": 3200
         }
-      },
-      "version": "3.2.1"
+      }
     },
     {
-      "model": "ScalaSwitch",
       "name": "RackSwitch",
       "type": "switch",
+      "model": "ScalaSwitch",
+      "version": "3.2.1",
       "typedParameters": {
-        "NumDownLinks": {
-          "type": "uint",
-          "value": 4
-        },
         "NumUpLinks": {
           "type": "uint",
           "value": 2
+        },
+        "NumDownLinks": {
+          "type": "uint",
+          "value": 4
         },
         "SwitchingCapacity": {
           "type": "datarate",
           "unit": "Gbps",
           "value": 1600
         }
-      },
-      "version": "3.2.1"
+      }
     },
     {
-      "model": "ScalaNic",
       "name": "Nic",
       "type": "nic",
+      "model": "ScalaNic",
+      "version": "3.1.1",
       "typedParameters": {
         "NetworkInterface": {
           "UplinkNetworkInterface": {
@@ -110,70 +91,89 @@ Validates the provided topology components, containers, applications, and links 
             }
           }
         }
-      },
-      "version": "3.1.1"
+      }
     },
     {
+      "name": "Host",
+      "type": "server",
+      "model": "ScalaHost",
+      "version": "3.1.1",
+      "typedParameters": {},
       "allowedComponents": [
         "nic"
       ],
       "components": [
         {
-          "count": 1,
           "name": "Nic",
+          "count": 1,
           "type": "nic"
         }
-      ],
-      "model": "ScalaHost",
-      "name": "Host",
-      "type": "server",
-      "typedParameters": {},
-      "version": "3.1.1"
+      ]
     }
   ],
   "containers": [
     {
+      "type": "rack",
+      "name": "Rack",
       "allowedComponents": [
         "switch",
         "server"
       ],
       "components": [
         {
-          "count": 1,
-          "model": "ScalaSwitch",
           "name": "RackSwitch",
-          "type": "switch"
+          "count": 1,
+          "type": "switch",
+          "model": "ScalaSwitch"
         },
         {
-          "count": 4,
-          "model": "ScalaHost",
           "name": "Host",
-          "type": "server"
+          "count": 4,
+          "type": "server",
+          "model": "ScalaHost"
         }
-      ],
-      "name": "Rack",
-      "type": "rack"
+      ]
     },
     {
+      "type": "pod",
+      "name": "Pod",
       "allowedComponents": [
         "switch",
         "rack"
       ],
       "components": [
         {
-          "count": 2,
-          "model": "ScalaSwitch",
           "name": "FabricSwitch",
-          "type": "switch"
+          "count": 2,
+          "type": "switch",
+          "model": "ScalaSwitch"
         },
         {
-          "count": 2,
           "name": "Rack",
+          "count": 2,
           "type": "rack"
         }
-      ],
-      "name": "Pod",
-      "type": "pod"
+      ]
+    }
+  ],
+  "applications": [
+    {
+      "name": "TrafficGen",
+      "type": "application",
+      "model": "ScalaTrafficGeneratorApplication",
+      "version": "3.1.1",
+      "trafficType": "non-coordinated",
+      "typedParameters": {
+        "TrafficPattern": {
+          "type": "string",
+          "value": "uniform-random"
+        },
+        "MessageSize": {
+          "type": "bytes",
+          "unit": "KB",
+          "value": 16
+        }
+      }
     }
   ],
   "links": []
@@ -186,7 +186,22 @@ Validates the provided topology components, containers, applications, and links 
 
 ```json
 {
-  "checksum": "abc123def456",
+  "validation": {
+    "valid": true,
+    "status": "valid",
+    "errors": null,
+    "warnings": null,
+    "info": [
+      {
+        "message": "Preprocessor validation (PASS): Topology validated successfully",
+        "severity": "info",
+        "code": "PREPROCESSOR_VALIDATION_NOTE",
+        "path": null,
+        "component": null,
+        "parameter": null
+      }
+    ]
+  },
   "simulationParameters": [
     {
       "label": "Total Hosts",
@@ -209,22 +224,7 @@ Validates the provided topology components, containers, applications, and links 
     }
   ],
   "topologyMap": "",
-  "validation": {
-    "errors": null,
-    "info": [
-      {
-        "code": "PREPROCESSOR_VALIDATION_NOTE",
-        "component": null,
-        "message": "Preprocessor validation (PASS): Topology validated successfully",
-        "parameter": null,
-        "path": null,
-        "severity": "info"
-      }
-    ],
-    "status": "valid",
-    "valid": true,
-    "warnings": null
-  }
+  "checksum": "abc123def456"
 }
 ```
 

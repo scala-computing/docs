@@ -38,13 +38,13 @@ Component schema discovery
 {
   "components": [
     {
-      "category": "model",
-      "description": "string",
       "id": "model_37w6uUurBkspg7voji4julJIPSP",
-      "latestVersion": "string",
       "model": "ScalaSwitch",
       "name": "string",
+      "category": "model",
       "type": "string",
+      "description": "string",
+      "latestVersion": "string",
       "versions": [
         "..."
       ]
@@ -78,34 +78,34 @@ Component schema discovery
 
 ```json
 {
+  "id": "string",
+  "name": "string",
   "category": "model",
+  "type": "string",
+  "trafficType": "chakra",
+  "description": "string",
+  "version": "string",
+  "latestVersion": "string",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "typedParameters": {},
   "containerSchema": {
+    "type": "rack",
+    "name": {
+      "type": "...",
+      "description": "...",
+      "enum": "...",
+      "minimum": "..."
+    },
     "allowed": [
       "string"
     ],
     "components": {
+      "type": "...",
       "description": "...",
-      "items": "...",
-      "type": "..."
-    },
-    "name": {
-      "description": "...",
-      "enum": "...",
-      "minimum": "...",
-      "type": "..."
-    },
-    "type": "rack"
+      "items": "..."
+    }
   },
-  "createdAt": "2024-01-15T10:30:00Z",
-  "description": "string",
-  "id": "string",
-  "latestVersion": "string",
-  "name": "string",
-  "notes": "string",
-  "trafficType": "chakra",
-  "type": "string",
-  "typedParameters": {},
-  "version": "string"
+  "notes": "string"
 }
 ```
 

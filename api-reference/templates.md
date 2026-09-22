@@ -38,19 +38,19 @@ Curated example configurations
 
 ```json
 {
+  "templates": [
+    {
+      "id": "string",
+      "name": "string",
+      "description": "string",
+      "category": "..."
+    }
+  ],
   "pagination": {
     "count": 1,
     "hasMore": true,
     "nextCursor": "string"
-  },
-  "templates": [
-    {
-      "category": "...",
-      "description": "string",
-      "id": "string",
-      "name": "string"
-    }
-  ]
+  }
 }
 ```
 
@@ -64,94 +64,94 @@ Curated example configurations
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `applications` | array[ApplicationDefinition] | No | Traffic generator and workload applications |
+| `name` | string | Yes | Template name |
+| `description` | string | Yes | Human-readable description |
 | `category` | TemplateCategory | Yes | Category of template |
 | `components` | array[ComponentDeclaration] | No | Component declarations with typedParameters |
 | `containers` | array[ContainerDefinition] | No | Container definitions |
-| `description` | string | Yes | Human-readable description |
-| `globalParameters` | TypedParameters | No | Hierarchical parameters structure. Leaf nodes are ParameterValue objects, branch nodes are nested TypedParameters representing ModelComponents. |
-| `links` | array[ComponentDeclaration] | No | Layer components defining spine plane linking configuration (type='layer') |
-| `name` | string | Yes | Template name |
 | `topology` | TopologyDefinition | No | Active network topology definition |
+| `globalParameters` | TypedParameters | No | Hierarchical parameters structure. Leaf nodes are ParameterValue objects, branch nodes are nested TypedParameters representing ModelComponents. |
+| `applications` | array[ApplicationDefinition] | No | Traffic generator and workload applications |
+| `links` | array[ComponentDeclaration] | No | Layer components defining spine plane linking configuration (type='layer') |
 
 ```json
 {
-  "applications": [
-    {
-      "model": "ChakraWorkload",
-      "name": "ScalaChakraGenerator",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "4.0.1"
-    }
-  ],
+  "name": "string",
+  "description": "string",
   "category": "getting-started",
   "components": [
     {
+      "type": "...",
+      "trafficType": "...",
+      "model": "ScalaSwitch",
+      "name": "spine-switch-1",
+      "version": "3.2.1",
+      "typedParameters": "...",
       "allowedComponents": [
         "..."
       ],
       "components": [
         "..."
-      ],
-      "model": "ScalaSwitch",
-      "name": "spine-switch-1",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "3.2.1"
+      ]
     }
   ],
   "containers": [
     {
-      "allowedComponents": [
-        "..."
-      ],
-      "components": [
-        "..."
-      ],
-      "configuration": null,
-      "model": "ScalaRack",
+      "type": "...",
       "name": "roce-rack",
-      "type": "...",
-      "version": "4.0.0"
-    }
-  ],
-  "description": "string",
-  "globalParameters": {},
-  "links": [
-    {
+      "model": "ScalaRack",
+      "version": "4.0.0",
+      "configuration": null,
       "allowedComponents": [
         "..."
       ],
       "components": [
         "..."
-      ],
-      "model": "ScalaSwitch",
-      "name": "spine-switch-1",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "3.2.1"
+      ]
     }
   ],
-  "name": "string",
   "topology": {
+    "name": null,
+    "type": "clos",
+    "topologyTiers": 1,
     "allowedComponents": [
       "string"
+    ],
+    "components": [
+      "..."
     ],
     "appDistribution": {
       "description": "...",
       "randomApplicationDistribution": "..."
-    },
-    "components": [
-      "..."
-    ],
-    "name": null,
-    "topologyTiers": 1,
-    "type": "clos"
-  }
+    }
+  },
+  "globalParameters": {},
+  "applications": [
+    {
+      "type": "...",
+      "trafficType": "...",
+      "name": "ScalaChakraGenerator",
+      "model": "ChakraWorkload",
+      "version": "4.0.1",
+      "typedParameters": "..."
+    }
+  ],
+  "links": [
+    {
+      "type": "...",
+      "trafficType": "...",
+      "model": "ScalaSwitch",
+      "name": "spine-switch-1",
+      "version": "3.2.1",
+      "typedParameters": "...",
+      "allowedComponents": [
+        "..."
+      ],
+      "components": [
+        "..."
+      ]
+    }
+  ]
 }
 ```
 
@@ -161,12 +161,18 @@ Curated example configurations
 
 ```json
 {
+  "id": "string",
+  "name": "string",
+  "description": "string",
   "category": "getting-started",
   "configuration": {
-    "activeTraceset": {},
-    "applications": [
-      "..."
-    ],
+    "id": "config_10045",
+    "workspaceId": "string",
+    "name": "string",
+    "status": "draft",
+    "createdAt": "2024-01-15T10:30:00Z",
+    "modifiedAt": "2024-01-15T10:30:00Z",
+    "version": 1,
     "componentCount": 1,
     "components": [
       "..."
@@ -174,29 +180,23 @@ Curated example configurations
     "containers": [
       "..."
     ],
-    "createdAt": "2024-01-15T10:30:00Z",
-    "globalParameters": {},
-    "id": "config_10045",
+    "applications": [
+      "..."
+    ],
     "links": [
       "..."
     ],
-    "modifiedAt": "2024-01-15T10:30:00Z",
-    "name": "string",
-    "status": "draft",
     "topology": {
-      "allowedComponents": "...",
-      "appDistribution": "...",
-      "components": "...",
       "name": "...",
+      "type": "...",
       "topologyTiers": "...",
-      "type": "..."
+      "allowedComponents": "...",
+      "components": "...",
+      "appDistribution": "..."
     },
-    "version": 1,
-    "workspaceId": "string"
-  },
-  "description": "string",
-  "id": "string",
-  "name": "string"
+    "globalParameters": {},
+    "activeTraceset": {}
+  }
 }
 ```
 
@@ -218,12 +218,18 @@ Curated example configurations
 
 ```json
 {
+  "id": "string",
+  "name": "string",
+  "description": "string",
   "category": "getting-started",
   "configuration": {
-    "activeTraceset": {},
-    "applications": [
-      "..."
-    ],
+    "id": "config_10045",
+    "workspaceId": "string",
+    "name": "string",
+    "status": "draft",
+    "createdAt": "2024-01-15T10:30:00Z",
+    "modifiedAt": "2024-01-15T10:30:00Z",
+    "version": 1,
     "componentCount": 1,
     "components": [
       "..."
@@ -231,29 +237,23 @@ Curated example configurations
     "containers": [
       "..."
     ],
-    "createdAt": "2024-01-15T10:30:00Z",
-    "globalParameters": {},
-    "id": "config_10045",
+    "applications": [
+      "..."
+    ],
     "links": [
       "..."
     ],
-    "modifiedAt": "2024-01-15T10:30:00Z",
-    "name": "string",
-    "status": "draft",
     "topology": {
-      "allowedComponents": "...",
-      "appDistribution": "...",
-      "components": "...",
       "name": "...",
+      "type": "...",
       "topologyTiers": "...",
-      "type": "..."
+      "allowedComponents": "...",
+      "components": "...",
+      "appDistribution": "..."
     },
-    "version": 1,
-    "workspaceId": "string"
-  },
-  "description": "string",
-  "id": "string",
-  "name": "string"
+    "globalParameters": {},
+    "activeTraceset": {}
+  }
 }
 ```
 
@@ -273,13 +273,13 @@ Curated example configurations
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `name` | string | Yes | Name for the new configuration |
 | `workspaceId` | string | No | Target workspace identifier |
+| `name` | string | Yes | Name for the new configuration |
 
 ```json
 {
-  "name": "string",
-  "workspaceId": "string"
+  "workspaceId": "string",
+  "name": "string"
 }
 ```
 
@@ -289,88 +289,88 @@ Curated example configurations
 
 ```json
 {
-  "activeTraceset": {},
-  "applications": [
-    {
-      "model": "ChakraWorkload",
-      "name": "ScalaChakraGenerator",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "4.0.1"
-    }
-  ],
+  "id": "config_10045",
+  "workspaceId": "string",
+  "name": "string",
+  "status": "draft",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "modifiedAt": "2024-01-15T10:30:00Z",
+  "version": 1,
   "componentCount": 1,
   "components": [
     {
+      "type": "...",
+      "trafficType": "...",
+      "model": "ScalaSwitch",
+      "name": "spine-switch-1",
+      "version": "3.2.1",
+      "typedParameters": "...",
       "allowedComponents": [
         "..."
       ],
       "components": [
         "..."
-      ],
-      "model": "ScalaSwitch",
-      "name": "spine-switch-1",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "3.2.1"
+      ]
     }
   ],
   "containers": [
     {
+      "type": "...",
+      "name": "roce-rack",
+      "model": "ScalaRack",
+      "version": "4.0.0",
+      "configuration": null,
       "allowedComponents": [
         "..."
       ],
       "components": [
         "..."
-      ],
-      "configuration": null,
-      "model": "ScalaRack",
-      "name": "roce-rack",
-      "type": "...",
-      "version": "4.0.0"
+      ]
     }
   ],
-  "createdAt": "2024-01-15T10:30:00Z",
-  "globalParameters": {},
-  "id": "config_10045",
+  "applications": [
+    {
+      "type": "...",
+      "trafficType": "...",
+      "name": "ScalaChakraGenerator",
+      "model": "ChakraWorkload",
+      "version": "4.0.1",
+      "typedParameters": "..."
+    }
+  ],
   "links": [
     {
+      "type": "...",
+      "trafficType": "...",
+      "model": "ScalaSwitch",
+      "name": "spine-switch-1",
+      "version": "3.2.1",
+      "typedParameters": "...",
       "allowedComponents": [
         "..."
       ],
       "components": [
         "..."
-      ],
-      "model": "ScalaSwitch",
-      "name": "spine-switch-1",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "3.2.1"
+      ]
     }
   ],
-  "modifiedAt": "2024-01-15T10:30:00Z",
-  "name": "string",
-  "status": "draft",
   "topology": {
+    "name": null,
+    "type": "clos",
+    "topologyTiers": 1,
     "allowedComponents": [
       "string"
+    ],
+    "components": [
+      "..."
     ],
     "appDistribution": {
       "description": "...",
       "randomApplicationDistribution": "..."
-    },
-    "components": [
-      "..."
-    ],
-    "name": null,
-    "topologyTiers": 1,
-    "type": "clos"
+    }
   },
-  "version": 1,
-  "workspaceId": "string"
+  "globalParameters": {},
+  "activeTraceset": {}
 }
 ```
 

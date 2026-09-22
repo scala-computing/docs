@@ -1,9 +1,9 @@
 ---
 title: "Charts"
-description: "Chart definitions served to the simulation UI"
+description: "Chart definitions served to the simulation UI (feature-gated: enable_chart_definitions)"
 ---
 
-Chart definitions served to the simulation UI
+Chart definitions served to the simulation UI (feature-gated: enable_chart_definitions)
 
 {/* AUTO-GENERATED CONTENT BELOW - DO NOT EDIT MANUALLY */}
 {/* Generated from OpenAPI spec by generate-api-reference.py */}
@@ -37,7 +37,7 @@ Returns every chart definition stored on this platform as a bare body, ordered b
 
 **401** - Unauthorized
 
-**404** - Endpoint not served: this platform's release predates it. No handler is mounted, so this status carries no body.
+**404** - Endpoint not served: this platform's release predates it, or it runs with enable_chart_definitions off. No handler is mounted on either path, so this status carries no body.
 
 **500** - The definitions could not be read, or the set breached a served bound and was refused whole
 

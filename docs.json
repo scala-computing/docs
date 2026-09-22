@@ -16,7 +16,7 @@
           {
             "group": "Getting Started",
             "pages": [
-              "index",
+              "introduction",
               "authentication",
               "examples/quickstart"
             ]
@@ -33,6 +33,7 @@
               "api-reference/templates",
               "api-reference/topology",
               "api-reference/tracesets",
+              "api-reference/mapping-files",
               "api-reference/libraries",
               "api-reference/workspaces",
               "api-reference/billing",
