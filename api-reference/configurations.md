@@ -188,7 +188,10 @@ Workload configuration management
     }
   },
   "globalParameters": {},
-  "activeTraceset": {}
+  "activeTraceset": {
+    "name": "string",
+    "id": "string"
+  }
 }
 ```
 
@@ -279,7 +282,15 @@ Workload configuration management
     }
   },
   "globalParameters": {},
-  "activeTraceset": {}
+  "activeTraceset": {
+    "name": "string",
+    "id": "string"
+  },
+  "activeMappingFile": {
+    "id": "string",
+    "name": "string",
+    "deleted": true
+  }
 }
 ```
 
@@ -382,7 +393,15 @@ Workload configuration management
     }
   },
   "globalParameters": {},
-  "activeTraceset": {}
+  "activeTraceset": {
+    "name": "string",
+    "id": "string"
+  },
+  "activeMappingFile": {
+    "id": "string",
+    "name": "string",
+    "deleted": true
+  }
 }
 ```
 
@@ -488,7 +507,10 @@ Workload configuration management
     }
   },
   "globalParameters": {},
-  "activeTraceset": {}
+  "activeTraceset": {
+    "name": "string",
+    "id": "string"
+  }
 }
 ```
 
@@ -579,7 +601,15 @@ Workload configuration management
     }
   },
   "globalParameters": {},
-  "activeTraceset": {}
+  "activeTraceset": {
+    "name": "string",
+    "id": "string"
+  },
+  "activeMappingFile": {
+    "id": "string",
+    "name": "string",
+    "deleted": true
+  }
 }
 ```
 
@@ -686,9 +716,9 @@ Returns tracesets that can be attached to configuration applications. Use scope=
       "hash": "crc64nvme:abc123...",
       "hashShort": "abc123def456",
       "totalSize": 1,
-      "format": {},
+      "format": "chakra_json_v1",
       "status": "uploading",
-      "metadataStatus": {},
+      "metadataStatus": "pending",
       "createdAt": "2024-01-15T10:30:00Z",
       "updatedAt": "2024-01-15T10:30:00Z"
     }
@@ -874,7 +904,10 @@ Sets the activeTraceset field on the configuration to reference the specified tr
     }
   },
   "globalParameters": {},
-  "activeTraceset": {}
+  "activeTraceset": {
+    "name": "string",
+    "id": "string"
+  }
 }
 ```
 

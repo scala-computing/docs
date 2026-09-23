@@ -42,7 +42,7 @@ Retrieves a paginated list of simulations with optional filtering by workspace, 
 | `search` | query | string | No | Full-text search on simulation name (case-insensitive, max 100 characters) |
 | `createdAfter` | query | string | No | Filter by creation date - items created on or after this time (ISO 8601, inclusive) |
 | `createdBefore` | query | string | No | Filter by creation date - items created before this time (ISO 8601, exclusive) |
-| `sort` | query | string | No | Sort order: comma-separated list of `field:direction` pairs (e.g., `created:desc,name:asc`). Default: `created:desc` |
+| `sort` | query | string | No | Sort order: a single `field:direction` pair (e.g., `created_at:desc`). Sortable fields: `name`, `created_at`, `status`. Default: `created_at:desc`. Compound (multi-field) sorts are not supported and return 400, because a cursor cannot express them. |
 
 ### Responses
 
@@ -69,7 +69,7 @@ Retrieves a paginated list of simulations with optional filtering by workspace, 
 }
 ```
 
-**400** - Bad Request - Invalid query parameters (e.g., malformed cursor, invalid workspaceId format, search query too long)
+**400** - Bad Request - Invalid query parameters (e.g., malformed cursor, invalid workspaceId format, search query too long, a compound sort, or a cursor minted under a different sort)
 
 ```json
 {

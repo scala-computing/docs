@@ -18,7 +18,7 @@ This section provides detailed documentation for all Network Simulation API endp
 | [Configurations](./configurations.md) | Workload configuration management | 34 |
 | Health | Health and monitoring endpoints | 2 |
 | [Libraries](./libraries.md) | Content-addressed trace libraries (feature-gated: enable_trace_routes) | 2 |
-| [Mapping-Files](./mapping-files.md) | Chakra mapping files (feature-gated: enable_trace_routes) | 6 |
+| [Mapping-Files](./mapping-files.md) | Chakra mapping files. The six mapping-file resource operations are served by the trace-service router behind enable_trace_routes; the two configuration attach and detach operations are served by central unconditionally. | 8 |
 | [Models](./models.md) | Model catalog and discovery | 3 |
 | [Simple](./simple.md) | Simple collective-operation simulation | 3 |
 | [Simulations](./simulations.md) | Simulation execution and results | 10 |
