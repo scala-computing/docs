@@ -44,21 +44,21 @@ Workspace management
 
 ```json
 {
+  "workspaces": [
+    {
+      "id": "string",
+      "name": "string",
+      "description": "string",
+      "owner": "string",
+      "createdAt": "2024-01-15T10:30:00Z",
+      "modifiedAt": "2024-01-15T10:30:00Z"
+    }
+  ],
   "pagination": {
     "count": 1,
     "hasMore": true,
     "nextCursor": "string"
-  },
-  "workspaces": [
-    {
-      "createdAt": "2024-01-15T10:30:00Z",
-      "description": "string",
-      "id": "string",
-      "modifiedAt": "2024-01-15T10:30:00Z",
-      "name": "string",
-      "owner": "string"
-    }
-  ]
+  }
 }
 ```
 
@@ -76,13 +76,13 @@ Workspace management
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `description` | string | No | - |
 | `name` | string | Yes | - |
+| `description` | string | No | - |
 
 ```json
 {
-  "description": "string",
-  "name": "string"
+  "name": "string",
+  "description": "string"
 }
 ```
 
@@ -92,16 +92,16 @@ Workspace management
 
 ```json
 {
-  "createdAt": "2024-01-15T10:30:00Z",
-  "description": "string",
   "id": "string",
-  "modifiedAt": "2024-01-15T10:30:00Z",
   "name": "string",
+  "description": "string",
   "owner": "string",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "modifiedAt": "2024-01-15T10:30:00Z",
   "stats": {
-    "activeSimulations": 1,
     "configurationCount": 1,
-    "simulationCount": 1
+    "simulationCount": 1,
+    "activeSimulations": 1
   }
 }
 ```
@@ -132,16 +132,16 @@ Workspace management
 
 ```json
 {
-  "createdAt": "2024-01-15T10:30:00Z",
-  "description": "string",
   "id": "string",
-  "modifiedAt": "2024-01-15T10:30:00Z",
   "name": "string",
+  "description": "string",
   "owner": "string",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "modifiedAt": "2024-01-15T10:30:00Z",
   "stats": {
-    "activeSimulations": 1,
     "configurationCount": 1,
-    "simulationCount": 1
+    "simulationCount": 1,
+    "activeSimulations": 1
   }
 }
 ```
@@ -169,13 +169,13 @@ Workspace management
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `description` | string | No | - |
 | `name` | string | Yes | - |
+| `description` | string | No | - |
 
 ```json
 {
-  "description": "string",
-  "name": "string"
+  "name": "string",
+  "description": "string"
 }
 ```
 
@@ -185,16 +185,16 @@ Workspace management
 
 ```json
 {
-  "createdAt": "2024-01-15T10:30:00Z",
-  "description": "string",
   "id": "string",
-  "modifiedAt": "2024-01-15T10:30:00Z",
   "name": "string",
+  "description": "string",
   "owner": "string",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "modifiedAt": "2024-01-15T10:30:00Z",
   "stats": {
-    "activeSimulations": 1,
     "configurationCount": 1,
-    "simulationCount": 1
+    "simulationCount": 1,
+    "activeSimulations": 1
   }
 }
 ```
@@ -240,6 +240,8 @@ Workspace management
 
 **404** - Workspace not found
 
+**409** - Conflict — the workspace still holds an active simulation that is running platform compute. Deleting a workspace revokes reads of every simulation inside it, including the queries that are the only way to discover a simulation id, so those simulations must be terminated first. Active simulations with no platform link do not block deletion: they have no compute to strand and cannot be terminated.
+
 **500** - Internal server error
 
 ---
@@ -272,9 +274,9 @@ Workspace management
 
 ```json
 {
-  "created": true,
+  "workspaceId": "workspace_abc123",
   "legacyProjectId": "550e8400-e29b-41d4-a716-446655440000",
-  "workspaceId": "workspace_abc123"
+  "created": true
 }
 ```
 
