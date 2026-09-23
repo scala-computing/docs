@@ -1,9 +1,9 @@
 ---
 title: "Mapping-Files"
-description: "Chakra mapping files (feature-gated: enable_trace_routes)"
+description: "Chakra mapping files. The six mapping-file resource operations are served by the trace-service router behind enable_trace_routes; the two configuration..."
 ---
 
-Chakra mapping files (feature-gated: enable_trace_routes)
+Chakra mapping files. The six mapping-file resource operations are served by the trace-service router behind enable_trace_routes; the two configuration attach and detach operations are served by central unconditionally.
 
 {/* AUTO-GENERATED CONTENT BELOW - DO NOT EDIT MANUALLY */}
 {/* Generated from OpenAPI spec by generate-api-reference.py */}
@@ -12,12 +12,270 @@ Chakra mapping files (feature-gated: enable_trace_routes)
 
 | Method | Path | Description |
 |--------|------|-------------|
+| PATCH | `/api/v1/configurations/{config_id}/mapping-file` | Attach mapping file to configuration |
+| DELETE | `/api/v1/configurations/{config_id}/mapping-file` | Detach mapping file from configuration |
 | GET | `/api/v1/mapping-files` | List mapping files |
 | GET | `/api/v1/mapping-files/{mapping_file_id}` | Get mapping file |
 | DELETE | `/api/v1/mapping-files/{mapping_file_id}` | Delete mapping file |
 | GET | `/api/v1/mapping-files/{mapping_file_id}/download` | Get mapping file download URL |
 | POST | `/api/v1/mapping-files/upload-url` | Initiate mapping-file upload |
 | POST | `/api/v1/mapping-files/upload-url/complete` | Complete mapping-file upload |
+
+---
+
+## Attach mapping file to configuration
+
+<span class="api-method api-method-patch">PATCH</span> `/api/v1/configurations/{config_id}/mapping-file`
+
+Sets the activeMappingFile field on the configuration and writes UseMapping and MappingFileName into every application with trafficType 'chakra', as a new configuration version. Requires at least one Chakra application, an attached traceset, and a mapping file whose rank count equals the traceset's rank count.
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `config_id` | path | string | Yes | - |
+| `If-Match` | header | string | No | ETag for optimistic concurrency control |
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `mappingFileId` | string | Yes | - |
+
+```json
+{
+  "mappingFileId": "string"
+}
+```
+
+### Responses
+
+**200** - Mapping file attached successfully; returns the new configuration version
+
+```json
+{
+  "id": "config_10045",
+  "workspaceId": "string",
+  "name": "string",
+  "status": "draft",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "modifiedAt": "2024-01-15T10:30:00Z",
+  "version": 1,
+  "componentCount": 1,
+  "components": [
+    {
+      "type": "...",
+      "trafficType": "...",
+      "model": "ScalaSwitch",
+      "name": "spine-switch-1",
+      "version": "3.2.1",
+      "typedParameters": "...",
+      "allowedComponents": [
+        "..."
+      ],
+      "components": [
+        "..."
+      ]
+    }
+  ],
+  "containers": [
+    {
+      "type": "...",
+      "name": "roce-rack",
+      "model": "ScalaRack",
+      "version": "4.0.0",
+      "configuration": null,
+      "allowedComponents": [
+        "..."
+      ],
+      "components": [
+        "..."
+      ]
+    }
+  ],
+  "applications": [
+    {
+      "type": "...",
+      "trafficType": "...",
+      "name": "ScalaChakraGenerator",
+      "model": "ChakraWorkload",
+      "version": "4.0.1",
+      "typedParameters": "..."
+    }
+  ],
+  "links": [
+    {
+      "type": "...",
+      "trafficType": "...",
+      "model": "ScalaSwitch",
+      "name": "spine-switch-1",
+      "version": "3.2.1",
+      "typedParameters": "...",
+      "allowedComponents": [
+        "..."
+      ],
+      "components": [
+        "..."
+      ]
+    }
+  ],
+  "topology": {
+    "name": null,
+    "type": "clos",
+    "topologyTiers": 1,
+    "allowedComponents": [
+      "string"
+    ],
+    "components": [
+      "..."
+    ],
+    "appDistribution": {
+      "description": "...",
+      "randomApplicationDistribution": "..."
+    }
+  },
+  "globalParameters": {},
+  "activeTraceset": {
+    "name": "string",
+    "id": "string"
+  },
+  "activeMappingFile": {
+    "id": "string",
+    "name": "string",
+    "deleted": true
+  }
+}
+```
+
+**400** - Malformed configuration ID or mapping file ID, a request body that fails validation, or a configuration in the template workspace (reserved for standard templates)
+
+**404** - Configuration not found, or mapping file not found, deleted, or held by another workspace
+
+**409** - The configuration has no attached traceset (MAPPING_REQUIRES_TRACESET), or the traceset's rank count is not yet resolved (CONFLICT, retry-safe).
+
+**412** - Precondition failed (ETag mismatch)
+
+**422** - The configuration has no Chakra application (MAPPING_REQUIRES_CHAKRA_APP), or the mapping file's rank count differs from the traceset's (MAPPING_RANK_COUNT_MISMATCH).
+
+---
+
+## Detach mapping file from configuration
+
+<span class="api-method api-method-delete">DELETE</span> `/api/v1/configurations/{config_id}/mapping-file`
+
+Removes the activeMappingFile field and writes UseMapping false and an empty MappingFileName into every Chakra application, restoring default placement, as a new configuration version. The mapping file itself is untouched and stays attachable to other configurations.
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `config_id` | path | string | Yes | - |
+| `If-Match` | header | string | No | ETag for optimistic concurrency control |
+
+### Responses
+
+**200** - Mapping file detached successfully; returns the new configuration version
+
+```json
+{
+  "id": "config_10045",
+  "workspaceId": "string",
+  "name": "string",
+  "status": "draft",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "modifiedAt": "2024-01-15T10:30:00Z",
+  "version": 1,
+  "componentCount": 1,
+  "components": [
+    {
+      "type": "...",
+      "trafficType": "...",
+      "model": "ScalaSwitch",
+      "name": "spine-switch-1",
+      "version": "3.2.1",
+      "typedParameters": "...",
+      "allowedComponents": [
+        "..."
+      ],
+      "components": [
+        "..."
+      ]
+    }
+  ],
+  "containers": [
+    {
+      "type": "...",
+      "name": "roce-rack",
+      "model": "ScalaRack",
+      "version": "4.0.0",
+      "configuration": null,
+      "allowedComponents": [
+        "..."
+      ],
+      "components": [
+        "..."
+      ]
+    }
+  ],
+  "applications": [
+    {
+      "type": "...",
+      "trafficType": "...",
+      "name": "ScalaChakraGenerator",
+      "model": "ChakraWorkload",
+      "version": "4.0.1",
+      "typedParameters": "..."
+    }
+  ],
+  "links": [
+    {
+      "type": "...",
+      "trafficType": "...",
+      "model": "ScalaSwitch",
+      "name": "spine-switch-1",
+      "version": "3.2.1",
+      "typedParameters": "...",
+      "allowedComponents": [
+        "..."
+      ],
+      "components": [
+        "..."
+      ]
+    }
+  ],
+  "topology": {
+    "name": null,
+    "type": "clos",
+    "topologyTiers": 1,
+    "allowedComponents": [
+      "string"
+    ],
+    "components": [
+      "..."
+    ],
+    "appDistribution": {
+      "description": "...",
+      "randomApplicationDistribution": "..."
+    }
+  },
+  "globalParameters": {},
+  "activeTraceset": {
+    "name": "string",
+    "id": "string"
+  },
+  "activeMappingFile": {
+    "id": "string",
+    "name": "string",
+    "deleted": true
+  }
+}
+```
+
+**400** - Malformed configuration ID, or a configuration in the template workspace (reserved for standard templates)
+
+**404** - Configuration not found, or no mapping file attached
+
+**412** - Precondition failed (ETag mismatch)
 
 ---
 
@@ -32,7 +290,7 @@ Lists the Chakra mapping files in a workspace, newest first, with cursor paginat
 | Name | In | Type | Required | Description |
 |------|-----|------|----------|-------------|
 | `workspaceId` | query | string | Yes | Workspace to list (format: `workspace_xxx`). |
-| `limit` | query | integer | No | Maximum number of items to return. |
+| `limit` | query | integer | No | Maximum number of items to return; at least 1. A value above the server's page cap but within the unsigned 32-bit range is clamped to the cap; a value outside that range is refused as not parsing. |
 | `next` | query | string | No | Opaque cursor token from the previous response's nextCursor field. |
 
 ### Responses
@@ -60,7 +318,7 @@ Lists the Chakra mapping files in a workspace, newest first, with cursor paginat
 }
 ```
 
-**400** - Bad Request — workspaceId is absent or blank (there is no tenant-wide fallback), or the cursor is invalid or expired
+**400** - Bad Request — workspaceId is absent or blank (there is no tenant-wide fallback), limit is zero or does not parse as a positive unsigned 32-bit integer, or the cursor is invalid or expired
 
 ```json
 {
@@ -265,7 +523,7 @@ Creates an upload session and returns presigned S3 multipart upload URLs for one
 
 <span class="api-method api-method-post">POST</span> `/api/v1/mapping-files/upload-url/complete`
 
-Finalises the multipart upload, validates the file against the simulator's grammar, stores it once under its content checksum, and creates the mapping file. A file whose bytes already exist as a live mapping file in the workspace returns that file with duplicateOfExisting set and creates nothing. A file that fails validation is refused with the offending line number and nothing is stored. Not yet available: until the completion handler ships in the follow-on change, this operation answers 501 NOT_IMPLEMENTED and changes nothing; that response is removed when the handler lands.
+Finalises the multipart upload, validates the file against the simulator's grammar, stores it once under its content checksum, and creates the mapping file. A file whose bytes already exist as a live mapping file in the workspace returns that file with duplicateOfExisting set and creates nothing. A file that fails validation is refused with the offending line number and nothing is stored.
 
 ### Request Body
 
@@ -326,7 +584,7 @@ Finalises the multipart upload, validates the file against the simulator's gramm
 }
 ```
 
-**400** - Invalid request — the upload session is not a mapping-file upload, the parts do not match the session, or the session has failed
+**400** - Invalid request — the upload session is not a mapping-file upload, or the parts do not match the session
 
 ```json
 {
@@ -392,18 +650,7 @@ Finalises the multipart upload, validates the file against the simulator's gramm
 }
 ```
 
-**501** - Not yet available: the upload-complete handler ships in the follow-on change, which removes this response. Nothing is stored and the upload session is left untouched
-
-```json
-{
-  "error": {
-    "code": "NOT_IMPLEMENTED",
-    "message": "Internal server error"
-  }
-}
-```
-
-**503** - Another upload of the same content held the content lock for too long; the request is safe to retry
+**503** - Another upload of the same content held the content lock for too long. This upload session is closed and its staged object deleted, so the request is not safe to retry: open a new upload session and upload the file again. Because another upload of the same content was in progress, the new upload is most often answered 200 with duplicateOfExisting set.
 
 ```json
 {

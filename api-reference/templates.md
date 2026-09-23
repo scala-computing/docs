@@ -195,7 +195,15 @@ Curated example configurations
       "appDistribution": "..."
     },
     "globalParameters": {},
-    "activeTraceset": {}
+    "activeTraceset": {
+      "name": "...",
+      "id": "..."
+    },
+    "activeMappingFile": {
+      "id": "...",
+      "name": "...",
+      "deleted": "..."
+    }
   }
 }
 ```
@@ -252,7 +260,15 @@ Curated example configurations
       "appDistribution": "..."
     },
     "globalParameters": {},
-    "activeTraceset": {}
+    "activeTraceset": {
+      "name": "...",
+      "id": "..."
+    },
+    "activeMappingFile": {
+      "id": "...",
+      "name": "...",
+      "deleted": "..."
+    }
   }
 }
 ```
@@ -370,7 +386,15 @@ Curated example configurations
     }
   },
   "globalParameters": {},
-  "activeTraceset": {}
+  "activeTraceset": {
+    "name": "string",
+    "id": "string"
+  },
+  "activeMappingFile": {
+    "id": "string",
+    "name": "string",
+    "deleted": true
+  }
 }
 ```
 

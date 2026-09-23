@@ -484,7 +484,7 @@ Finalizes a multipart upload session by providing the ETags returned by S3 for a
 }
 ```
 
-**400** - Invalid request (missing parts, bad ETags)
+**400** - Invalid request (missing parts, bad ETags, or an upload session minted by POST /api/v1/mapping-files/upload-url, which only POST /api/v1/mapping-files/upload-url/complete accepts)
 
 ```json
 {
