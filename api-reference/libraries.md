@@ -13,7 +13,6 @@ Content-addressed trace libraries (feature-gated: enable_trace_routes)
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/api/v1/libraries` | List libraries |
-| GET | `/api/v1/libraries/{hash}` | Get library by hash |
 | GET | `/api/v1/libraries/{id}` | Get library |
 
 ---
@@ -22,93 +21,54 @@ Content-addressed trace libraries (feature-gated: enable_trace_routes)
 
 <span class="api-method api-method-get">GET</span> `/api/v1/libraries`
 
-List all libraries accessible in the workspace, including global libraries.
+List content-addressed trace libraries. Libraries are de-duplicated by content hash and may be shared across multiple tracesets. Supports pagination, filtering by scope and workspace, full-text search on hash prefix or metadata, and date range filtering.
 
 ### Parameters
 
 | Name | In | Type | Required | Description |
 |------|-----|------|----------|-------------|
-| `workspaceId` | query | string | No | Workspace ID to scope the query. If not provided, returns only global libraries. |
-| `scope` | query | string | No | Filter by library scope |
-| `next` | query | string | No | Cursor for pagination (opaque token from previous response's nextCursor field) |
+| `workspaceId` | query | string | No | Filter by workspace ID (format: `workspace_xxx`). If not provided, returns only global-scoped libraries. |
+| `scope` | query | string | No | Filter by scope. Valid values: `global`, `workspace`. |
+| `search` | query | string | No | Search by content hash prefix or metadata fields (case-insensitive) |
+| `sort` | query | string | No | Sort order: comma-separated list of `field:direction` pairs (e.g., `created:desc`). Default: `created:desc` |
 | `limit` | query | integer | No | Maximum number of items to return |
+| `next` | query | string | No | Opaque cursor token from previous response's nextCursor field |
+| `createdAfter` | query | string | No | Filter by creation date — items created on or after this time (ISO 8601, inclusive) |
+| `createdBefore` | query | string | No | Filter by creation date — items created before this time (ISO 8601, exclusive) |
 
 ### Responses
 
-**200** - List of libraries
+**200** - Paginated list of libraries
 
 ```json
 {
   "items": [
     {
-      "format": "string",
-      "hash": "string",
-      "hash_short": "string",
-      "id": "string",
+      "id": "lib_abc123xyz",
+      "hash_short": "a1b2c3d4",
+      "storage_url": "s3://scala-traces/libraries/lib_abc123xyz/",
       "layout": "cas",
-      "reference_count": 1,
       "scope": "global",
-      "storage_url": "string",
-      "total_size": 1,
-      "workload_type": "string"
+      "total_size": 104857600,
+      "reference_count": 3
     }
   ],
   "pagination": {
     "count": 1,
-    "hasMore": true,
-    "nextCursor": "string"
+    "hasMore": false
   }
 }
 ```
 
----
-
-## Get library by hash
-
-<span class="api-method api-method-get">GET</span> `/api/v1/libraries/{hash}`
-
-Get library details by content hash. Accepts 12-character prefix or full 64-character Blake3 hash.
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `hash` | path | string | Yes | Library hash (12-char prefix or full 64-char Blake3) |
-| `workspaceId` | query | string | No | Workspace ID for access control. If not provided, only global libraries are accessible. |
-
-### Responses
-
-**200** - Library details
+**400** - Bad Request — Invalid query parameters (bad cursor, invalid sort field)
 
 ```json
 {
-  "content_type": "string",
-  "created_at": "2024-01-15T10:30:00Z",
-  "file_count": 1,
-  "format": "string",
-  "hash": "string",
-  "hash_short": "string",
-  "id": "string",
-  "layout": "cas",
-  "metadata_status": "string",
-  "reference_count": 1,
-  "scope": "global",
-  "storage_url": "string",
-  "total_size": 1,
-  "tracesets": [
-    {
-      "id": "string",
-      "name": "string",
-      "workspace_id": "string"
-    }
-  ],
-  "workload_type": "string"
+  "error": {
+    "message": "Invalid sort field: 'unknown'. Valid fields: created, total_size, reference_count"
+  }
 }
 ```
-
-**300** - Ambiguous hash prefix - multiple matches
-
-**404** - Library not found
 
 ---
 
@@ -131,24 +91,24 @@ Returns a library by ID (`lib_xxx` format) or content hash prefix (minimum 8 cha
 
 ```json
 {
-  "created_at": "2026-01-15T10:30:00Z",
-  "file_count": 256,
+  "id": "lib_abc123xyz",
   "hash": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2",
   "hash_short": "a1b2c3d4",
-  "id": "lib_abc123xyz",
+  "storage_url": "s3://scala-traces/libraries/lib_abc123xyz/",
   "layout": "cas",
+  "scope": "global",
+  "total_size": 104857600,
   "metadata_status": "complete",
   "reference_count": 3,
-  "scope": "global",
-  "storage_url": "s3://scala-traces/libraries/lib_abc123xyz/",
-  "total_size": 104857600,
   "tracesets": [
     {
       "id": "ts_def456",
       "name": "GPT-175B Traces",
       "workspace_id": "workspace_ghi789"
     }
-  ]
+  ],
+  "created_at": "2026-01-15T10:30:00Z",
+  "file_count": 256
 }
 ```
 

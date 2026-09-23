@@ -16,7 +16,7 @@
           {
             "group": "Getting Started",
             "pages": [
-              "index",
+              "introduction",
               "authentication",
               "examples/quickstart"
             ]
@@ -33,6 +33,7 @@
               "api-reference/templates",
               "api-reference/topology",
               "api-reference/tracesets",
+              "api-reference/mapping-files",
               "api-reference/libraries",
               "api-reference/workspaces",
               "api-reference/billing",
@@ -51,6 +52,29 @@
             "group": "Examples",
             "pages": [
               "examples/run-simulation"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Models",
+        "groups": [
+          {
+            "group": "Scala Switch",
+            "pages": [
+              "models/scala-switch/index"
+            ]
+          },
+          {
+            "group": "Scala RoCE NIC",
+            "pages": [
+              "models/scala-roce-nic/index"
+            ]
+          },
+          {
+            "group": "MRC NIC",
+            "pages": [
+              "models/mrc-nic/index"
             ]
           }
         ]

@@ -456,6 +456,8 @@ RoCE Transport Statistics files record detailed RDMA over Converged Ethernet (Ro
 | `ivl_num_cnp_recvd` | Integer | CNPs received in the interval |
 | `num_seq_out_of_order` | Integer | Cumulative out-of-order sequence events |
 | `ivl_num_seq_out_of_order` | Integer | Out-of-order events in the interval |
+| `num_duplicate` | Integer | Cumulative duplicate packets received |
+| `ivl_num_duplicate` | Integer | Duplicate packets received in the interval |
 | `ivl_min_size_reorder_buf_psn` | Integer | Minimum reorder buffer size in the interval (PSN entries) |
 | `max_size_reorder_buf_psn` | Integer | Maximum reorder buffer size observed (PSN entries) |
 | `ivl_max_size_reorder_buf_psn` | Integer | Maximum reorder buffer size in the interval |
@@ -474,11 +476,19 @@ RoCE Transport Statistics files record detailed RDMA over Converged Ethernet (Ro
 | `ivl_max_calc_rtt_usec` | Float | Maximum calculated RTT in the interval (microseconds) |
 | `avg_calc_rtt_usec` | Float | Average calculated RTT (microseconds) |
 | `ivl_avg_calc_rtt_usec` | Float | Average calculated RTT in the interval (microseconds) |
+| `num_rx_drops` | Integer | Cumulative receive-path packets discarded by the NIC, summed over every reason below |
+| `ivl_num_rx_drops` | Integer | Receive-path discards in the interval |
+| `num_rx_drops_no_qp_data` | Integer | Data packets discarded because no QP context resolved for the flow id |
+| `ivl_num_rx_drops_no_qp_data` | Integer | No-QP data discards in the interval |
+| `num_rx_drops_no_qp_ctrl` | Integer | Control packets (ACK/SACK/NAK/CNP) discarded because no QP context resolved. Excluded from `nd-stats` `rx_drops`, because an ACK arriving after its QP was torn down is expected rather than loss, so `num_rx_drops` = `rx_drops` + `num_rx_drops_no_qp_ctrl` by design |
+| `ivl_num_rx_drops_no_qp_ctrl` | Integer | No-QP control discards in the interval |
+| `num_rx_drops_after_nak` | Integer | Packets discarded because the QP has an unfilled hole: the NAK-triggering packet and everything behind it, until the hole fills |
+| `ivl_num_rx_drops_after_nak` | Integer | After-NAK discards in the interval |
 
 #### Example Header
 
 ```csv
-time_utc,sim_time_sec,component_name,node_id,num_pkts_sent,ivl_num_pkts_sent,num_verb_pkts_sent,ivl_num_verb_pkts_sent,num_non_verb_pkts_sent,ivl_num_non_verb_pkts_sent,num_conn_pkts_sent,ivl_num_conn_pkts_sent,num_conn_pkts_recvd,ivl_num_conn_pkts_recvd,rdma_write_cnt,ivl_rdma_write_cnt,rdma_send_cnt,ivl_rdma_send_cnt,rdma_atomic_cnt,ivl_rdma_atomic_cnt,num_acks_sent,ivl_num_acks_sent,num_acks_recvd,ivl_num_acks_recvd,num_sacks_sent,ivl_num_sacks_sent,num_sacks_recvd,ivl_num_sacks_recvd,num_nacks_sent,ivl_num_nacks_sent,num_nacks_recvd,ivl_num_nacks_recvd,num_writes_recvd,ivl_num_writes_recvd,num_sends_recvd,ivl_num_sends_recvd,num_cnp_sent,ivl_num_cnp_sent,num_cnp_recvd,ivl_num_cnp_recvd,num_seq_out_of_order,ivl_num_seq_out_of_order,ivl_min_size_reorder_buf_psn,max_size_reorder_buf_psn,ivl_max_size_reorder_buf_psn,avg_size_reorder_buf_psn,ivl_avg_size_reorder_buf_psn,num_wqe_created,ivl_num_wqe_created,num_wqe_completed,ivl_num_wqe_completed,num_rtx,ivl_num_rtx,num_rto,ivl_num_rto,ivl_min_calc_rtt_usec,max_calc_rtt_usec,ivl_max_calc_rtt_usec,avg_calc_rtt_usec,ivl_avg_calc_rtt_usec
+time_utc,sim_time_sec,component_name,node_id,num_pkts_sent,ivl_num_pkts_sent,num_verb_pkts_sent,ivl_num_verb_pkts_sent,num_non_verb_pkts_sent,ivl_num_non_verb_pkts_sent,num_conn_pkts_sent,ivl_num_conn_pkts_sent,num_conn_pkts_recvd,ivl_num_conn_pkts_recvd,rdma_write_cnt,ivl_rdma_write_cnt,rdma_send_cnt,ivl_rdma_send_cnt,rdma_atomic_cnt,ivl_rdma_atomic_cnt,num_acks_sent,ivl_num_acks_sent,num_acks_recvd,ivl_num_acks_recvd,num_sacks_sent,ivl_num_sacks_sent,num_sacks_recvd,ivl_num_sacks_recvd,num_nacks_sent,ivl_num_nacks_sent,num_nacks_recvd,ivl_num_nacks_recvd,num_writes_recvd,ivl_num_writes_recvd,num_sends_recvd,ivl_num_sends_recvd,num_cnp_sent,ivl_num_cnp_sent,num_cnp_recvd,ivl_num_cnp_recvd,num_seq_out_of_order,ivl_num_seq_out_of_order,num_duplicate,ivl_num_duplicate,ivl_min_size_reorder_buf_psn,max_size_reorder_buf_psn,ivl_max_size_reorder_buf_psn,avg_size_reorder_buf_psn,ivl_avg_size_reorder_buf_psn,num_wqe_created,ivl_num_wqe_created,num_wqe_completed,ivl_num_wqe_completed,num_rtx,ivl_num_rtx,num_rto,ivl_num_rto,ivl_min_calc_rtt_usec,max_calc_rtt_usec,ivl_max_calc_rtt_usec,avg_calc_rtt_usec,ivl_avg_calc_rtt_usec,num_rx_drops,ivl_num_rx_drops,num_rx_drops_no_qp_data,ivl_num_rx_drops_no_qp_data,num_rx_drops_no_qp_ctrl,ivl_num_rx_drops_no_qp_ctrl,num_rx_drops_after_nak,ivl_num_rx_drops_after_nak
 ```
 
 ---

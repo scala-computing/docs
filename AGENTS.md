@@ -9,13 +9,16 @@
 
 ## Source of truth
 
-Most pages here are **derived from the `scala-computing/scala` repository** at
-`docs/api/src`. Files under `api-reference/` are generated from the OpenAPI spec by
-`docs/scripts/generate-api-reference.py` and carry a generated-content marker.
+Pages listed in `.sync-owned-paths` are **owned by the `scala-computing/scala` repository**
+and are rewritten by its customer-docs sync (`docs/api/src` for the Documentation tab,
+`docs/models` for the Models tab). Files under `api-reference/` are generated there from the
+OpenAPI spec by `docs/scripts/generate-api-reference.py` and carry a generated-content marker.
+The sync also owns `navigation.tabs` in `docs.json`. Everything else in this repository
+(branding, theme, `README.md`, this file, any page not in `.sync-owned-paths`) is owned here.
 
-Do not hand-edit generated pages to correct an API detail. Fix the OpenAPI spec in the
-source repository and regenerate, then sync the result here. Hand edits are lost on the
-next regeneration.
+Do not hand-edit an owned page: the next sync overwrites it. Fix the source page or the
+OpenAPI spec in the source repository; the sync opens a pull request here on
+`sync/from-monorepo` for review.
 
 ## Markdown constraints
 

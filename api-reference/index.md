@@ -13,14 +13,15 @@ This section provides detailed documentation for all Network Simulation API endp
 | Tag | Description | Endpoints |
 |-----|-------------|-----------|
 | [Billing](./billing.md) | Billing balance, costs, items, events, and rates (feature-gated: enable_billing_endpoints) | 7 |
-| [Charts](./charts.md) | Chart definitions served to the simulation UI | 1 |
+| [Charts](./charts.md) | Chart definitions served to the simulation UI (feature-gated: enable_chart_definitions) | 1 |
 | [Components](./components.md) | Component schema discovery | 2 |
 | [Configurations](./configurations.md) | Workload configuration management | 34 |
 | Health | Health and monitoring endpoints | 2 |
 | [Libraries](./libraries.md) | Content-addressed trace libraries (feature-gated: enable_trace_routes) | 2 |
+| [Mapping-Files](./mapping-files.md) | Chakra mapping files. The six mapping-file resource operations are served by the trace-service router behind enable_trace_routes; the two configuration attach and detach operations are served by central unconditionally. | 8 |
 | [Models](./models.md) | Model catalog and discovery | 3 |
 | [Simple](./simple.md) | Simple collective-operation simulation | 3 |
-| [Simulations](./simulations.md) | Simulation execution and results | 9 |
+| [Simulations](./simulations.md) | Simulation execution and results | 10 |
 | [Templates](./templates.md) | Curated example configurations | 4 |
 | [Topology](./topology.md) | Real-time topology validation | 1 |
 | [Tracesets](./tracesets.md) | Trace file management (feature-gated: enable_trace_routes) | 9 |

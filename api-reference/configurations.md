@@ -17,35 +17,35 @@ Workload configuration management
 | GET | `/api/v1/configurations/{config_id}` | Get configuration |
 | PATCH | `/api/v1/configurations/{config_id}` | Update configuration |
 | DELETE | `/api/v1/configurations/{config_id}` | Delete configuration |
-| GET | `/api/v1/configurations/{config_id}/applications` | List configuration applications |
-| POST | `/api/v1/configurations/{config_id}/applications` | Add application to configuration |
-| DELETE | `/api/v1/configurations/{config_id}/applications/{app_name}` | Remove application from configuration |
-| PATCH | `/api/v1/configurations/{config_id}/applications/{app_name}/parameters` | Update application parameters |
+| POST | `/api/v1/configurations/{config_id}/validate` | Validate configuration |
+| GET | `/api/v1/configurations/{config_id}/traceset` | List available tracesets for configuration |
+| PATCH | `/api/v1/configurations/{config_id}/traceset` | Attach traceset to configuration |
+| GET | `/api/v1/configurations/{config_id}/versions` | List configuration versions |
+| GET | `/api/v1/configurations/{config_id}/versions/{version}` | Get specific configuration version |
 | GET | `/api/v1/configurations/{config_id}/components` | List configuration components |
 | POST | `/api/v1/configurations/{config_id}/components` | Add component to configuration |
 | DELETE | `/api/v1/configurations/{config_id}/components/{component_name}` | Remove component from configuration |
-| PATCH | `/api/v1/configurations/{config_id}/components/{component_name}/parameters` | Update component parameters |
-| PATCH | `/api/v1/configurations/{config_id}/configurations/{component_name}` | Add child to component |
-| PATCH | `/api/v1/configurations/{config_id}/configurations/{component_name}/components/{child_name}` | Update child in component |
-| DELETE | `/api/v1/configurations/{config_id}/configurations/{component_name}/components/{child_name}` | Remove child from component |
 | GET | `/api/v1/configurations/{config_id}/containers` | List configuration containers |
 | PATCH | `/api/v1/configurations/{config_id}/containers/{container_name}` | Add component to container |
-| GET | `/api/v1/configurations/{config_id}/containers/{container_name}/allowed` | Get allowed component types for container |
 | PATCH | `/api/v1/configurations/{config_id}/containers/{container_name}/components/{component_name}` | Update component in container |
 | DELETE | `/api/v1/configurations/{config_id}/containers/{container_name}/components/{component_name}` | Remove component from container |
-| PATCH | `/api/v1/configurations/{config_id}/distribution` | Update distribution entry value |
+| GET | `/api/v1/configurations/{config_id}/containers/{container_name}/allowed` | Get allowed component types for container |
+| GET | `/api/v1/configurations/{config_id}/applications` | List configuration applications |
+| POST | `/api/v1/configurations/{config_id}/applications` | Add application to configuration |
 | GET | `/api/v1/configurations/{config_id}/links` | List configuration links |
-| PATCH | `/api/v1/configurations/{config_id}/links/{link_name}/parameters` | Update link parameters |
-| PATCH | `/api/v1/configurations/{config_id}/parameters` | Update global parameters |
-| GET | `/api/v1/configurations/{config_id}/software-version` | Get software version |
 | PATCH | `/api/v1/configurations/{config_id}/topology` | Add component to topology |
 | PATCH | `/api/v1/configurations/{config_id}/topology/{component_name}` | Update topology component |
 | DELETE | `/api/v1/configurations/{config_id}/topology/{component_name}` | Remove component from topology |
-| GET | `/api/v1/configurations/{config_id}/traceset` | List available tracesets for configuration |
-| PATCH | `/api/v1/configurations/{config_id}/traceset` | Attach traceset to configuration |
-| POST | `/api/v1/configurations/{config_id}/validate` | Validate configuration |
-| GET | `/api/v1/configurations/{config_id}/versions` | List configuration versions |
-| GET | `/api/v1/configurations/{config_id}/versions/{version}` | Get specific configuration version |
+| PATCH | `/api/v1/configurations/{config_id}/distribution` | Update distribution entry value |
+| DELETE | `/api/v1/configurations/{config_id}/applications/{app_name}` | Remove application from configuration |
+| PATCH | `/api/v1/configurations/{config_id}/parameters` | Update global parameters |
+| PATCH | `/api/v1/configurations/{config_id}/components/{component_name}/parameters` | Update component parameters |
+| PATCH | `/api/v1/configurations/{config_id}/applications/{app_name}/parameters` | Update application parameters |
+| PATCH | `/api/v1/configurations/{config_id}/links/{link_name}/parameters` | Update link parameters |
+| PATCH | `/api/v1/configurations/{config_id}/configurations/{component_name}` | Add child to component |
+| PATCH | `/api/v1/configurations/{config_id}/configurations/{component_name}/components/{child_name}` | Update child in component |
+| DELETE | `/api/v1/configurations/{config_id}/configurations/{component_name}/components/{child_name}` | Remove child from component |
+| GET | `/api/v1/configurations/{config_id}/software-version` | Get software version |
 
 ---
 
@@ -73,14 +73,14 @@ Workload configuration management
 {
   "configurations": [
     {
-      "componentCount": 1,
-      "createdAt": "2024-01-15T10:30:00Z",
       "id": "string",
-      "modifiedAt": "2024-01-15T10:30:00Z",
+      "workspaceId": "string",
       "name": "string",
       "status": "...",
+      "createdAt": "2024-01-15T10:30:00Z",
+      "modifiedAt": "2024-01-15T10:30:00Z",
       "version": 1,
-      "workspaceId": "string"
+      "componentCount": 1
     }
   ],
   "pagination": {
@@ -101,94 +101,97 @@ Workload configuration management
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `activeTraceset` | any | No | Active traceset for chakra-based simulations. Required when any application has trafficType 'chakra'. |
-| `applications` | array[ApplicationDefinition] | Yes | Traffic generator and workload applications |
+| `workspaceId` | string | No | Workspace identifier. If omitted, defaults to the well-known default workspace. |
+| `name` | string | Yes | Configuration name |
 | `components` | array[ComponentDeclaration] | Yes | Component declarations |
 | `containers` | array[ContainerDefinition] | Yes | Container definitions |
-| `globalParameters` | TypedParameters | Yes | Hierarchical parameters structure. Leaf nodes are ParameterValue objects, branch nodes are nested TypedParameters representing ModelComponents. |
+| `applications` | array[ApplicationDefinition] | Yes | Traffic generator and workload applications |
 | `links` | array[ComponentDeclaration] | Yes | Layer components defining spine plane linking configuration (type='layer') |
-| `name` | string | Yes | Configuration name |
 | `topology` | TopologyDefinition | Yes | Active network topology definition |
-| `workspaceId` | string | No | Workspace identifier. If omitted, defaults to the well-known default workspace. |
+| `globalParameters` | TypedParameters | Yes | Hierarchical parameters structure. Leaf nodes are ParameterValue objects, branch nodes are nested TypedParameters representing ModelComponents. |
+| `activeTraceset` | any | No | Active traceset for chakra-based simulations. Required when any application has trafficType 'chakra'. |
 
 ```json
 {
-  "activeTraceset": {},
-  "applications": [
-    {
-      "model": "ChakraWorkload",
-      "name": "ScalaChakraGenerator",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "4.0.1"
-    }
-  ],
+  "workspaceId": "string",
+  "name": "string",
   "components": [
     {
+      "type": "...",
+      "trafficType": "...",
+      "model": "ScalaSwitch",
+      "name": "spine-switch-1",
+      "version": "3.2.1",
+      "typedParameters": "...",
       "allowedComponents": [
         "..."
       ],
       "components": [
         "..."
-      ],
-      "model": "ScalaSwitch",
-      "name": "spine-switch-1",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "3.2.1"
+      ]
     }
   ],
   "containers": [
     {
+      "type": "...",
+      "name": "roce-rack",
+      "model": "ScalaRack",
+      "version": "4.0.0",
+      "configuration": null,
       "allowedComponents": [
         "..."
       ],
       "components": [
         "..."
-      ],
-      "configuration": null,
-      "model": "ScalaRack",
-      "name": "roce-rack",
-      "type": "...",
-      "version": "4.0.0"
+      ]
     }
   ],
-  "globalParameters": {},
+  "applications": [
+    {
+      "type": "...",
+      "trafficType": "...",
+      "name": "ScalaChakraGenerator",
+      "model": "ChakraWorkload",
+      "version": "4.0.1",
+      "typedParameters": "..."
+    }
+  ],
   "links": [
     {
+      "type": "...",
+      "trafficType": "...",
+      "model": "ScalaSwitch",
+      "name": "spine-switch-1",
+      "version": "3.2.1",
+      "typedParameters": "...",
       "allowedComponents": [
         "..."
       ],
       "components": [
         "..."
-      ],
-      "model": "ScalaSwitch",
-      "name": "spine-switch-1",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "3.2.1"
+      ]
     }
   ],
-  "name": "string",
   "topology": {
+    "name": null,
+    "type": "clos",
+    "topologyTiers": 1,
     "allowedComponents": [
       "string"
+    ],
+    "components": [
+      "..."
     ],
     "appDistribution": {
       "description": "...",
       "randomApplicationDistribution": "..."
-    },
-    "components": [
-      "..."
-    ],
-    "name": null,
-    "topologyTiers": 1,
-    "type": "clos"
+    }
   },
-  "workspaceId": "string"
+  "globalParameters": {},
+  "activeTraceset": {
+    "name": "string",
+    "id": "string"
+  }
 }
 ```
 
@@ -198,88 +201,96 @@ Workload configuration management
 
 ```json
 {
-  "activeTraceset": {},
-  "applications": [
-    {
-      "model": "ChakraWorkload",
-      "name": "ScalaChakraGenerator",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "4.0.1"
-    }
-  ],
+  "id": "config_10045",
+  "workspaceId": "string",
+  "name": "string",
+  "status": "draft",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "modifiedAt": "2024-01-15T10:30:00Z",
+  "version": 1,
   "componentCount": 1,
   "components": [
     {
+      "type": "...",
+      "trafficType": "...",
+      "model": "ScalaSwitch",
+      "name": "spine-switch-1",
+      "version": "3.2.1",
+      "typedParameters": "...",
       "allowedComponents": [
         "..."
       ],
       "components": [
         "..."
-      ],
-      "model": "ScalaSwitch",
-      "name": "spine-switch-1",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "3.2.1"
+      ]
     }
   ],
   "containers": [
     {
+      "type": "...",
+      "name": "roce-rack",
+      "model": "ScalaRack",
+      "version": "4.0.0",
+      "configuration": null,
       "allowedComponents": [
         "..."
       ],
       "components": [
         "..."
-      ],
-      "configuration": null,
-      "model": "ScalaRack",
-      "name": "roce-rack",
-      "type": "...",
-      "version": "4.0.0"
+      ]
     }
   ],
-  "createdAt": "2024-01-15T10:30:00Z",
-  "globalParameters": {},
-  "id": "config_10045",
+  "applications": [
+    {
+      "type": "...",
+      "trafficType": "...",
+      "name": "ScalaChakraGenerator",
+      "model": "ChakraWorkload",
+      "version": "4.0.1",
+      "typedParameters": "..."
+    }
+  ],
   "links": [
     {
+      "type": "...",
+      "trafficType": "...",
+      "model": "ScalaSwitch",
+      "name": "spine-switch-1",
+      "version": "3.2.1",
+      "typedParameters": "...",
       "allowedComponents": [
         "..."
       ],
       "components": [
         "..."
-      ],
-      "model": "ScalaSwitch",
-      "name": "spine-switch-1",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "3.2.1"
+      ]
     }
   ],
-  "modifiedAt": "2024-01-15T10:30:00Z",
-  "name": "string",
-  "status": "draft",
   "topology": {
+    "name": null,
+    "type": "clos",
+    "topologyTiers": 1,
     "allowedComponents": [
       "string"
+    ],
+    "components": [
+      "..."
     ],
     "appDistribution": {
       "description": "...",
       "randomApplicationDistribution": "..."
-    },
-    "components": [
-      "..."
-    ],
-    "name": null,
-    "topologyTiers": 1,
-    "type": "clos"
+    }
   },
-  "version": 1,
-  "workspaceId": "string"
+  "globalParameters": {},
+  "activeTraceset": {
+    "name": "string",
+    "id": "string"
+  },
+  "activeMappingFile": {
+    "id": "string",
+    "name": "string",
+    "deleted": true
+  }
 }
 ```
 
@@ -301,88 +312,96 @@ Workload configuration management
 
 ```json
 {
-  "activeTraceset": {},
-  "applications": [
-    {
-      "model": "ChakraWorkload",
-      "name": "ScalaChakraGenerator",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "4.0.1"
-    }
-  ],
+  "id": "config_10045",
+  "workspaceId": "string",
+  "name": "string",
+  "status": "draft",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "modifiedAt": "2024-01-15T10:30:00Z",
+  "version": 1,
   "componentCount": 1,
   "components": [
     {
+      "type": "...",
+      "trafficType": "...",
+      "model": "ScalaSwitch",
+      "name": "spine-switch-1",
+      "version": "3.2.1",
+      "typedParameters": "...",
       "allowedComponents": [
         "..."
       ],
       "components": [
         "..."
-      ],
-      "model": "ScalaSwitch",
-      "name": "spine-switch-1",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "3.2.1"
+      ]
     }
   ],
   "containers": [
     {
+      "type": "...",
+      "name": "roce-rack",
+      "model": "ScalaRack",
+      "version": "4.0.0",
+      "configuration": null,
       "allowedComponents": [
         "..."
       ],
       "components": [
         "..."
-      ],
-      "configuration": null,
-      "model": "ScalaRack",
-      "name": "roce-rack",
-      "type": "...",
-      "version": "4.0.0"
+      ]
     }
   ],
-  "createdAt": "2024-01-15T10:30:00Z",
-  "globalParameters": {},
-  "id": "config_10045",
+  "applications": [
+    {
+      "type": "...",
+      "trafficType": "...",
+      "name": "ScalaChakraGenerator",
+      "model": "ChakraWorkload",
+      "version": "4.0.1",
+      "typedParameters": "..."
+    }
+  ],
   "links": [
     {
+      "type": "...",
+      "trafficType": "...",
+      "model": "ScalaSwitch",
+      "name": "spine-switch-1",
+      "version": "3.2.1",
+      "typedParameters": "...",
       "allowedComponents": [
         "..."
       ],
       "components": [
         "..."
-      ],
-      "model": "ScalaSwitch",
-      "name": "spine-switch-1",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "3.2.1"
+      ]
     }
   ],
-  "modifiedAt": "2024-01-15T10:30:00Z",
-  "name": "string",
-  "status": "draft",
   "topology": {
+    "name": null,
+    "type": "clos",
+    "topologyTiers": 1,
     "allowedComponents": [
       "string"
+    ],
+    "components": [
+      "..."
     ],
     "appDistribution": {
       "description": "...",
       "randomApplicationDistribution": "..."
-    },
-    "components": [
-      "..."
-    ],
-    "name": null,
-    "topologyTiers": 1,
-    "type": "clos"
+    }
   },
-  "version": 1,
-  "workspaceId": "string"
+  "globalParameters": {},
+  "activeTraceset": {
+    "name": "string",
+    "id": "string"
+  },
+  "activeMappingFile": {
+    "id": "string",
+    "name": "string",
+    "deleted": true
+  }
 }
 ```
 
@@ -403,91 +422,94 @@ Workload configuration management
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `activeTraceset` | any | No | Active traceset for chakra-based simulations. Required when any application has trafficType 'chakra'. |
-| `applications` | array[ApplicationDefinition] | No | Traffic generator and workload applications |
+| `name` | ['string', 'null'] | No | Configuration name |
 | `components` | array[ComponentDeclaration] | No | Component declarations |
 | `containers` | array[ContainerDefinition] | No | Container definitions |
-| `globalParameters` | TypedParameters | No | Hierarchical parameters structure. Leaf nodes are ParameterValue objects, branch nodes are nested TypedParameters representing ModelComponents. |
+| `applications` | array[ApplicationDefinition] | No | Traffic generator and workload applications |
 | `links` | array[ComponentDeclaration] | No | Layer components defining spine plane linking configuration (type='layer') |
-| `name` | ['string', 'null'] | No | Configuration name |
 | `topology` | TopologyDefinition | No | Active network topology definition |
+| `globalParameters` | TypedParameters | No | Hierarchical parameters structure. Leaf nodes are ParameterValue objects, branch nodes are nested TypedParameters representing ModelComponents. |
+| `activeTraceset` | any | No | Active traceset for chakra-based simulations. Required when any application has trafficType 'chakra'. |
 
 ```json
 {
-  "activeTraceset": {},
-  "applications": [
-    {
-      "model": "ChakraWorkload",
-      "name": "ScalaChakraGenerator",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "4.0.1"
-    }
-  ],
+  "name": null,
   "components": [
     {
+      "type": "...",
+      "trafficType": "...",
+      "model": "ScalaSwitch",
+      "name": "spine-switch-1",
+      "version": "3.2.1",
+      "typedParameters": "...",
       "allowedComponents": [
         "..."
       ],
       "components": [
         "..."
-      ],
-      "model": "ScalaSwitch",
-      "name": "spine-switch-1",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "3.2.1"
+      ]
     }
   ],
   "containers": [
     {
+      "type": "...",
+      "name": "roce-rack",
+      "model": "ScalaRack",
+      "version": "4.0.0",
+      "configuration": null,
       "allowedComponents": [
         "..."
       ],
       "components": [
         "..."
-      ],
-      "configuration": null,
-      "model": "ScalaRack",
-      "name": "roce-rack",
-      "type": "...",
-      "version": "4.0.0"
+      ]
     }
   ],
-  "globalParameters": {},
+  "applications": [
+    {
+      "type": "...",
+      "trafficType": "...",
+      "name": "ScalaChakraGenerator",
+      "model": "ChakraWorkload",
+      "version": "4.0.1",
+      "typedParameters": "..."
+    }
+  ],
   "links": [
     {
+      "type": "...",
+      "trafficType": "...",
+      "model": "ScalaSwitch",
+      "name": "spine-switch-1",
+      "version": "3.2.1",
+      "typedParameters": "...",
       "allowedComponents": [
         "..."
       ],
       "components": [
         "..."
-      ],
-      "model": "ScalaSwitch",
-      "name": "spine-switch-1",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "3.2.1"
+      ]
     }
   ],
-  "name": null,
   "topology": {
+    "name": null,
+    "type": "clos",
+    "topologyTiers": 1,
     "allowedComponents": [
       "string"
+    ],
+    "components": [
+      "..."
     ],
     "appDistribution": {
       "description": "...",
       "randomApplicationDistribution": "..."
-    },
-    "components": [
-      "..."
-    ],
-    "name": null,
-    "topologyTiers": 1,
-    "type": "clos"
+    }
+  },
+  "globalParameters": {},
+  "activeTraceset": {
+    "name": "string",
+    "id": "string"
   }
 }
 ```
@@ -498,88 +520,96 @@ Workload configuration management
 
 ```json
 {
-  "activeTraceset": {},
-  "applications": [
-    {
-      "model": "ChakraWorkload",
-      "name": "ScalaChakraGenerator",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "4.0.1"
-    }
-  ],
+  "id": "config_10045",
+  "workspaceId": "string",
+  "name": "string",
+  "status": "draft",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "modifiedAt": "2024-01-15T10:30:00Z",
+  "version": 1,
   "componentCount": 1,
   "components": [
     {
+      "type": "...",
+      "trafficType": "...",
+      "model": "ScalaSwitch",
+      "name": "spine-switch-1",
+      "version": "3.2.1",
+      "typedParameters": "...",
       "allowedComponents": [
         "..."
       ],
       "components": [
         "..."
-      ],
-      "model": "ScalaSwitch",
-      "name": "spine-switch-1",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "3.2.1"
+      ]
     }
   ],
   "containers": [
     {
+      "type": "...",
+      "name": "roce-rack",
+      "model": "ScalaRack",
+      "version": "4.0.0",
+      "configuration": null,
       "allowedComponents": [
         "..."
       ],
       "components": [
         "..."
-      ],
-      "configuration": null,
-      "model": "ScalaRack",
-      "name": "roce-rack",
-      "type": "...",
-      "version": "4.0.0"
+      ]
     }
   ],
-  "createdAt": "2024-01-15T10:30:00Z",
-  "globalParameters": {},
-  "id": "config_10045",
+  "applications": [
+    {
+      "type": "...",
+      "trafficType": "...",
+      "name": "ScalaChakraGenerator",
+      "model": "ChakraWorkload",
+      "version": "4.0.1",
+      "typedParameters": "..."
+    }
+  ],
   "links": [
     {
+      "type": "...",
+      "trafficType": "...",
+      "model": "ScalaSwitch",
+      "name": "spine-switch-1",
+      "version": "3.2.1",
+      "typedParameters": "...",
       "allowedComponents": [
         "..."
       ],
       "components": [
         "..."
-      ],
-      "model": "ScalaSwitch",
-      "name": "spine-switch-1",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "3.2.1"
+      ]
     }
   ],
-  "modifiedAt": "2024-01-15T10:30:00Z",
-  "name": "string",
-  "status": "draft",
   "topology": {
+    "name": null,
+    "type": "clos",
+    "topologyTiers": 1,
     "allowedComponents": [
       "string"
+    ],
+    "components": [
+      "..."
     ],
     "appDistribution": {
       "description": "...",
       "randomApplicationDistribution": "..."
-    },
-    "components": [
-      "..."
-    ],
-    "name": null,
-    "topologyTiers": 1,
-    "type": "clos"
+    }
   },
-  "version": 1,
-  "workspaceId": "string"
+  "globalParameters": {},
+  "activeTraceset": {
+    "name": "string",
+    "id": "string"
+  },
+  "activeMappingFile": {
+    "id": "string",
+    "name": "string",
+    "deleted": true
+  }
 }
 ```
 
@@ -603,138 +633,285 @@ Workload configuration management
 
 ---
 
-## List configuration applications
+## Validate configuration
 
-<span class="api-method api-method-get">GET</span> `/api/v1/configurations/{config_id}/applications`
-
-Returns all applications in the configuration's topology
+<span class="api-method api-method-post">POST</span> `/api/v1/configurations/{config_id}/validate`
 
 ### Parameters
 
 | Name | In | Type | Required | Description |
 |------|-----|------|----------|-------------|
 | `config_id` | path | string | Yes | - |
-| `withDetails` | query | boolean | No | When true, includes full typedParameters for each application. Defaults to false. |
 
 ### Responses
 
-**200** - List of applications
+**200** - Validation result
 
 ```json
 {
-  "applications": [
+  "valid": true,
+  "status": "valid",
+  "errors": [
     {
-      "model": "ChakraWorkload",
-      "name": "ScalaChakraGenerator",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "4.0.1"
+      "path": "$.components[2].typedParameters.numUpLinks",
+      "code": "CONSTRAINT_VIOLATION",
+      "severity": "...",
+      "component": null,
+      "parameter": null,
+      "message": "string"
+    }
+  ],
+  "warnings": [
+    {
+      "path": "$.components[2].typedParameters.numUpLinks",
+      "code": "CONSTRAINT_VIOLATION",
+      "severity": "...",
+      "component": null,
+      "parameter": null,
+      "message": "string"
+    }
+  ],
+  "info": [
+    {
+      "path": "$.components[2].typedParameters.numUpLinks",
+      "code": "CONSTRAINT_VIOLATION",
+      "severity": "...",
+      "component": null,
+      "parameter": null,
+      "message": "string"
     }
   ]
 }
 ```
 
+---
+
+## List available tracesets for configuration
+
+<span class="api-method api-method-get">GET</span> `/api/v1/configurations/{config_id}/traceset`
+
+Returns tracesets that can be attached to configuration applications. Use scope=global to list all tracesets across all workspaces, or scope=workspace to filter by the configuration's workspace only.
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `config_id` | path | string | Yes | - |
+| `status` | query | string | No | Filter by traceset status (completed, uploading, failed) |
+| `limit` | query | integer | No | - |
+| `next` | query | string | No | Opaque cursor token for pagination |
+| `scope` | query | string (enum) | No | Scope filter for tracesets. 'global' returns all tracesets across all workspaces (default). 'workspace' returns only tracesets in the configuration's workspace. |
+
+### Responses
+
+**200** - List of available tracesets
+
+```json
+{
+  "tracesets": [
+    {
+      "id": "ts_2RKHfGD5Z8vW9pL3NqM7TjX1YcB",
+      "name": "string",
+      "description": null,
+      "hash": "crc64nvme:abc123...",
+      "hashShort": "abc123def456",
+      "totalSize": 1,
+      "format": "chakra_json_v1",
+      "status": "uploading",
+      "metadataStatus": "pending",
+      "createdAt": "2024-01-15T10:30:00Z",
+      "updatedAt": "2024-01-15T10:30:00Z"
+    }
+  ],
+  "pagination": {
+    "count": 1,
+    "hasMore": true,
+    "nextCursor": "string"
+  }
+}
+```
+
 **404** - Configuration not found
 
 ---
 
-## Add application to configuration
+## Attach traceset to configuration
 
-<span class="api-method api-method-post">POST</span> `/api/v1/configurations/{config_id}/applications`
+<span class="api-method api-method-patch">PATCH</span> `/api/v1/configurations/{config_id}/traceset`
 
-Adds an application to the configuration's topology by looking up the model from the database. Server resolves traffic type, version, and default parameters from the model.
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `config_id` | path | string | Yes | - |
-| `modelId` | query | string | Yes | Application model identifier — KSUID (model_xxx) or model name (e.g., ScalaChakraGenerator). Server resolves traffic type, version, and default parameters. |
-| `name` | query | string | Yes | Unique name for this application in the configuration |
-| `version` | query | string | No | Optional model version. If omitted, uses latest stable version. |
-
-### Responses
-
-**201** - Application added
-
-```json
-{
-  "model": "ChakraWorkload",
-  "name": "ScalaChakraGenerator",
-  "trafficType": "chakra",
-  "type": "switch",
-  "typedParameters": {},
-  "version": "4.0.1"
-}
-```
-
-**400** - Invalid request (distribution sum exceeds 1.0)
-
-**404** - Configuration not found
-
----
-
-## Remove application from configuration
-
-<span class="api-method api-method-delete">DELETE</span> `/api/v1/configurations/{config_id}/applications/{app_name}`
-
-Removes an application from the configuration's topology. Remaining applications are auto-scaled to maintain distribution sum of 1.0.
+Sets the activeTraceset field on the configuration to reference the specified traceset. Requires at least one application with trafficType 'chakra' to exist in the configuration. Workspace-agnostic: any traceset can be attached regardless of workspace.
 
 ### Parameters
 
 | Name | In | Type | Required | Description |
 |------|-----|------|----------|-------------|
 | `config_id` | path | string | Yes | - |
-| `app_name` | path | string | Yes | - |
-
-### Responses
-
-**200** - Application removed successfully
-
-```json
-{
-  "id": "string",
-  "message": "string",
-  "status": "string"
-}
-```
-
-**404** - Configuration or application not found
-
----
-
-## Update application parameters
-
-<span class="api-method api-method-patch">PATCH</span> `/api/v1/configurations/{config_id}/applications/{app_name}/parameters`
-
-Performs a validated merge of the provided TypedParameters patch into the named application's typed_parameters. Only existing parameter keys can be updated, and types must match.
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `config_id` | path | string | Yes | - |
-| `app_name` | path | string | Yes | - |
 | `If-Match` | header | string | No | ETag for optimistic concurrency control |
 
 ### Request Body
 
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `tracesetId` | string | Yes | Traceset ID to attach (workspace-agnostic) |
+
+```json
+{
+  "tracesetId": "ts_2RKHfGD5Z8vW9pL3NqM7TjX1YcB"
+}
+```
+
 ### Responses
 
-**200** - Parameters updated successfully. Returns the full updated TypedParameters for the application.
+**200** - Traceset attached successfully
 
-**400** - Invalid request (empty patch, unknown parameter key, type mismatch, structural mismatch)
+```json
+{
+  "activeTraceset": {
+    "name": "string",
+    "id": "string"
+  }
+}
+```
 
-**404** - Configuration or application not found
+**400** - Invalid request (traceset not found, no Chakra application in configuration)
 
-**409** - Conflict (serialization failure from concurrent modification)
+**404** - Configuration not found
 
 **412** - Precondition failed (ETag mismatch)
 
 **409** - Traceset rank count not yet resolved — metadata extraction is still in progress. Retry after extraction completes.
 
 **422** - Traceset rank count is present but invalid (zero or negative). The traceset data is malformed and cannot be used for a Chakra simulation.
+
+---
+
+## List configuration versions
+
+<span class="api-method api-method-get">GET</span> `/api/v1/configurations/{config_id}/versions`
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `config_id` | path | string | Yes | - |
+
+### Responses
+
+**200** - List of version summaries
+
+```json
+{
+  "versions": [
+    {
+      "version": 1,
+      "createdAt": "2024-01-15T10:30:00Z"
+    }
+  ]
+}
+```
+
+---
+
+## Get specific configuration version
+
+<span class="api-method api-method-get">GET</span> `/api/v1/configurations/{config_id}/versions/{version}`
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `config_id` | path | string | Yes | - |
+| `version` | path | integer | Yes | - |
+
+### Responses
+
+**200** - Configuration version details
+
+```json
+{
+  "version": 1,
+  "createdAt": "2024-01-15T10:30:00Z",
+  "components": [
+    {
+      "type": "...",
+      "trafficType": "...",
+      "model": "ScalaSwitch",
+      "name": "spine-switch-1",
+      "version": "3.2.1",
+      "typedParameters": "...",
+      "allowedComponents": [
+        "..."
+      ],
+      "components": [
+        "..."
+      ]
+    }
+  ],
+  "containers": [
+    {
+      "type": "...",
+      "name": "roce-rack",
+      "model": "ScalaRack",
+      "version": "4.0.0",
+      "configuration": null,
+      "allowedComponents": [
+        "..."
+      ],
+      "components": [
+        "..."
+      ]
+    }
+  ],
+  "applications": [
+    {
+      "type": "...",
+      "trafficType": "...",
+      "name": "ScalaChakraGenerator",
+      "model": "ChakraWorkload",
+      "version": "4.0.1",
+      "typedParameters": "..."
+    }
+  ],
+  "links": [
+    {
+      "type": "...",
+      "trafficType": "...",
+      "model": "ScalaSwitch",
+      "name": "spine-switch-1",
+      "version": "3.2.1",
+      "typedParameters": "...",
+      "allowedComponents": [
+        "..."
+      ],
+      "components": [
+        "..."
+      ]
+    }
+  ],
+  "topology": {
+    "name": null,
+    "type": "clos",
+    "topologyTiers": 1,
+    "allowedComponents": [
+      "string"
+    ],
+    "components": [
+      "..."
+    ],
+    "appDistribution": {
+      "description": "...",
+      "randomApplicationDistribution": "..."
+    }
+  },
+  "globalParameters": {},
+  "activeTraceset": {
+    "name": "string",
+    "id": "string"
+  }
+}
+```
+
+**404** - Version not found
 
 ---
 
@@ -762,12 +939,12 @@ Returns all components from the configuration's components array with optional t
 {
   "components": [
     {
-      "container": null,
-      "model": "ScalaSwitch",
       "name": "string",
       "type": "...",
+      "model": "ScalaSwitch",
+      "version": "3.2.1",
       "typedParameters": "...",
-      "version": "3.2.1"
+      "container": null
     }
   ],
   "pagination": {
@@ -804,26 +981,26 @@ Adds a component, container, or layer to the configuration by looking up the mod
 
 ```json
 {
+  "type": "switch",
+  "trafficType": "chakra",
+  "model": "ScalaSwitch",
+  "name": "spine-switch-1",
+  "version": "3.2.1",
+  "typedParameters": {},
   "allowedComponents": [
     "string"
   ],
   "components": [
     {
-      "count": 4,
-      "group": null,
-      "model": "ScalaSwitch",
       "name": "spine-1",
-      "parentApplicationName": null,
+      "count": 4,
+      "model": "ScalaSwitch",
+      "version": "3.2.1",
       "type": "switch",
-      "version": "3.2.1"
+      "group": null,
+      "parentApplicationName": null
     }
-  ],
-  "model": "ScalaSwitch",
-  "name": "spine-switch-1",
-  "trafficType": "chakra",
-  "type": "switch",
-  "typedParameters": {},
-  "version": "3.2.1"
+  ]
 }
 ```
 
@@ -852,6 +1029,627 @@ Removes a component from the configuration's components array. Cascades removal 
 **204** - Component removed from configuration
 
 **404** - Configuration or component not found
+
+**412** - Precondition failed (ETag mismatch)
+
+---
+
+## List configuration containers
+
+<span class="api-method api-method-get">GET</span> `/api/v1/configurations/{config_id}/containers`
+
+Returns all containers from the configuration with optional type filtering
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `config_id` | path | string | Yes | - |
+| `type` | query | string | No | Filter by container type (rack, pod) |
+| `limit` | query | integer | No | - |
+| `next` | query | string | No | Opaque cursor token for pagination |
+
+### Responses
+
+**200** - List of containers
+
+```json
+{
+  "containers": [
+    {
+      "type": "...",
+      "name": "roce-rack",
+      "model": "ScalaRack",
+      "version": "4.0.0",
+      "configuration": null,
+      "allowedComponents": [
+        "..."
+      ],
+      "components": [
+        "..."
+      ]
+    }
+  ],
+  "pagination": {
+    "count": 1,
+    "hasMore": true,
+    "nextCursor": "string"
+  }
+}
+```
+
+**404** - Configuration not found
+
+---
+
+## Add component to container
+
+<span class="api-method api-method-patch">PATCH</span> `/api/v1/configurations/{config_id}/containers/{container_name}`
+
+Adds a component reference to the specified container. Validates that the component type is in the container's allowed list.
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `config_id` | path | string | Yes | - |
+| `container_name` | path | string | Yes | - |
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Name of an existing component or container in the configuration to add to this container |
+| `type` | string | Yes | Component type (switch, nic, server, rack, pod) |
+| `count` | integer | No | Number of instances (default 1) |
+| `group` | string | No | Logical group for relating components |
+
+```json
+{
+  "name": "my-spine-switch",
+  "type": "switch",
+  "count": 1,
+  "group": "string"
+}
+```
+
+### Responses
+
+**200** - Component added to container
+
+```json
+{
+  "type": "rack",
+  "name": "roce-rack",
+  "model": "ScalaRack",
+  "version": "4.0.0",
+  "configuration": null,
+  "allowedComponents": [
+    "string"
+  ],
+  "components": [
+    {
+      "name": "spine-1",
+      "count": 4,
+      "model": "ScalaSwitch",
+      "version": "3.2.1",
+      "type": "switch",
+      "group": null,
+      "parentApplicationName": null
+    }
+  ]
+}
+```
+
+**400** - Component type not allowed in container
+
+**404** - Configuration or container not found
+
+---
+
+## Update component in container
+
+<span class="api-method api-method-patch">PATCH</span> `/api/v1/configurations/{config_id}/containers/{container_name}/components/{component_name}`
+
+Updates count and/or group on an existing component reference in the specified container. At least one of count or group must be provided.
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `config_id` | path | string | Yes | - |
+| `container_name` | path | string | Yes | - |
+| `component_name` | path | string | Yes | - |
+| `If-Match` | header | string | No | ETag for optimistic concurrency control |
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `count` | integer | No | Updated instance count |
+| `group` | string | No | Updated logical group assignment |
+
+```json
+{
+  "count": 1,
+  "group": "string"
+}
+```
+
+### Responses
+
+**200** - Component updated in container
+
+```json
+{
+  "type": "rack",
+  "name": "roce-rack",
+  "model": "ScalaRack",
+  "version": "4.0.0",
+  "configuration": null,
+  "allowedComponents": [
+    "string"
+  ],
+  "components": [
+    {
+      "name": "spine-1",
+      "count": 4,
+      "model": "ScalaSwitch",
+      "version": "3.2.1",
+      "type": "switch",
+      "group": null,
+      "parentApplicationName": null
+    }
+  ]
+}
+```
+
+**400** - Invalid request (empty patch, count < 1)
+
+**404** - Configuration, container, or component not found
+
+**412** - Precondition failed (ETag mismatch)
+
+---
+
+## Remove component from container
+
+<span class="api-method api-method-delete">DELETE</span> `/api/v1/configurations/{config_id}/containers/{container_name}/components/{component_name}`
+
+Removes a component reference from the specified container
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `config_id` | path | string | Yes | - |
+| `container_name` | path | string | Yes | - |
+| `component_name` | path | string | Yes | - |
+
+### Responses
+
+**204** - Component removed from container
+
+**404** - Configuration, container, or component not found
+
+---
+
+## Get allowed component types for container
+
+<span class="api-method api-method-get">GET</span> `/api/v1/configurations/{config_id}/containers/{container_name}/allowed`
+
+Returns the list of component types allowed in this container based on its type
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `config_id` | path | string | Yes | - |
+| `container_name` | path | string | Yes | - |
+
+### Responses
+
+**200** - Allowed component types
+
+```json
+{
+  "containerName": "string",
+  "containerType": "rack",
+  "allowedComponents": [
+    "switch",
+    "nic",
+    "server",
+    "application",
+    "layer"
+  ]
+}
+```
+
+**404** - Configuration or container not found
+
+---
+
+## List configuration applications
+
+<span class="api-method api-method-get">GET</span> `/api/v1/configurations/{config_id}/applications`
+
+Returns all applications in the configuration's topology
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `config_id` | path | string | Yes | - |
+| `withDetails` | query | boolean | No | When true, includes full typedParameters for each application. Defaults to false. |
+
+### Responses
+
+**200** - List of applications
+
+```json
+{
+  "applications": [
+    {
+      "type": "...",
+      "trafficType": "...",
+      "name": "ScalaChakraGenerator",
+      "model": "ChakraWorkload",
+      "version": "4.0.1",
+      "typedParameters": "..."
+    }
+  ]
+}
+```
+
+**404** - Configuration not found
+
+---
+
+## Add application to configuration
+
+<span class="api-method api-method-post">POST</span> `/api/v1/configurations/{config_id}/applications`
+
+Adds an application to the configuration's topology by looking up the model from the database. Server resolves traffic type, version, and default parameters from the model.
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `config_id` | path | string | Yes | - |
+| `modelId` | query | string | Yes | Application model identifier — KSUID (model_xxx) or model name (e.g., ScalaChakraGenerator). Server resolves traffic type, version, and default parameters. |
+| `name` | query | string | Yes | Unique name for this application in the configuration |
+| `version` | query | string | No | Optional model version. If omitted, uses latest stable version. |
+
+### Responses
+
+**201** - Application added
+
+```json
+{
+  "type": "switch",
+  "trafficType": "chakra",
+  "name": "ScalaChakraGenerator",
+  "model": "ChakraWorkload",
+  "version": "4.0.1",
+  "typedParameters": {}
+}
+```
+
+**400** - Invalid request (distribution sum exceeds 1.0)
+
+**404** - Configuration not found
+
+---
+
+## List configuration links
+
+<span class="api-method api-method-get">GET</span> `/api/v1/configurations/{config_id}/links`
+
+Returns all links (layer components) from the configuration
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `config_id` | path | string | Yes | - |
+| `withDetails` | query | boolean | No | When true, includes full typedParameters for each link. Defaults to false. |
+
+### Responses
+
+**200** - List of links
+
+```json
+{
+  "links": [
+    {
+      "type": "...",
+      "trafficType": "...",
+      "model": "ScalaSwitch",
+      "name": "spine-switch-1",
+      "version": "3.2.1",
+      "typedParameters": "...",
+      "allowedComponents": [
+        "..."
+      ],
+      "components": [
+        "..."
+      ]
+    }
+  ]
+}
+```
+
+**404** - Configuration not found
+
+---
+
+## Add component to topology
+
+<span class="api-method api-method-patch">PATCH</span> `/api/v1/configurations/{config_id}/topology`
+
+Adds a component reference to the configuration's topology.components array. Validates the named entity exists in the correct collection by type (switch→components, layer→links, pod→containers).
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `config_id` | path | string | Yes | - |
+| `If-Match` | header | string | No | ETag for optimistic concurrency control |
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Name of existing component, container, or link to reference |
+| `type` | string | Yes | Type of the referenced entity |
+| `count` | integer | No | Number of instances (default 1) |
+
+```json
+{
+  "name": "my-spine-switch",
+  "type": "switch",
+  "count": 1
+}
+```
+
+### Responses
+
+**200** - Component added to topology
+
+```json
+{
+  "name": null,
+  "type": "clos",
+  "topologyTiers": 1,
+  "allowedComponents": [
+    "string"
+  ],
+  "components": [
+    {
+      "name": "spine-1",
+      "count": 4,
+      "model": "ScalaSwitch",
+      "version": "3.2.1",
+      "type": "switch",
+      "group": null,
+      "parentApplicationName": null
+    }
+  ],
+  "appDistribution": {
+    "description": null,
+    "randomApplicationDistribution": [
+      "..."
+    ]
+  }
+}
+```
+
+**400** - Invalid request (type not allowed, duplicate, invalid type)
+
+**404** - Configuration or referenced entity not found
+
+---
+
+## Update topology component
+
+<span class="api-method api-method-patch">PATCH</span> `/api/v1/configurations/{config_id}/topology/{component_name}`
+
+Updates the count on an existing component reference in the topology.
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `config_id` | path | string | Yes | - |
+| `component_name` | path | string | Yes | - |
+| `If-Match` | header | string | No | ETag for optimistic concurrency control |
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `count` | integer | Yes | Updated instance count |
+
+```json
+{
+  "count": 1
+}
+```
+
+### Responses
+
+**200** - Topology component updated
+
+```json
+{
+  "name": null,
+  "type": "clos",
+  "topologyTiers": 1,
+  "allowedComponents": [
+    "string"
+  ],
+  "components": [
+    {
+      "name": "spine-1",
+      "count": 4,
+      "model": "ScalaSwitch",
+      "version": "3.2.1",
+      "type": "switch",
+      "group": null,
+      "parentApplicationName": null
+    }
+  ],
+  "appDistribution": {
+    "description": null,
+    "randomApplicationDistribution": [
+      "..."
+    ]
+  }
+}
+```
+
+**400** - Invalid request (count < 1)
+
+**404** - Configuration or component not found in topology
+
+**412** - Precondition failed (ETag mismatch)
+
+---
+
+## Remove component from topology
+
+<span class="api-method api-method-delete">DELETE</span> `/api/v1/configurations/{config_id}/topology/{component_name}`
+
+Removes a component reference from the configuration's topology.
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `config_id` | path | string | Yes | - |
+| `component_name` | path | string | Yes | - |
+| `If-Match` | header | string | No | ETag for optimistic concurrency control |
+
+### Responses
+
+**204** - Component removed from topology
+
+**404** - Configuration or component not found in topology
+
+**412** - Precondition failed (ETag mismatch)
+
+---
+
+## Update distribution entry value
+
+<span class="api-method api-method-patch">PATCH</span> `/api/v1/configurations/{config_id}/distribution`
+
+Updates the value field of a specific entry in topology.appDistribution.randomApplicationDistribution[]. The entry is identified by parentApplication + distributionId.
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `config_id` | path | string | Yes | - |
+| `If-Match` | header | string | No | ETag for optimistic concurrency control |
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `parentApplication` | string | Yes | Root application name (e.g., ScalaTrafficGeneratorApp) |
+| `distributionId` | string | Yes | Distribution identifier linking to prClientVariable (e.g., prScalaTrafficServer) |
+| `value` | number | Yes | New distribution percentage value (0.0 to 1.0 inclusive) |
+
+```json
+{
+  "parentApplication": "string",
+  "distributionId": "string",
+  "value": 1.0
+}
+```
+
+### Responses
+
+**200** - Distribution value updated
+
+```json
+{
+  "description": null,
+  "randomApplicationDistribution": [
+    {
+      "parentApplication": "string",
+      "name": "string",
+      "applicationType": "client",
+      "distributionPercent": "..."
+    }
+  ]
+}
+```
+
+**400** - Invalid request (value out of range, empty fields, no app_distribution)
+
+**404** - Configuration or distribution entry not found
+
+**409** - Concurrent modification conflict, please retry
+
+**412** - Precondition failed (ETag mismatch)
+
+---
+
+## Remove application from configuration
+
+<span class="api-method api-method-delete">DELETE</span> `/api/v1/configurations/{config_id}/applications/{app_name}`
+
+Removes an application from the configuration's topology. Remaining applications are auto-scaled to maintain distribution sum of 1.0.
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `config_id` | path | string | Yes | - |
+| `app_name` | path | string | Yes | - |
+
+### Responses
+
+**200** - Application removed successfully
+
+```json
+{
+  "id": "string",
+  "status": "string",
+  "message": "string"
+}
+```
+
+**404** - Configuration or application not found
+
+---
+
+## Update global parameters
+
+<span class="api-method api-method-patch">PATCH</span> `/api/v1/configurations/{config_id}/parameters`
+
+Performs a validated merge of the provided TypedParameters patch into the configuration's global_parameters. Backend-managed sections (ComputeConfiguration, ParallelizationParameters, etc.), readonly sections (SoftwareVersion), and hidden parameters are rejected with 400.
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `config_id` | path | string | Yes | - |
+| `If-Match` | header | string | No | ETag for optimistic concurrency control |
+
+### Request Body
+
+### Responses
+
+**200** - Parameters updated successfully. Returns the full updated global TypedParameters (with backend params stripped).
+
+**400** - Invalid request (empty patch, unknown parameter key, type mismatch, structural mismatch, attempt to modify backend-managed/readonly/hidden params)
+
+**404** - Configuration not found
+
+**409** - Conflict (serialization failure from concurrent modification)
 
 **412** - Precondition failed (ETag mismatch)
 
@@ -887,6 +1685,66 @@ Performs a validated merge of the provided TypedParameters patch into the named 
 
 ---
 
+## Update application parameters
+
+<span class="api-method api-method-patch">PATCH</span> `/api/v1/configurations/{config_id}/applications/{app_name}/parameters`
+
+Performs a validated merge of the provided TypedParameters patch into the named application's typed_parameters. Only existing parameter keys can be updated, and types must match.
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `config_id` | path | string | Yes | - |
+| `app_name` | path | string | Yes | - |
+| `If-Match` | header | string | No | ETag for optimistic concurrency control |
+
+### Request Body
+
+### Responses
+
+**200** - Parameters updated successfully. Returns the full updated TypedParameters for the application.
+
+**400** - Invalid request (empty patch, unknown parameter key, type mismatch, structural mismatch)
+
+**404** - Configuration or application not found
+
+**409** - Conflict (serialization failure from concurrent modification)
+
+**412** - Precondition failed (ETag mismatch)
+
+---
+
+## Update link parameters
+
+<span class="api-method api-method-patch">PATCH</span> `/api/v1/configurations/{config_id}/links/{link_name}/parameters`
+
+Performs a validated merge of the provided TypedParameters patch into the named link's typed_parameters. Only existing parameter keys can be updated, and types must match.
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `config_id` | path | string | Yes | - |
+| `link_name` | path | string | Yes | - |
+| `If-Match` | header | string | No | ETag for optimistic concurrency control |
+
+### Request Body
+
+### Responses
+
+**200** - Parameters updated successfully. Returns the full updated TypedParameters for the link.
+
+**400** - Invalid request (empty patch, unknown parameter key, type mismatch, structural mismatch)
+
+**404** - Configuration or link not found
+
+**409** - Conflict (serialization failure from concurrent modification)
+
+**412** - Precondition failed (ETag mismatch)
+
+---
+
 ## Add child to component
 
 <span class="api-method api-method-patch">PATCH</span> `/api/v1/configurations/{config_id}/configurations/{component_name}`
@@ -905,19 +1763,19 @@ Adds a child component (NIC, GPU, or application) to the specified host (server)
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
+| `name` | string | Yes | Name of an existing NIC, GPU, or application component in the configuration |
+| `type` | string | Yes | Child component type (nic, gpu, application) |
 | `count` | integer | No | Number of instances (default 1) |
 | `group` | string | No | Logical group for relating components |
-| `name` | string | Yes | Name of an existing NIC, GPU, or application component in the configuration |
 | `parentApplicationName` | string | No | Parent application name (required for application type children) |
-| `type` | string | Yes | Child component type (nic, gpu, application) |
 
 ```json
 {
+  "name": "string",
+  "type": "nic",
   "count": 1,
   "group": "string",
-  "name": "string",
-  "parentApplicationName": "string",
-  "type": "nic"
+  "parentApplicationName": "string"
 }
 ```
 
@@ -927,26 +1785,26 @@ Adds a child component (NIC, GPU, or application) to the specified host (server)
 
 ```json
 {
+  "type": "switch",
+  "trafficType": "chakra",
+  "model": "ScalaSwitch",
+  "name": "spine-switch-1",
+  "version": "3.2.1",
+  "typedParameters": {},
   "allowedComponents": [
     "string"
   ],
   "components": [
     {
-      "count": 4,
-      "group": null,
-      "model": "ScalaSwitch",
       "name": "spine-1",
-      "parentApplicationName": null,
+      "count": 4,
+      "model": "ScalaSwitch",
+      "version": "3.2.1",
       "type": "switch",
-      "version": "3.2.1"
+      "group": null,
+      "parentApplicationName": null
     }
-  ],
-  "model": "ScalaSwitch",
-  "name": "spine-switch-1",
-  "trafficType": "chakra",
-  "type": "switch",
-  "typedParameters": {},
-  "version": "3.2.1"
+  ]
 }
 ```
 
@@ -991,26 +1849,26 @@ Updates count and/or group on an existing child component reference within the s
 
 ```json
 {
+  "type": "switch",
+  "trafficType": "chakra",
+  "model": "ScalaSwitch",
+  "name": "spine-switch-1",
+  "version": "3.2.1",
+  "typedParameters": {},
   "allowedComponents": [
     "string"
   ],
   "components": [
     {
-      "count": 4,
-      "group": null,
-      "model": "ScalaSwitch",
       "name": "spine-1",
-      "parentApplicationName": null,
+      "count": 4,
+      "model": "ScalaSwitch",
+      "version": "3.2.1",
       "type": "switch",
-      "version": "3.2.1"
+      "group": null,
+      "parentApplicationName": null
     }
-  ],
-  "model": "ScalaSwitch",
-  "name": "spine-switch-1",
-  "trafficType": "chakra",
-  "type": "switch",
-  "typedParameters": {},
-  "version": "3.2.1"
+  ]
 }
 ```
 
@@ -1047,399 +1905,6 @@ Removes a child component (NIC, GPU, or application) from the specified host (se
 
 ---
 
-## List configuration containers
-
-<span class="api-method api-method-get">GET</span> `/api/v1/configurations/{config_id}/containers`
-
-Returns all containers from the configuration with optional type filtering
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `config_id` | path | string | Yes | - |
-| `type` | query | string | No | Filter by container type (rack, pod) |
-| `limit` | query | integer | No | - |
-| `next` | query | string | No | Opaque cursor token for pagination |
-
-### Responses
-
-**200** - List of containers
-
-```json
-{
-  "containers": [
-    {
-      "allowedComponents": [
-        "..."
-      ],
-      "components": [
-        "..."
-      ],
-      "configuration": null,
-      "model": "ScalaRack",
-      "name": "roce-rack",
-      "type": "...",
-      "version": "4.0.0"
-    }
-  ],
-  "pagination": {
-    "count": 1,
-    "hasMore": true,
-    "nextCursor": "string"
-  }
-}
-```
-
-**404** - Configuration not found
-
----
-
-## Add component to container
-
-<span class="api-method api-method-patch">PATCH</span> `/api/v1/configurations/{config_id}/containers/{container_name}`
-
-Adds a component reference to the specified container. Validates that the component type is in the container's allowed list.
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `config_id` | path | string | Yes | - |
-| `container_name` | path | string | Yes | - |
-
-### Request Body
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `count` | integer | No | Number of instances (default 1) |
-| `group` | string | No | Logical group for relating components |
-| `name` | string | Yes | Name of an existing component or container in the configuration to add to this container |
-| `type` | string | Yes | Component type (switch, nic, server, rack, pod) |
-
-```json
-{
-  "count": 1,
-  "group": "string",
-  "name": "my-spine-switch",
-  "type": "switch"
-}
-```
-
-### Responses
-
-**200** - Component added to container
-
-```json
-{
-  "allowedComponents": [
-    "string"
-  ],
-  "components": [
-    {
-      "count": 4,
-      "group": null,
-      "model": "ScalaSwitch",
-      "name": "spine-1",
-      "parentApplicationName": null,
-      "type": "switch",
-      "version": "3.2.1"
-    }
-  ],
-  "configuration": null,
-  "model": "ScalaRack",
-  "name": "roce-rack",
-  "type": "rack",
-  "version": "4.0.0"
-}
-```
-
-**400** - Component type not allowed in container
-
-**404** - Configuration or container not found
-
----
-
-## Get allowed component types for container
-
-<span class="api-method api-method-get">GET</span> `/api/v1/configurations/{config_id}/containers/{container_name}/allowed`
-
-Returns the list of component types allowed in this container based on its type
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `config_id` | path | string | Yes | - |
-| `container_name` | path | string | Yes | - |
-
-### Responses
-
-**200** - Allowed component types
-
-```json
-{
-  "allowedComponents": [
-    "switch",
-    "nic",
-    "server",
-    "application",
-    "layer"
-  ],
-  "containerName": "string",
-  "containerType": "rack"
-}
-```
-
-**404** - Configuration or container not found
-
----
-
-## Update component in container
-
-<span class="api-method api-method-patch">PATCH</span> `/api/v1/configurations/{config_id}/containers/{container_name}/components/{component_name}`
-
-Updates count and/or group on an existing component reference in the specified container. At least one of count or group must be provided.
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `config_id` | path | string | Yes | - |
-| `container_name` | path | string | Yes | - |
-| `component_name` | path | string | Yes | - |
-| `If-Match` | header | string | No | ETag for optimistic concurrency control |
-
-### Request Body
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `count` | integer | No | Updated instance count |
-| `group` | string | No | Updated logical group assignment |
-
-```json
-{
-  "count": 1,
-  "group": "string"
-}
-```
-
-### Responses
-
-**200** - Component updated in container
-
-```json
-{
-  "allowedComponents": [
-    "string"
-  ],
-  "components": [
-    {
-      "count": 4,
-      "group": null,
-      "model": "ScalaSwitch",
-      "name": "spine-1",
-      "parentApplicationName": null,
-      "type": "switch",
-      "version": "3.2.1"
-    }
-  ],
-  "configuration": null,
-  "model": "ScalaRack",
-  "name": "roce-rack",
-  "type": "rack",
-  "version": "4.0.0"
-}
-```
-
-**400** - Invalid request (empty patch, count < 1)
-
-**404** - Configuration, container, or component not found
-
-**412** - Precondition failed (ETag mismatch)
-
----
-
-## Remove component from container
-
-<span class="api-method api-method-delete">DELETE</span> `/api/v1/configurations/{config_id}/containers/{container_name}/components/{component_name}`
-
-Removes a component reference from the specified container
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `config_id` | path | string | Yes | - |
-| `container_name` | path | string | Yes | - |
-| `component_name` | path | string | Yes | - |
-
-### Responses
-
-**204** - Component removed from container
-
-**404** - Configuration, container, or component not found
-
----
-
-## Update distribution entry value
-
-<span class="api-method api-method-patch">PATCH</span> `/api/v1/configurations/{config_id}/distribution`
-
-Updates the value field of a specific entry in topology.appDistribution.randomApplicationDistribution[]. The entry is identified by parentApplication + distributionId.
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `config_id` | path | string | Yes | - |
-| `If-Match` | header | string | No | ETag for optimistic concurrency control |
-
-### Request Body
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `distributionId` | string | Yes | Distribution identifier linking to prClientVariable (e.g., prScalaTrafficServer) |
-| `parentApplication` | string | Yes | Root application name (e.g., ScalaTrafficGeneratorApp) |
-| `value` | number | Yes | New distribution percentage value (0.0 to 1.0 inclusive) |
-
-```json
-{
-  "distributionId": "string",
-  "parentApplication": "string",
-  "value": 1.0
-}
-```
-
-### Responses
-
-**200** - Distribution value updated
-
-```json
-{
-  "description": null,
-  "randomApplicationDistribution": [
-    {
-      "applicationType": "client",
-      "distributionPercent": "...",
-      "name": "string",
-      "parentApplication": "string"
-    }
-  ]
-}
-```
-
-**400** - Invalid request (value out of range, empty fields, no app_distribution)
-
-**404** - Configuration or distribution entry not found
-
-**409** - Concurrent modification conflict, please retry
-
-**412** - Precondition failed (ETag mismatch)
-
----
-
-## List configuration links
-
-<span class="api-method api-method-get">GET</span> `/api/v1/configurations/{config_id}/links`
-
-Returns all links (layer components) from the configuration
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `config_id` | path | string | Yes | - |
-| `withDetails` | query | boolean | No | When true, includes full typedParameters for each link. Defaults to false. |
-
-### Responses
-
-**200** - List of links
-
-```json
-{
-  "links": [
-    {
-      "allowedComponents": [
-        "..."
-      ],
-      "components": [
-        "..."
-      ],
-      "model": "ScalaSwitch",
-      "name": "spine-switch-1",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "3.2.1"
-    }
-  ]
-}
-```
-
-**404** - Configuration not found
-
----
-
-## Update link parameters
-
-<span class="api-method api-method-patch">PATCH</span> `/api/v1/configurations/{config_id}/links/{link_name}/parameters`
-
-Performs a validated merge of the provided TypedParameters patch into the named link's typed_parameters. Only existing parameter keys can be updated, and types must match.
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `config_id` | path | string | Yes | - |
-| `link_name` | path | string | Yes | - |
-| `If-Match` | header | string | No | ETag for optimistic concurrency control |
-
-### Request Body
-
-### Responses
-
-**200** - Parameters updated successfully. Returns the full updated TypedParameters for the link.
-
-**400** - Invalid request (empty patch, unknown parameter key, type mismatch, structural mismatch)
-
-**404** - Configuration or link not found
-
-**409** - Conflict (serialization failure from concurrent modification)
-
-**412** - Precondition failed (ETag mismatch)
-
----
-
-## Update global parameters
-
-<span class="api-method api-method-patch">PATCH</span> `/api/v1/configurations/{config_id}/parameters`
-
-Performs a validated merge of the provided TypedParameters patch into the configuration's global_parameters. Backend-managed sections (ComputeConfiguration, ParallelizationParameters, etc.), readonly sections (SoftwareVersion), and hidden parameters are rejected with 400.
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `config_id` | path | string | Yes | - |
-| `If-Match` | header | string | No | ETag for optimistic concurrency control |
-
-### Request Body
-
-### Responses
-
-**200** - Parameters updated successfully. Returns the full updated global TypedParameters (with backend params stripped).
-
-**400** - Invalid request (empty patch, unknown parameter key, type mismatch, structural mismatch, attempt to modify backend-managed/readonly/hidden params)
-
-**404** - Configuration not found
-
-**409** - Conflict (serialization failure from concurrent modification)
-
-**412** - Precondition failed (ETag mismatch)
-
----
-
 ## Get software version
 
 <span class="api-method api-method-get">GET</span> `/api/v1/configurations/{config_id}/software-version`
@@ -1463,441 +1928,5 @@ Returns the simulator software version from the SoftwareVersion section of globa
 ```
 
 **404** - Configuration not found
-
----
-
-## Add component to topology
-
-<span class="api-method api-method-patch">PATCH</span> `/api/v1/configurations/{config_id}/topology`
-
-Adds a component reference to the configuration's topology.components array. Validates the named entity exists in the correct collection by type (switch→components, layer→links, pod→containers).
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `config_id` | path | string | Yes | - |
-| `If-Match` | header | string | No | ETag for optimistic concurrency control |
-
-### Request Body
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `count` | integer | No | Number of instances (default 1) |
-| `name` | string | Yes | Name of existing component, container, or link to reference |
-| `type` | string | Yes | Type of the referenced entity |
-
-```json
-{
-  "count": 1,
-  "name": "my-spine-switch",
-  "type": "switch"
-}
-```
-
-### Responses
-
-**200** - Component added to topology
-
-```json
-{
-  "allowedComponents": [
-    "string"
-  ],
-  "appDistribution": {
-    "description": null,
-    "randomApplicationDistribution": [
-      "..."
-    ]
-  },
-  "components": [
-    {
-      "count": 4,
-      "group": null,
-      "model": "ScalaSwitch",
-      "name": "spine-1",
-      "parentApplicationName": null,
-      "type": "switch",
-      "version": "3.2.1"
-    }
-  ],
-  "name": null,
-  "topologyTiers": 1,
-  "type": "clos"
-}
-```
-
-**400** - Invalid request (type not allowed, duplicate, invalid type)
-
-**404** - Configuration or referenced entity not found
-
----
-
-## Update topology component
-
-<span class="api-method api-method-patch">PATCH</span> `/api/v1/configurations/{config_id}/topology/{component_name}`
-
-Updates the count on an existing component reference in the topology.
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `config_id` | path | string | Yes | - |
-| `component_name` | path | string | Yes | - |
-| `If-Match` | header | string | No | ETag for optimistic concurrency control |
-
-### Request Body
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `count` | integer | Yes | Updated instance count |
-
-```json
-{
-  "count": 1
-}
-```
-
-### Responses
-
-**200** - Topology component updated
-
-```json
-{
-  "allowedComponents": [
-    "string"
-  ],
-  "appDistribution": {
-    "description": null,
-    "randomApplicationDistribution": [
-      "..."
-    ]
-  },
-  "components": [
-    {
-      "count": 4,
-      "group": null,
-      "model": "ScalaSwitch",
-      "name": "spine-1",
-      "parentApplicationName": null,
-      "type": "switch",
-      "version": "3.2.1"
-    }
-  ],
-  "name": null,
-  "topologyTiers": 1,
-  "type": "clos"
-}
-```
-
-**400** - Invalid request (count < 1)
-
-**404** - Configuration or component not found in topology
-
-**412** - Precondition failed (ETag mismatch)
-
----
-
-## Remove component from topology
-
-<span class="api-method api-method-delete">DELETE</span> `/api/v1/configurations/{config_id}/topology/{component_name}`
-
-Removes a component reference from the configuration's topology.
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `config_id` | path | string | Yes | - |
-| `component_name` | path | string | Yes | - |
-| `If-Match` | header | string | No | ETag for optimistic concurrency control |
-
-### Responses
-
-**204** - Component removed from topology
-
-**404** - Configuration or component not found in topology
-
-**412** - Precondition failed (ETag mismatch)
-
----
-
-## List available tracesets for configuration
-
-<span class="api-method api-method-get">GET</span> `/api/v1/configurations/{config_id}/traceset`
-
-Returns tracesets that can be attached to configuration applications. Use scope=global to list all tracesets across all workspaces, or scope=workspace to filter by the configuration's workspace only.
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `config_id` | path | string | Yes | - |
-| `status` | query | string | No | Filter by traceset status (completed, uploading, failed) |
-| `limit` | query | integer | No | - |
-| `next` | query | string | No | Opaque cursor token for pagination |
-| `scope` | query | string (enum) | No | Scope filter for tracesets. 'global' returns all tracesets across all workspaces (default). 'workspace' returns only tracesets in the configuration's workspace. |
-
-### Responses
-
-**200** - List of available tracesets
-
-```json
-{
-  "pagination": {
-    "count": 1,
-    "hasMore": true,
-    "nextCursor": "string"
-  },
-  "tracesets": [
-    {
-      "createdAt": "2024-01-15T10:30:00Z",
-      "description": null,
-      "format": "chakra_json_v1",
-      "hash": "crc64nvme:abc123...",
-      "hashShort": "abc123def456",
-      "id": "ts_2RKHfGD5Z8vW9pL3NqM7TjX1YcB",
-      "metadataStatus": "pending",
-      "name": "string",
-      "status": "uploading",
-      "totalSize": 1,
-      "updatedAt": "2024-01-15T10:30:00Z"
-    }
-  ]
-}
-```
-
-**404** - Configuration not found
-
----
-
-## Attach traceset to configuration
-
-<span class="api-method api-method-patch">PATCH</span> `/api/v1/configurations/{config_id}/traceset`
-
-Sets the activeTraceset field on the configuration to reference the specified traceset. Requires at least one application with trafficType 'chakra' to exist in the configuration. Workspace-agnostic: any traceset can be attached regardless of workspace.
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `config_id` | path | string | Yes | - |
-| `If-Match` | header | string | No | ETag for optimistic concurrency control |
-
-### Request Body
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `tracesetId` | string | Yes | Traceset ID to attach (workspace-agnostic) |
-
-```json
-{
-  "tracesetId": "ts_2RKHfGD5Z8vW9pL3NqM7TjX1YcB"
-}
-```
-
-### Responses
-
-**200** - Traceset attached successfully
-
-```json
-{
-  "activeTraceset": {
-    "id": "string",
-    "name": "string"
-  }
-}
-```
-
-**400** - Invalid request (traceset not found, no Chakra application in configuration)
-
-**404** - Configuration not found
-
-**409** - Traceset rank count not yet resolved — metadata extraction is still in progress. Retry after extraction completes.
-
-**412** - Precondition failed (ETag mismatch)
-
-**422** - Traceset rank count is present but invalid (zero or negative). The traceset data is malformed and cannot be used for a Chakra simulation.
-
----
-
-## Validate configuration
-
-<span class="api-method api-method-post">POST</span> `/api/v1/configurations/{config_id}/validate`
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `config_id` | path | string | Yes | - |
-
-### Responses
-
-**200** - Validation result
-
-```json
-{
-  "errors": [
-    {
-      "code": "CONSTRAINT_VIOLATION",
-      "component": null,
-      "message": "string",
-      "parameter": null,
-      "path": "$.components[2].typedParameters.numUpLinks",
-      "severity": "..."
-    }
-  ],
-  "info": [
-    {
-      "code": "CONSTRAINT_VIOLATION",
-      "component": null,
-      "message": "string",
-      "parameter": null,
-      "path": "$.components[2].typedParameters.numUpLinks",
-      "severity": "..."
-    }
-  ],
-  "status": "valid",
-  "valid": true,
-  "warnings": [
-    {
-      "code": "CONSTRAINT_VIOLATION",
-      "component": null,
-      "message": "string",
-      "parameter": null,
-      "path": "$.components[2].typedParameters.numUpLinks",
-      "severity": "..."
-    }
-  ]
-}
-```
-
----
-
-## List configuration versions
-
-<span class="api-method api-method-get">GET</span> `/api/v1/configurations/{config_id}/versions`
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `config_id` | path | string | Yes | - |
-
-### Responses
-
-**200** - List of version summaries
-
-```json
-{
-  "versions": [
-    {
-      "createdAt": "2024-01-15T10:30:00Z",
-      "version": 1
-    }
-  ]
-}
-```
-
----
-
-## Get specific configuration version
-
-<span class="api-method api-method-get">GET</span> `/api/v1/configurations/{config_id}/versions/{version}`
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `config_id` | path | string | Yes | - |
-| `version` | path | integer | Yes | - |
-
-### Responses
-
-**200** - Configuration version details
-
-```json
-{
-  "activeTraceset": {},
-  "applications": [
-    {
-      "model": "ChakraWorkload",
-      "name": "ScalaChakraGenerator",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "4.0.1"
-    }
-  ],
-  "components": [
-    {
-      "allowedComponents": [
-        "..."
-      ],
-      "components": [
-        "..."
-      ],
-      "model": "ScalaSwitch",
-      "name": "spine-switch-1",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "3.2.1"
-    }
-  ],
-  "containers": [
-    {
-      "allowedComponents": [
-        "..."
-      ],
-      "components": [
-        "..."
-      ],
-      "configuration": null,
-      "model": "ScalaRack",
-      "name": "roce-rack",
-      "type": "...",
-      "version": "4.0.0"
-    }
-  ],
-  "createdAt": "2024-01-15T10:30:00Z",
-  "globalParameters": {},
-  "links": [
-    {
-      "allowedComponents": [
-        "..."
-      ],
-      "components": [
-        "..."
-      ],
-      "model": "ScalaSwitch",
-      "name": "spine-switch-1",
-      "trafficType": "...",
-      "type": "...",
-      "typedParameters": "...",
-      "version": "3.2.1"
-    }
-  ],
-  "topology": {
-    "allowedComponents": [
-      "string"
-    ],
-    "appDistribution": {
-      "description": "...",
-      "randomApplicationDistribution": "..."
-    },
-    "components": [
-      "..."
-    ],
-    "name": null,
-    "topologyTiers": 1,
-    "type": "clos"
-  },
-  "version": 1
-}
-```
-
-**404** - Version not found
 
 ---

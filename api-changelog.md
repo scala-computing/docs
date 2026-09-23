@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **BREAKING**: `GET /api/v1/simulations` now accepts only a single `field:direction` pair in `sort` (for example `created_at:desc`). A compound sort such as `status:asc,created_at:desc` returns **400**; it previously returned 200 but could not be paginated correctly past the first page. A `next` cursor replayed with a different `sort` than the one that produced it also returns **400** instead of a wrong page. To migrate: send one sort field, and when you change `sort`, restart pagination without `next`.
+
 - **Presigned URL expiry reduced**: Simulation result download URLs (`GET /simulations/{id}/results` and `GET /simulations/{id}/results/download-url`) now expire after **15 minutes (900 s)** instead of the previous 60 minutes (3600 s). This is a defense-in-depth hardening to limit exposure if a URL leaks. Clients that fetch a presigned URL and consume it after a delay greater than 15 minutes will receive an HTTP 403 from S3. The `expiresAt` field in the `download-url` response reflects the actual expiry. No known consumers cache presigned URLs beyond this window.
 
 - **BREAKING**: `SimpleWorkload.ranks` changed from integer enum (`[64, 128, 256, 512, 1024, 4096]`) to `integer` with `minimum: 1`. Without `topologyConstraints`, the server still restricts to the 6 reference values. With `topologyConstraints`, any positive value satisfying the constraint solver is accepted.

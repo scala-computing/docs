@@ -13,15 +13,14 @@ Trace file management (feature-gated: enable_trace_routes)
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/api/v1/tracesets` | List tracesets |
-| POST | `/api/v1/tracesets` | Upload a traceset (small file) |
-| POST | `/api/v1/tracesets/upload-url` | Get pre-signed URLs for large file upload |
-| POST | `/api/v1/tracesets/upload-url/complete` | Complete multipart upload |
-| GET | `/api/v1/tracesets/{id}` | Get traceset details |
-| DELETE | `/api/v1/tracesets/{id}` | Delete a traceset |
-| GET | `/api/v1/tracesets/{id}/download` | Get download URL |
-| POST | `/api/v1/tracesets/{id}/promote` | Promote traceset scope |
-| GET | `/api/v1/tracesets/{id}/resolve` | Resolve traceset |
+| POST | `/api/v1/tracesets` | Create traceset (direct upload) |
+| GET | `/api/v1/tracesets/{id}` | Get traceset |
+| DELETE | `/api/v1/tracesets/{id}` | Delete traceset |
+| GET | `/api/v1/tracesets/{id}/download` | Get traceset download URL |
 | POST | `/api/v1/tracesets/{id}/validate` | Validate traceset |
+| GET | `/api/v1/tracesets/{id}/resolve` | Resolve traceset |
+| POST | `/api/v1/tracesets/upload-url` | Initiate multipart traceset upload |
+| POST | `/api/v1/tracesets/upload-url/complete` | Complete multipart traceset upload |
 
 ---
 
@@ -29,332 +28,79 @@ Trace file management (feature-gated: enable_trace_routes)
 
 <span class="api-method api-method-get">GET</span> `/api/v1/tracesets`
 
-List all tracesets in the workspace. Supports pagination and filtering by status.
+List all tracesets. Supports pagination, filtering by workspace/status, full-text name search, and date range filtering. Results are sorted by creation date (newest first) by default.
 
 ### Parameters
 
 | Name | In | Type | Required | Description |
 |------|-----|------|----------|-------------|
-| `workspaceId` | query | string | No | Workspace ID to scope the query. If not provided, returns all tracesets. |
-| `status` | query | string | No | Filter by traceset status |
-| `next` | query | string | No | Cursor for pagination (opaque token from previous response's nextCursor field) |
-| `limit` | query | integer | No | Maximum number of items to return (default 20, max 100) |
+| `workspaceId` | query | string | No | Filter by workspace ID (format: `workspace_xxx`). If not provided, returns all tracesets accessible to the authenticated user. |
+| `status` | query | string | No | Filter by traceset status. Valid values: `uploading`, `processing`, `ready`, `metadata_failed`, `upload_failed`, `deleted`. |
+| `search` | query | string | No | Full-text search on traceset name (case-insensitive) |
+| `sort` | query | string | No | Sort order: comma-separated list of `field:direction` pairs (e.g., `created:desc,name:asc`). Default: `created:desc` |
+| `limit` | query | integer | No | Maximum number of items to return |
+| `next` | query | string | No | Opaque cursor token from previous response's nextCursor field |
+| `createdAfter` | query | string | No | Filter by creation date — items created on or after this time (ISO 8601, inclusive) |
+| `createdBefore` | query | string | No | Filter by creation date — items created before this time (ISO 8601, exclusive) |
 
 ### Responses
 
-**200** - List of tracesets
+**200** - Paginated list of tracesets
 
 ```json
 {
   "items": [
     {
-      "createdAt": "2024-01-15T10:30:00Z",
-      "fileCount": 1,
-      "id": "string",
-      "name": "string",
-      "status": "uploading"
+      "id": "ts_abc123xyz",
+      "name": "GPT-175B Training Traces",
+      "status": "ready",
+      "fileCount": 4,
+      "createdAt": "2026-02-20T14:30:00Z"
     }
   ],
   "pagination": {
     "count": 1,
     "hasMore": true,
-    "nextCursor": "string"
+    "nextCursor": "eyJjcmVhdGVkIjoiMjAyNi0wMi0yMFQxNDozMDowMFoifQ=="
   }
 }
 ```
 
-**401** - Unauthorized
+**400** - Bad Request — Invalid query parameters (bad cursor, invalid sort field)
 
-**403** - Forbidden - not a member of workspace
+```json
+{
+  "error": {
+    "message": "Invalid sort field: 'unknown'. Valid fields: created, name, status"
+  }
+}
+```
 
 ---
 
-## Upload a traceset (small file)
+## Create traceset (direct upload)
 
 <span class="api-method api-method-post">POST</span> `/api/v1/tracesets`
 
-Upload a trace file directly. For files larger than 100MB, use the upload-url endpoint instead.
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `workspaceId` | query | string | Yes | Workspace ID to upload to |
-
-### Request Body
+Direct single-file traceset upload. Not yet available for external use — returns 501 Not Implemented. Use POST /api/v1/tracesets/upload-url for multipart upload.
 
 ### Responses
 
-**200** - Traceset already exists (de-duplicated)
-
-```json
-{
-  "createdAt": "2024-01-15T10:30:00Z",
-  "description": "string",
-  "expiresAt": "2024-01-15T10:30:00Z",
-  "files": [
-    {
-      "contentType": "string",
-      "hash": "string",
-      "metadataStatus": "pending",
-      "name": "string",
-      "rankRange": "...",
-      "role": "primary",
-      "size": 1
-    }
-  ],
-  "id": "string",
-  "name": "string",
-  "status": "uploading",
-  "tags": [
-    "string"
-  ],
-  "totalSize": 1,
-  "workspaceId": "string"
-}
-```
-
-**201** - Traceset created successfully
-
-```json
-{
-  "createdAt": "2024-01-15T10:30:00Z",
-  "description": "string",
-  "expiresAt": "2024-01-15T10:30:00Z",
-  "files": [
-    {
-      "contentType": "string",
-      "hash": "string",
-      "metadataStatus": "pending",
-      "name": "string",
-      "rankRange": "...",
-      "role": "primary",
-      "size": 1
-    }
-  ],
-  "id": "string",
-  "name": "string",
-  "status": "uploading",
-  "tags": [
-    "string"
-  ],
-  "totalSize": 1,
-  "workspaceId": "string"
-}
-```
-
-**400** - Invalid request (bad format, validation failed)
-
-**413** - File too large (use upload-url for files >100MB)
+**501** - Not implemented — use POST /api/v1/tracesets/upload-url instead
 
 ---
 
-## Get pre-signed URLs for large file upload
-
-<span class="api-method api-method-post">POST</span> `/api/v1/tracesets/upload-url`
-
-Initiate a multipart upload and get pre-signed URLs for each part. Use this for files larger than 100MB.
-
-### Request Body
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `description` | string | No | - |
-| `files` | array[UploadFileSpec] | Yes | Files to upload. Maximum 100 files per request (configurable server-side via max_files_per_upload). |
-| `name` | string | Yes | Traceset name |
-| `tags` | array[string] | No | - |
-| `ttlDays` | integer | No | Days until trace expires since last use. Default: 7 |
-| `workloadMetadata` | WorkloadMetadata | No | Workload characterization metadata for traceset promotion |
-| `workspaceId` | string | No | Workspace to upload to. If not provided, uses the universal traceset workspace. |
-
-```json
-{
-  "description": "string",
-  "files": [
-    {
-      "contentType": "string",
-      "name": "string",
-      "role": "primary",
-      "size": 1
-    }
-  ],
-  "name": "string",
-  "tags": [
-    "string"
-  ],
-  "ttlDays": 1,
-  "workloadMetadata": {
-    "accelerator": "string",
-    "collectiveOps": [
-      "string"
-    ],
-    "computeModel": "string",
-    "etFormatVersion": "string",
-    "executionKind": "string",
-    "extensions": {},
-    "modelName": "string",
-    "parallelism": {
-      "cp": "...",
-      "dp": "...",
-      "ep": "...",
-      "fsdp": "...",
-      "pp": "...",
-      "sp": "...",
-      "tp": "..."
-    },
-    "precision": "string",
-    "schemaVersion": 1,
-    "shape": {
-      "globalBatchSize": "...",
-      "hiddenDim": "...",
-      "numMicrobatches": "...",
-      "rankCount": "...",
-      "seqLen": "...",
-      "trainingSteps": "..."
-    },
-    "stepKind": "string",
-    "traceGenerator": "string",
-    "workloadFamily": "string",
-    "workloadName": "string",
-    "workloadRevision": "string"
-  },
-  "workspaceId": "string"
-}
-```
-
-### Responses
-
-**200** - Pre-signed URLs generated
-
-```json
-{
-  "expiresAt": "2024-01-15T10:30:00Z",
-  "files": [
-    {
-      "name": "string",
-      "parts": [
-        "..."
-      ]
-    }
-  ],
-  "uploadId": "upload_2cKWFtZ2E5gSLHrnZLT0xwM8r8M"
-}
-```
-
-**400** - Invalid request (invalid/duplicate filenames, path traversal, invalid role, file count exceeds limit, description/tags/metadata exceeds size limits, file too large)
-
----
-
-## Complete multipart upload
-
-<span class="api-method api-method-post">POST</span> `/api/v1/tracesets/upload-url/complete`
-
-Complete a multipart upload after all parts have been uploaded. This endpoint is idempotent - calling it multiple times with the same uploadId returns the same traceset.
-
-### Request Body
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `files` | array[CompletedFile] | Yes | - |
-| `uploadId` | string | Yes | Upload session ID from upload-url response |
-
-```json
-{
-  "files": [
-    {
-      "name": "string",
-      "parts": [
-        "..."
-      ]
-    }
-  ],
-  "uploadId": "string"
-}
-```
-
-### Responses
-
-**200** - Traceset already exists (idempotent retry)
-
-```json
-{
-  "createdAt": "2024-01-15T10:30:00Z",
-  "description": "string",
-  "expiresAt": "2024-01-15T10:30:00Z",
-  "files": [
-    {
-      "contentType": "string",
-      "hash": "string",
-      "metadataStatus": "pending",
-      "name": "string",
-      "rankRange": "...",
-      "role": "primary",
-      "size": 1
-    }
-  ],
-  "id": "string",
-  "name": "string",
-  "status": "uploading",
-  "tags": [
-    "string"
-  ],
-  "totalSize": 1,
-  "workspaceId": "string"
-}
-```
-
-**201** - Traceset created successfully
-
-```json
-{
-  "createdAt": "2024-01-15T10:30:00Z",
-  "description": "string",
-  "expiresAt": "2024-01-15T10:30:00Z",
-  "files": [
-    {
-      "contentType": "string",
-      "hash": "string",
-      "metadataStatus": "pending",
-      "name": "string",
-      "rankRange": "...",
-      "role": "primary",
-      "size": 1
-    }
-  ],
-  "id": "string",
-  "name": "string",
-  "status": "uploading",
-  "tags": [
-    "string"
-  ],
-  "totalSize": 1,
-  "workspaceId": "string"
-}
-```
-
-**400** - Invalid request (missing/unexpected files, bad parts, empty ETags, failed session)
-
-**404** - Upload session not found
-
-**409** - Upload session is already being completed by another request
-
-**410** - Upload session has expired
-
-**500** - Server error (S3 failure, database error, checksum unavailable)
-
----
-
-## Get traceset details
+## Get traceset
 
 <span class="api-method api-method-get">GET</span> `/api/v1/tracesets/{id}`
 
-Get detailed information about a traceset including files, metadata status, and library hash.
+Returns a traceset by ID including all file metadata, tags, and expiration information.
 
 ### Parameters
 
 | Name | In | Type | Required | Description |
 |------|-----|------|----------|-------------|
-| `id` | path | string | Yes | Traceset ID |
+| `id` | path | string | Yes | Traceset ID (format: `ts_xxx`) |
 
 ### Responses
 
@@ -362,170 +108,173 @@ Get detailed information about a traceset including files, metadata status, and 
 
 ```json
 {
-  "createdAt": "2024-01-15T10:30:00Z",
-  "description": "string",
-  "expiresAt": "2024-01-15T10:30:00Z",
+  "id": "ts_abc123xyz",
+  "name": "GPT-175B Training Traces",
+  "description": "Chakra traces for GPT-175B on 256 ranks",
+  "status": "ready",
   "files": [
     {
-      "contentType": "string",
-      "hash": "string",
-      "metadataStatus": "pending",
-      "name": "string",
-      "rankRange": "...",
+      "name": "rank_0.chakra.json",
+      "size": 1048576,
       "role": "primary",
-      "size": 1
+      "metadataStatus": "complete"
     }
   ],
-  "id": "string",
-  "name": "string",
-  "status": "uploading",
+  "totalSize": 4194304,
   "tags": [
-    "string"
+    "gpt",
+    "training"
   ],
-  "totalSize": 1,
-  "workspaceId": "string"
+  "workspaceId": "workspace_def456",
+  "createdAt": "2026-02-20T14:30:00Z"
 }
 ```
 
 **404** - Traceset not found
-
----
-
-## Delete a traceset
-
-<span class="api-method api-method-delete">DELETE</span> `/api/v1/tracesets/{id}`
-
-Soft delete a traceset. The traceset will be marked as deleted and cleaned up after TTL expires. Does not affect the library if other tracesets reference it.
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `id` | path | string | Yes | Traceset ID |
-
-### Responses
-
-**204** - Traceset deleted successfully
-
-**404** - Traceset not found
-
----
-
-## Get download URL
-
-<span class="api-method api-method-get">GET</span> `/api/v1/tracesets/{id}/download`
-
-Get a pre-signed URL to download traceset files. Resets TTL on access. Protected by auth proxy.
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `id` | path | string | Yes | Traceset ID |
-| `file` | query | string | No | Specific file to download (optional, defaults to primary trace file) |
-
-### Responses
-
-**200** - Download URL
 
 ```json
 {
-  "expiresAt": "2024-01-15T10:30:00Z",
-  "file": "string",
-  "url": "https://example.com"
+  "error": {
+    "message": "Traceset 'ts_notfound' not found"
+  }
 }
 ```
 
-**404** - Traceset not found
-
 ---
 
-## Promote traceset scope
+## Delete traceset
 
-<span class="api-method api-method-post">POST</span> `/api/v1/tracesets/{id}/promote`
+<span class="api-method api-method-delete">DELETE</span> `/api/v1/tracesets/{id}`
 
-Promote a traceset from workspace to tenant scope, or from tenant to public scope. Requires status=ready. Idempotent if already at target scope.
+Soft-deletes a traceset. Associated library files are reference-counted and cleaned up asynchronously. Excluded when trace_routes_read_only is enabled.
 
 ### Parameters
 
 | Name | In | Type | Required | Description |
 |------|-----|------|----------|-------------|
-| `id` | path | string | Yes | Traceset ID |
+| `id` | path | string | Yes | Traceset ID (format: `ts_xxx`) |
+
+### Responses
+
+**204** - Traceset deleted
+
+**404** - Traceset not found
+
+```json
+{
+  "error": {
+    "message": "Traceset 'ts_notfound' not found"
+  }
+}
+```
+
+---
+
+## Get traceset download URL
+
+<span class="api-method api-method-get">GET</span> `/api/v1/tracesets/{id}/download`
+
+Returns a presigned S3 download URL for a specific file within a traceset, or for the entire traceset archive if no file is specified. The URL expires after a short TTL.
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `id` | path | string | Yes | Traceset ID (format: `ts_xxx`) |
+| `file` | query | string | No | Specific file name within the traceset. If omitted, returns a URL for the entire traceset archive. |
+
+### Responses
+
+**200** - Presigned download URL
+
+```json
+{
+  "url": "https://scala-traces.s3.amazonaws.com/ts_abc123xyz/rank_0.chakra.json?X-Amz-Algorithm=...",
+  "expiresAt": "2026-02-23T20:30:00Z",
+  "file": "rank_0.chakra.json"
+}
+```
+
+**400** - File uses an external URL that cannot be downloaded via presigned URL
+
+```json
+{
+  "error": {
+    "message": "File 'external.dat' uses an external URL and cannot be downloaded via presigned URL"
+  }
+}
+```
+
+**404** - Traceset not found
+
+```json
+{
+  "error": {
+    "message": "Traceset 'ts_notfound' not found"
+  }
+}
+```
+
+---
+
+## Validate traceset
+
+<span class="api-method api-method-post">POST</span> `/api/v1/tracesets/{id}/validate`
+
+Runs validation checks on a traceset including file integrity and metadata completeness. Optionally accepts a topologyId for compatibility validation, but the topology_correlation check currently always returns passed (not yet implemented).
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `id` | path | string | Yes | Traceset ID (format: `ts_xxx`) |
 
 ### Request Body
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `description` | string | No | Optional description override |
-| `tags` | array[string] | No | Optional tags override |
-| `target` | string | No | Target scope. Defaults to 'tenant' if not specified. |
-| `workloadMetadata` | WorkloadMetadata | No | Workload metadata (required for promotion, may be pre-populated on traceset) |
+| `topologyId` | string | No | - |
 
 ```json
 {
-  "description": "string",
-  "tags": [
-    "string"
-  ],
-  "target": "tenant",
-  "workloadMetadata": {
-    "accelerator": "string",
-    "collectiveOps": [
-      "string"
-    ],
-    "computeModel": "string",
-    "etFormatVersion": "string",
-    "executionKind": "string",
-    "extensions": {},
-    "modelName": "string",
-    "parallelism": {
-      "cp": "...",
-      "dp": "...",
-      "ep": "...",
-      "fsdp": "...",
-      "pp": "...",
-      "sp": "...",
-      "tp": "..."
-    },
-    "precision": "string",
-    "schemaVersion": 1,
-    "shape": {
-      "globalBatchSize": "...",
-      "hiddenDim": "...",
-      "numMicrobatches": "...",
-      "rankCount": "...",
-      "seqLen": "...",
-      "trainingSteps": "..."
-    },
-    "stepKind": "string",
-    "traceGenerator": "string",
-    "workloadFamily": "string",
-    "workloadName": "string",
-    "workloadRevision": "string"
-  }
+  "topologyId": "config_ghi789"
 }
 ```
 
 ### Responses
 
-**200** - Promotion result
+**200** - Validation result
 
 ```json
 {
-  "error": "string",
-  "id": "string",
-  "promotionApplied": true,
-  "scope": "string"
+  "valid": true,
+  "checks": [
+    {
+      "name": "file_integrity",
+      "passed": true
+    },
+    {
+      "name": "metadata_complete",
+      "passed": true
+    },
+    {
+      "name": "topology_correlation",
+      "passed": true,
+      "message": "Not yet implemented \u2014 always passes"
+    }
+  ]
 }
 ```
 
-**400** - Invalid target scope
-
 **404** - Traceset not found
 
-**409** - Traceset not ready for promotion
-
-**412** - Promotion precondition failed (invalid transition, missing metadata)
+```json
+{
+  "error": {
+    "message": "Traceset 'ts_notfound' not found"
+  }
+}
+```
 
 ---
 
@@ -547,25 +296,25 @@ Resolves a traceset to its S3 paths and DRA (Data Resource Accessor) mounting in
 
 ```json
 {
+  "traceset_id": "ts_abc123xyz",
+  "name": "GPT-175B Training Traces",
+  "layout": "cas",
   "dra": {
     "bucket": "scala-traces",
-    "lustre_path": "/lustre/traces/lib_def456/",
-    "s3_path": "s3://scala-traces/libraries/lib_def456/"
+    "s3_path": "s3://scala-traces/libraries/lib_def456/",
+    "lustre_path": "/lustre/traces/lib_def456/"
   },
   "files": [
     {
-      "lustre_path": "/lustre/traces/lib_def456/ab/cdef1234567890",
       "name": "rank_0.chakra.json",
       "role": "primary",
       "s3_key": "libraries/lib_def456/ab/cdef1234567890",
       "s3_path": "s3://scala-traces/libraries/lib_def456/ab/cdef1234567890",
+      "lustre_path": "/lustre/traces/lib_def456/ab/cdef1234567890",
       "size": 1048576
     }
   ],
-  "layout": "cas",
-  "name": "GPT-175B Training Traces",
-  "total_size": 4194304,
-  "traceset_id": "ts_abc123xyz"
+  "total_size": 4194304
 }
 ```
 
@@ -591,47 +340,178 @@ Resolves a traceset to its S3 paths and DRA (Data Resource Accessor) mounting in
 
 ---
 
-## Validate traceset
+## Initiate multipart traceset upload
 
-<span class="api-method api-method-post">POST</span> `/api/v1/tracesets/{id}/validate`
+<span class="api-method api-method-post">POST</span> `/api/v1/tracesets/upload-url`
 
-Validate traceset format and optionally correlate with topology.
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `id` | path | string | Yes | Traceset ID |
+Creates a traceset record and returns presigned S3 multipart upload URLs for each file. Each file is split into parts based on size. After uploading all parts to their presigned URLs, call POST /api/v1/tracesets/upload-url/complete to finalize the upload.
 
 ### Request Body
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `topologyId` | string | No | Optional topology ID for correlation validation |
+| `workspaceId` | string | No | Workspace ID. If not provided, uses the universal traceset workspace. |
+| `name` | string | Yes | - |
+| `description` | string | No | - |
+| `tags` | array[string] | No | - |
+| `ttlDays` | integer | No | Custom TTL in days (1-365). Uses server default if omitted. |
+| `files` | array[UploadFileSpec] | Yes | - |
 
 ```json
 {
-  "topologyId": "string"
+  "workspaceId": "workspace_def456",
+  "name": "GPT-175B Training Traces",
+  "description": "Chakra traces for GPT-175B on 256 ranks",
+  "tags": [
+    "gpt",
+    "training"
+  ],
+  "files": [
+    {
+      "name": "rank_0.chakra.json",
+      "size": 1048576,
+      "role": "primary"
+    },
+    {
+      "name": "rank_1.chakra.json",
+      "size": 1048576,
+      "role": "primary"
+    }
+  ]
 }
 ```
 
 ### Responses
 
-**200** - Validation result
+**200** - Presigned upload URLs for each file part
 
 ```json
 {
-  "checks": [
+  "uploadId": "upload_ghi789",
+  "checksumAlgorithm": "SHA256",
+  "files": [
     {
-      "message": "string",
-      "name": "string",
-      "passed": true
+      "name": "rank_0.chakra.json",
+      "parts": [
+        {
+          "partNumber": 1,
+          "url": "https://scala-traces.s3.amazonaws.com/...?X-Amz-Algorithm=..."
+        }
+      ]
     }
   ],
-  "valid": true
+  "expiresAt": "2026-02-24T14:30:00Z"
 }
 ```
 
-**404** - Traceset not found
+**400** - Invalid request (empty files list, missing required fields)
+
+```json
+{
+  "error": {
+    "message": "At least one file is required"
+  }
+}
+```
+
+---
+
+## Complete multipart traceset upload
+
+<span class="api-method api-method-post">POST</span> `/api/v1/tracesets/upload-url/complete`
+
+Finalizes a multipart upload session by providing the ETags returned by S3 for all uploaded parts. The traceset transitions from `uploading` to `processing` state while metadata extraction runs asynchronously. Returns 201 on first completion or 200 on idempotent retry.
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `uploadId` | string | Yes | - |
+| `files` | array[CompletedFileInput] | Yes | - |
+
+```json
+{
+  "uploadId": "upload_ghi789",
+  "files": [
+    {
+      "name": "rank_0.chakra.json",
+      "parts": [
+        {
+          "partNumber": 1,
+          "etag": "\"d41d8cd98f00b204e9800998ecf8427e\""
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Responses
+
+**201** - Upload completed and traceset created
+
+```json
+{
+  "id": "ts_abc123xyz",
+  "name": "GPT-175B Training Traces",
+  "status": "processing",
+  "files": [
+    {
+      "name": "rank_0.chakra.json",
+      "size": 1048576,
+      "role": "primary"
+    }
+  ],
+  "totalSize": 1048576
+}
+```
+
+**200** - Idempotent retry — upload was already completed
+
+```json
+{
+  "id": "ts_abc123xyz",
+  "name": "GPT-175B Training Traces",
+  "status": "processing",
+  "files": [
+    {
+      "name": "rank_0.chakra.json",
+      "size": 1048576,
+      "role": "primary"
+    }
+  ],
+  "totalSize": 1048576
+}
+```
+
+**400** - Invalid request (missing parts, bad ETags, or an upload session minted by POST /api/v1/mapping-files/upload-url, which only POST /api/v1/mapping-files/upload-url/complete accepts)
+
+```json
+{
+  "error": {
+    "message": "Missing parts for file 'rank_0.chakra.json'"
+  }
+}
+```
+
+**404** - Upload session not found
+
+```json
+{
+  "error": {
+    "message": "Upload session 'upload_notfound' not found"
+  }
+}
+```
+
+**410** - Upload session expired
+
+```json
+{
+  "error": {
+    "message": "Upload session 'upload_ghi789' has expired"
+  }
+}
+```
 
 ---

@@ -40,14 +40,14 @@ Model catalog and discovery
 {
   "models": [
     {
-      "compatibility": null,
       "id": "string",
-      "latestVersion": "string",
       "model": "string",
       "name": "string",
-      "status": "...",
       "type": "...",
-      "vendor": null
+      "vendor": null,
+      "latestVersion": "string",
+      "compatibility": null,
+      "status": "..."
     }
   ],
   "pagination": {
@@ -77,26 +77,26 @@ Model catalog and discovery
 
 ```json
 {
+  "type": "switch",
+  "trafficType": "chakra",
+  "model": "ScalaSwitch",
+  "name": "spine-switch-1",
+  "version": "3.2.1",
+  "typedParameters": {},
   "allowedComponents": [
     "string"
   ],
   "components": [
     {
-      "count": 4,
-      "group": null,
-      "model": "ScalaSwitch",
       "name": "spine-1",
-      "parentApplicationName": null,
+      "count": 4,
+      "model": "ScalaSwitch",
+      "version": "3.2.1",
       "type": "switch",
-      "version": "3.2.1"
+      "group": null,
+      "parentApplicationName": null
     }
-  ],
-  "model": "ScalaSwitch",
-  "name": "spine-switch-1",
-  "trafficType": "chakra",
-  "type": "switch",
-  "typedParameters": {},
-  "version": "3.2.1"
+  ]
 }
 ```
 
@@ -124,9 +124,9 @@ Model catalog and discovery
   "model": "string",
   "versions": [
     {
-      "compatibility": null,
+      "version": "string",
       "status": "...",
-      "version": "string"
+      "compatibility": null
     }
   ]
 }
