@@ -127,6 +127,7 @@ Creates and starts a new simulation based on the specified configuration. The si
   "startedAt": "2024-01-15T10:30:00Z",
   "completedAt": "2024-01-15T10:30:00Z",
   "failureReason": "string",
+  "terminationRequestedAt": "2024-01-15T10:30:00Z",
   "metrics": {
     "simulatedTime": "string",
     "eventsProcessed": 1,
@@ -243,6 +244,7 @@ Retrieves detailed information about a specific simulation, including its curren
   "startedAt": "2024-01-15T10:30:00Z",
   "completedAt": "2024-01-15T10:30:00Z",
   "failureReason": "string",
+  "terminationRequestedAt": "2024-01-15T10:30:00Z",
   "metrics": {
     "simulatedTime": "string",
     "eventsProcessed": 1,
@@ -292,7 +294,7 @@ Retrieves detailed information about a specific simulation, including its curren
 
 <span class="api-method api-method-post">POST</span> `/api/v1/simulations/{sim_id}/terminate`
 
-Initiates graceful termination of a running simulation. The simulation will transition to `terminated` status. Results generated up to the termination point will be available.
+Initiates graceful termination of a simulation. There is no status pre-check: a simulation that has already finished is accepted and keeps its status; otherwise it transitions to `terminated`. Results generated up to the termination point will be available.
 
 ### Parameters
 
@@ -316,6 +318,7 @@ Initiates graceful termination of a running simulation. The simulation will tran
   "startedAt": "2024-01-15T10:30:00Z",
   "completedAt": "2024-01-15T10:30:00Z",
   "failureReason": "string",
+  "terminationRequestedAt": "2024-01-15T10:30:00Z",
   "metrics": {
     "simulatedTime": "string",
     "eventsProcessed": 1,
@@ -332,8 +335,6 @@ Initiates graceful termination of a running simulation. The simulation will tran
 **400** - Bad Request - Invalid simulation ID format, or the simulation has no platform link and cannot be terminated
 
 **404** - Simulation not found
-
-**409** - Conflict - Simulation is not in a running state
 
 **501** - Not Implemented - Termination is not yet supported for this simulation's backend
 
@@ -446,8 +447,8 @@ Computes or retrieves cached summary statistics for simulation result CSV files 
 | Name | In | Type | Required | Description |
 |------|-----|------|----------|-------------|
 | `sim_id` | path | string | Yes | Simulation ID in sim_xxx format (base32-encoded UUID with prefix) |
-| `metric` | query | string (enum) | Yes | Metric type to summarize. `rank-analysis` is published but returns 501 Not Implemented until its compute path ships. |
-| `mode` | query | string (enum) | No | Output mode (default: summary). `timeSeries` and `sampled` are published but return 501 Not Implemented until their compute paths ship. |
+| `metric` | query | string (enum) | Yes | Metric type to summarize. `rank-analysis` is published but returns 501 Not Implemented until its compute path ships. `uet-transport-stats` and `roce-transport-stats` are published: `uet-transport-stats` serves `timeSeries` and returns 501 for `summary` and `sampled`; `roce-transport-stats` returns 501 in every mode until its compute path ships. |
+| `mode` | query | string (enum) | No | Output mode (default: summary). `timeSeries` is served for `nd-stats`, `pfc` and `uet-transport-stats` and returns 501 Not Implemented for the other metrics; `sampled` is published but returns 501 Not Implemented until its compute path ships. |
 | `tier` | query | string (enum) | No | Tier filter for network device results (default: all) |
 | `nodeId` | query | array | No | Filter to these node ids. Comma-separated on the wire. An empty list is not accepted — omit the parameter instead. |
 | `ifid` | query | array | No | Filter to these interface ids. Comma-separated on the wire. An empty list is not accepted — omit the parameter instead. |

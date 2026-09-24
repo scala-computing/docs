@@ -15,7 +15,7 @@ This section provides detailed documentation for all Network Simulation API endp
 | [Billing](./billing.md) | Billing balance, costs, items, events, and rates (feature-gated: enable_billing_endpoints) | 7 |
 | [Charts](./charts.md) | Chart definitions served to the simulation UI (feature-gated: enable_chart_definitions) | 1 |
 | [Components](./components.md) | Component schema discovery | 2 |
-| [Configurations](./configurations.md) | Workload configuration management | 34 |
+| [Configurations](./configurations.md) | Workload configuration management | 35 |
 | Health | Health and monitoring endpoints | 2 |
 | [Libraries](./libraries.md) | Content-addressed trace libraries (feature-gated: enable_trace_routes) | 2 |
 | [Mapping-Files](./mapping-files.md) | Chakra mapping files. The six mapping-file resource operations are served by the trace-service router behind enable_trace_routes; the two configuration attach and detach operations are served by central unconditionally. | 8 |

@@ -22,6 +22,7 @@ Workload configuration management
 | PATCH | `/api/v1/configurations/{config_id}/traceset` | Attach traceset to configuration |
 | GET | `/api/v1/configurations/{config_id}/versions` | List configuration versions |
 | GET | `/api/v1/configurations/{config_id}/versions/{version}` | Get specific configuration version |
+| GET | `/api/v1/configurations/{config_id}/versions/{version}/switch-bandwidth` | Get switch bandwidth by tier for a configuration version |
 | GET | `/api/v1/configurations/{config_id}/components` | List configuration components |
 | POST | `/api/v1/configurations/{config_id}/components` | Add component to configuration |
 | DELETE | `/api/v1/configurations/{config_id}/components/{component_name}` | Remove component from configuration |
@@ -613,7 +614,13 @@ Workload configuration management
 }
 ```
 
+**400** - Invalid request: a malformed body, duplicate component or container names, a body that fails conversion or structural validation, a configuration in the template workspace, a body carrying activeMappingFile, which only the mapping-file attach and detach operations write, or, while a mapping file is attached, an activeTraceset naming no traceset (code VALIDATION_ERROR).
+
+**409** - Conflict, while a mapping file is attached and the body carries activeTraceset. Code TRACESET_CONFLICTS_WITH_MAPPING when that traceset's rank count differs from the mapping file's: detach the mapping file first, or use a traceset with its rank count. Code CONFLICT when that traceset's rank count is not yet resolved: metadata extraction is still in progress; retry after it completes.
+
 **412** - Precondition failed (ETag mismatch)
+
+**422** - Unprocessable entity. Code MAPPING_PARAMS_LOCKED when a mapping file is attached and the updated configuration would leave a Chakra application without UseMapping true and MappingFileName chakra-mapping.txt: an edit of either parameter, an applications array that drops or changes them, or an application re-typed to Chakra. Detach the mapping file first, make the change, then attach it again.
 
 ---
 
@@ -779,7 +786,7 @@ Sets the activeTraceset field on the configuration to reference the specified tr
 
 **412** - Precondition failed (ETag mismatch)
 
-**409** - Traceset rank count not yet resolved — metadata extraction is still in progress. Retry after extraction completes.
+**409** - Conflict. Code CONFLICT when the traceset rank count is not yet resolved: metadata extraction is still in progress; retry after it completes. Code TRACESET_CONFLICTS_WITH_MAPPING when a mapping file is attached to the configuration and its rank count differs from this traceset's: detach the mapping file first, or attach a traceset with its rank count.
 
 **422** - Traceset rank count is present but invalid (zero or negative). The traceset data is malformed and cannot be used for a Chakra simulation.
 
@@ -912,6 +919,46 @@ Sets the activeTraceset field on the configuration to reference the specified tr
 ```
 
 **404** - Version not found
+
+---
+
+## Get switch bandwidth by tier for a configuration version
+
+<span class="api-method api-method-get">GET</span> `/api/v1/configurations/{config_id}/versions/{version}/switch-bandwidth`
+
+Serves the per-tier rollup of the native validator's switch-bandwidth records persisted for this version. A version with no recorded row returns 404, never an empty or zero rollup: the version did not validate, or it validated before the records were persisted and the boot back-fill has not reached it yet.
+
+### Parameters
+
+| Name | In | Type | Required | Description |
+|------|-----|------|----------|-------------|
+| `config_id` | path | string | Yes | - |
+| `version` | path | integer | Yes | - |
+
+### Responses
+
+**200** - Per-tier switch bandwidth
+
+```json
+{
+  "configurationId": "string",
+  "version": 1,
+  "tiers": [
+    {
+      "networkTier": 1,
+      "switchCount": 1,
+      "switchingCapacityGbps": null,
+      "usedCapacityGbps": null
+    }
+  ]
+}
+```
+
+**400** - Malformed configuration ID
+
+**404** - No switch bandwidth is recorded for this version: it did not validate, has not been back-filled yet, does not exist, or its configuration is deleted.
+
+**500** - Stored switch bandwidth could not be rolled up
 
 ---
 
@@ -1339,6 +1386,8 @@ Adds an application to the configuration's topology by looking up the model from
 
 **404** - Configuration not found
 
+**422** - Unprocessable entity. Code MAPPING_PARAMS_LOCKED when a mapping file is attached and the new Chakra application does not carry UseMapping true and MappingFileName chakra-mapping.txt. Detach the mapping file first, add the application, then attach the mapping file again, which writes both parameters into every Chakra application.
+
 ---
 
 ## List configuration links
@@ -1712,6 +1761,8 @@ Performs a validated merge of the provided TypedParameters patch into the named 
 **409** - Conflict (serialization failure from concurrent modification)
 
 **412** - Precondition failed (ETag mismatch)
+
+**422** - Unprocessable entity. Code MAPPING_PARAMS_LOCKED when a mapping file is attached and the patch would leave a Chakra application without UseMapping true and MappingFileName chakra-mapping.txt. Detach the mapping file first, make the change, then attach it again.
 
 ---
 

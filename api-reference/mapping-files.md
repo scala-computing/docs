@@ -474,7 +474,7 @@ Creates an upload session and returns presigned S3 multipart upload URLs for one
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `name` | string | No | Optional display name; absent, it is chakra-mapping.txt. Used verbatim as the final segment of the stored object's key, so it must be a single safe path segment of 1 to 255 bytes of [A-Za-z0-9._-] and must not be `.` or `..`. Display metadata only: inside the simulator the file is always named chakra-mapping.txt. |
+| `name` | string | No | Optional display name; absent, it is chakra-mapping.txt. Used verbatim as the final segment of the stored object's key, so it must be a single safe path segment of 1 to 255 bytes of [A-Za-z0-9._-], must not be `.`, and must not contain `..` anywhere (so `placement..v2.txt` is refused), because central's launch check and the legacy path's stager refuse `..` inside the path the name is part of. Display metadata only: inside the simulator the file is always named chakra-mapping.txt. |
 | `sizeBytes` | integer | Yes | Upper bound on the file's byte length. The 64,000,000-byte ceiling is the 64 MB per-file limit. The stored sizeBytes is the completed object's actual length, which may be smaller. |
 | `workspaceId` | string | Yes | Workspace the file belongs to (format: `workspace_xxx`). Must not be blank or padded with whitespace; it is stored exactly as sent. |
 | `description` | string | No | - |
@@ -506,7 +506,7 @@ Creates an upload session and returns presigned S3 multipart upload URLs for one
 }
 ```
 
-**400** - Invalid request — name is not a single safe path segment, sizeBytes is outside 1..64000000, workspaceId is absent, blank, or padded with whitespace, or description exceeds 2048 characters
+**400** - Invalid request — name is not a single safe path segment or contains `..`, sizeBytes is outside 1..64000000, workspaceId is absent, blank, or padded with whitespace, or description exceeds 2048 characters
 
 ```json
 {
