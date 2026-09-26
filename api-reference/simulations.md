@@ -135,7 +135,12 @@ Creates and starts a new simulation based on the specified configuration. The si
   },
   "transportStats": [
     "uet"
-  ]
+  ],
+  "appliedMappingFile": {
+    "id": "string",
+    "name": "string",
+    "deleted": true
+  }
 }
 ```
 
@@ -144,6 +149,8 @@ Creates and starts a new simulation based on the specified configuration. The si
 **402** - Payment Required - the platform's credit balance is exhausted. Add credits before launching simulations.
 
 **404** - Configuration or workspace not found
+
+**409** - Conflict; no simulation is created. Code CONFLICT when a simulation with this name already exists in the workspace: choose another name. Code MAPPING_FILE_DELETED_REFERENCE when the Chakra mapping file attached to the configuration has been deleted: the message names the file. Detach it, or attach another mapping file, and create the simulation again.
 
 **422** - Configuration is not validated — must have status `validated` before starting a simulation
 
@@ -252,7 +259,12 @@ Retrieves detailed information about a specific simulation, including its curren
   },
   "transportStats": [
     "uet"
-  ]
+  ],
+  "appliedMappingFile": {
+    "id": "string",
+    "name": "string",
+    "deleted": true
+  }
 }
 ```
 
@@ -326,7 +338,12 @@ Initiates graceful termination of a simulation. There is no status pre-check: a 
   },
   "transportStats": [
     "uet"
-  ]
+  ],
+  "appliedMappingFile": {
+    "id": "string",
+    "name": "string",
+    "deleted": true
+  }
 }
 ```
 
@@ -447,8 +464,8 @@ Computes or retrieves cached summary statistics for simulation result CSV files 
 | Name | In | Type | Required | Description |
 |------|-----|------|----------|-------------|
 | `sim_id` | path | string | Yes | Simulation ID in sim_xxx format (base32-encoded UUID with prefix) |
-| `metric` | query | string (enum) | Yes | Metric type to summarize. `rank-analysis` is published but returns 501 Not Implemented until its compute path ships. `uet-transport-stats` and `roce-transport-stats` are published: `uet-transport-stats` serves `timeSeries` and returns 501 for `summary` and `sampled`; `roce-transport-stats` returns 501 in every mode until its compute path ships. |
-| `mode` | query | string (enum) | No | Output mode (default: summary). `timeSeries` is served for `nd-stats`, `pfc` and `uet-transport-stats` and returns 501 Not Implemented for the other metrics; `sampled` is published but returns 501 Not Implemented until its compute path ships. |
+| `metric` | query | string (enum) | Yes | Metric type to summarize. `rank-analysis` is published but returns 501 Not Implemented until its compute path ships. `uet-transport-stats` and `roce-transport-stats` are published: both serve `timeSeries` and return 501 for `summary` and `sampled` until those compute paths ship. |
+| `mode` | query | string (enum) | No | Output mode (default: summary). `timeSeries` is served for `nd-stats`, `pfc`, `uet-transport-stats` and `roce-transport-stats` and returns 501 Not Implemented for the other metrics; `sampled` is published but returns 501 Not Implemented until its compute path ships. |
 | `tier` | query | string (enum) | No | Tier filter for network device results (default: all) |
 | `nodeId` | query | array | No | Filter to these node ids. Comma-separated on the wire. An empty list is not accepted — omit the parameter instead. |
 | `ifid` | query | array | No | Filter to these interface ids. Comma-separated on the wire. An empty list is not accepted — omit the parameter instead. |

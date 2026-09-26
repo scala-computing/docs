@@ -45,6 +45,7 @@
             "pages": [
               "credits",
               "simulation-output-files",
+              "chakra-mapping-files",
               "api-changelog"
             ]
           },
