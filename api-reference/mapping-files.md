@@ -151,11 +151,11 @@ Sets the activeMappingFile field on the configuration and writes UseMapping and 
 
 **404** - Configuration not found, or mapping file not found, deleted, or held by another workspace
 
-**409** - The configuration has no attached traceset (MAPPING_REQUIRES_TRACESET), or the traceset's rank count is not yet resolved (CONFLICT, retry-safe).
+**409** - The configuration has no attached traceset (MAPPING_REQUIRES_TRACESET).
 
 **412** - Precondition failed (ETag mismatch)
 
-**422** - The configuration has no Chakra application (MAPPING_REQUIRES_CHAKRA_APP), or the mapping file's rank count differs from the traceset's (MAPPING_RANK_COUNT_MISMATCH).
+**422** - The configuration has no Chakra application (MAPPING_REQUIRES_CHAKRA_APP), the attached traceset has no rank count, because none was declared for it, none derives from its workloadMetadata, and none is recorded for its files (UNPROCESSABLE_ENTITY, not resolved by retrying), or the mapping file's rank count differs from the traceset's (MAPPING_RANK_COUNT_MISMATCH).
 
 ---
 

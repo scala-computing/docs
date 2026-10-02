@@ -17,7 +17,7 @@ Simulation execution and results
 | POST | `/api/v1/simulations/compare` | Compare simulations |
 | GET | `/api/v1/simulations/{sim_id}` | Get simulation status |
 | DELETE | `/api/v1/simulations/{sim_id}` | Delete simulation and free storage |
-| POST | `/api/v1/simulations/{sim_id}/terminate` | Terminate running simulation |
+| POST | `/api/v1/simulations/{sim_id}/terminate` | Terminate simulation |
 | GET | `/api/v1/simulations/{sim_id}/results` | Get simulation results |
 | GET | `/api/v1/simulations/{sim_id}/results/download-url` | Generate presigned download URL for result file |
 | GET | `/api/v1/simulations/{sim_id}/results/data` | Get computed summary data for simulation results |
@@ -135,7 +135,12 @@ Creates and starts a new simulation based on the specified configuration. The si
   },
   "transportStats": [
     "uet"
-  ]
+  ],
+  "appliedMappingFile": {
+    "id": "string",
+    "name": "string",
+    "deleted": true
+  }
 }
 ```
 
@@ -144,6 +149,8 @@ Creates and starts a new simulation based on the specified configuration. The si
 **402** - Payment Required - the platform's credit balance is exhausted. Add credits before launching simulations.
 
 **404** - Configuration or workspace not found
+
+**409** - Conflict; no simulation is created. Code CONFLICT when a simulation with this name already exists in the workspace: choose another name. Code MAPPING_FILE_DELETED_REFERENCE when the Chakra mapping file attached to the configuration has been deleted: the message names the file. Detach it, or attach another mapping file, and create the simulation again.
 
 **422** - Configuration is not validated — must have status `validated` before starting a simulation
 
@@ -252,7 +259,12 @@ Retrieves detailed information about a specific simulation, including its curren
   },
   "transportStats": [
     "uet"
-  ]
+  ],
+  "appliedMappingFile": {
+    "id": "string",
+    "name": "string",
+    "deleted": true
+  }
 }
 ```
 
@@ -290,11 +302,11 @@ Retrieves detailed information about a specific simulation, including its curren
 
 ---
 
-## Terminate running simulation
+## Terminate simulation
 
 <span class="api-method api-method-post">POST</span> `/api/v1/simulations/{sim_id}/terminate`
 
-Initiates graceful termination of a simulation. There is no status pre-check: a simulation that has already finished is accepted and keeps its status; otherwise it transitions to `terminated`. Results generated up to the termination point will be available.
+Initiates termination of a simulation. There is no status pre-check: a simulation that has already finished is accepted and keeps its status; otherwise it transitions to `terminated`. Results generated up to the termination point will be available.
 
 ### Parameters
 
@@ -326,17 +338,22 @@ Initiates graceful termination of a simulation. There is no status pre-check: a 
   },
   "transportStats": [
     "uet"
-  ]
+  ],
+  "appliedMappingFile": {
+    "id": "string",
+    "name": "string",
+    "deleted": true
+  }
 }
 ```
 
 **202** - Termination dispatched for a simulation whose workspace has been deleted. Returned without a body: workspace deletion revokes the simulation's details, so the acknowledgement carries no SimulationDetails payload. Also returned when the backend refuses the request with a 4xx, whose message would describe the revoked simulation; a backend 5xx is reported as itself.
 
-**400** - Bad Request - Invalid simulation ID format, or the simulation has no platform link and cannot be terminated
+**400** - Bad Request - Invalid simulation ID format, or a scala-go simulation has no platform link and cannot be terminated. An orchestrator-backed simulation carries no link and is terminated through the gateway, so it never reaches this refusal
 
 **404** - Simulation not found
 
-**501** - Not Implemented - Termination is not yet supported for this simulation's backend
+**500** - Internal Server Error - A fault a retry cannot clear: the gateway or broker refused central's own request or credentials, or the termination event could not be built
 
 **503** - Service Unavailable - The termination transport is unavailable
 
@@ -440,15 +457,15 @@ Retrieves results for a completed simulation including summary metrics, dashboar
 
 <span class="api-method api-method-get">GET</span> `/api/v1/simulations/{sim_id}/results/data`
 
-Computes or retrieves cached summary statistics for simulation result CSV files using Polars. Returns a presigned URL to download the zstd-compressed JSON summary.
+Computes or retrieves cached summary statistics for simulation result CSV files using Polars. Returns a presigned URL to download the zstd-compressed JSON summary. For a run whose status is `completed`, `failed` or `terminated` and whose `completedAt` is at least 60 minutes old, and that has no rows for the requested metric (no data file for it, or only a header-only one), the response is 200 with a summary whose `totalRowsProcessed` is 0 and whose projection fields are absent. The one exception is a `completed` run whose only data for the PFC metric is a header-only shard: its `pfc` projection is present with five zero totals (`totalXoffRx`, `totalXoffTx`, `totalXonRx`, `totalXonTx`, `totalTimePausedUsec`) and `byTier` omitted. A run that is not yet settled, or whose status is `invalid`, keeps 404.
 
 ### Parameters
 
 | Name | In | Type | Required | Description |
 |------|-----|------|----------|-------------|
 | `sim_id` | path | string | Yes | Simulation ID in sim_xxx format (base32-encoded UUID with prefix) |
-| `metric` | query | string (enum) | Yes | Metric type to summarize. `rank-analysis` is published but returns 501 Not Implemented until its compute path ships. `uet-transport-stats` and `roce-transport-stats` are published: `uet-transport-stats` serves `timeSeries` and returns 501 for `summary` and `sampled`; `roce-transport-stats` returns 501 in every mode until its compute path ships. |
-| `mode` | query | string (enum) | No | Output mode (default: summary). `timeSeries` is served for `nd-stats`, `pfc` and `uet-transport-stats` and returns 501 Not Implemented for the other metrics; `sampled` is published but returns 501 Not Implemented until its compute path ships. |
+| `metric` | query | string (enum) | Yes | Metric type to summarize. `rank-analysis` is published but returns 501 Not Implemented until its compute path ships. `uet-transport-stats` and `roce-transport-stats` are published: both serve `timeSeries` and return 501 for `summary` and `sampled` until those compute paths ship. |
+| `mode` | query | string (enum) | No | Output mode (default: summary). `timeSeries` is served for `nd-stats`, `pfc`, `uet-transport-stats` and `roce-transport-stats` and returns 501 Not Implemented for the other metrics; `sampled` is published but returns 501 Not Implemented until its compute path ships. |
 | `tier` | query | string (enum) | No | Tier filter for network device results (default: all) |
 | `nodeId` | query | array | No | Filter to these node ids. Comma-separated on the wire. An empty list is not accepted — omit the parameter instead. |
 | `ifid` | query | array | No | Filter to these interface ids. Comma-separated on the wire. An empty list is not accepted — omit the parameter instead. |
@@ -463,7 +480,7 @@ Computes or retrieves cached summary statistics for simulation result CSV files 
 
 ### Responses
 
-**200** - Summary data with presigned download URL
+**200** - Summary data with presigned download URL. For a run whose status is `completed`, `failed` or `terminated` and whose `completedAt` is at least 60 minutes old, and that has no rows for the requested metric (no data file for it, or only a header-only one), this is a summary whose `totalRowsProcessed` is 0 and whose projection fields are absent. The one exception is a `completed` run whose only data for the PFC metric is a header-only shard: its `pfc` projection is present with five zero totals (`totalXoffRx`, `totalXoffTx`, `totalXonRx`, `totalXonTx`, `totalTimePausedUsec`) and `byTier` omitted. A run that is not yet settled, or whose status is `invalid`, keeps 404.
 
 ```json
 {
@@ -489,7 +506,7 @@ Computes or retrieves cached summary statistics for simulation result CSV files 
 
 **400** - Invalid parameters (bad metric, mode, or tier value)
 
-**404** - Simulation not found or no data files available for the specified metric
+**404** - Simulation not found or no data files available for the specified metric for a simulation that is not yet settled, or is invalid
 
 **413** - Payload Too Large - The summarized result set exceeds the server's size limit (its row count is over the ceiling, or summarizing it would exceed the memory budget). This condition is permanent for the request and must not be retried.
 
