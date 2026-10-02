@@ -18,11 +18,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Topology constraints**: `topologyConstraints` object on `SimpleSimulationRequest` with `switchRadix` (enum: `64x800G`, `128x400G`, `256x200G`) and `subscriptionRatio` (enum: `1:1`, `2:1`, `3:1`, `4:1`). Enables arbitrary rank counts by deriving a valid 2-tier CLOS topology from hardware constraints.
 
+- **Chakra mapping files**: a mapping-file resource that pins each Chakra logical rank to a server, and optionally declares scale-up groups and their fabric parameters. Upload a file once, attach it to a simulation configuration, and every simulation created from that configuration is launched with it. Without one, placement is unchanged: rank `i` runs on the `i`-th Chakra-capable server. Running a simulation to completion with a mapping file is not yet available: a simulation on one of the platform's own Chakra tracesets fails before the simulator starts until an update to the platform's simulation hosts is in service. A mapping file attaches behind an uploaded traceset only when that traceset has a rank count, which it reports as `rankCountDerived`. For a new upload that rank count comes from parallelism degrees (`dp`, `tp`, `sp`, `ep`, `pp`) in its workload metadata; a rank count given only as `shape.rankCount` is not yet read for a new upload, although a traceset uploaded with one before rank counts were declared can report it. Behind a traceset with no rank count, the mapping-file attach, like the traceset attach, answers `422` `UNPROCESSABLE_ENTITY`, which retrying does not change (see Current limitations in [Chakra Mapping Files](./chakra-mapping-files.md)). Eight new operations, all tagged `mapping-files`:
+
+  | Method | Path | Purpose |
+  |---|---|---|
+  | POST | `/api/v1/mapping-files/upload-url` | Presigned multipart upload URLs for a new mapping file; `name` is optional (default `chakra-mapping.txt`) and `sizeBytes` is at most 64,000,000 |
+  | POST | `/api/v1/mapping-files/upload-url/complete` | Validate and store the file: `201` with the new file, or `200` with `duplicateOfExisting: true` when the workspace already holds the same bytes; `422` `MAPPING_FILE_INVALID` names the first offending line |
+  | GET | `/api/v1/mapping-files` | A workspace's live mapping files, newest first; `workspaceId` is required; cursor pagination through `next` and `nextCursor` |
+  | GET | `/api/v1/mapping-files/{mapping_file_id}` | One mapping file's details; `410` `MAPPING_FILE_DELETED` once deleted |
+  | GET | `/api/v1/mapping-files/{mapping_file_id}/download` | Presigned URL serving the exact uploaded bytes; `410` `MAPPING_FILE_DELETED` once deleted |
+  | DELETE | `/api/v1/mapping-files/{mapping_file_id}` | Delete a mapping file, whether or not a configuration refers to it |
+  | PATCH | `/api/v1/configurations/{config_id}/mapping-file` | Attach a mapping file to a configuration (`If-Match` supported) |
+  | DELETE | `/api/v1/configurations/{config_id}/mapping-file` | Detach it and restore in-order placement (`If-Match` supported) |
+
+  The stored file is the simulator's own text format, byte for byte, with a 64 MB per-file limit and no per-workspace quota. `MappingFileSummary` carries `id`, `name`, `workspaceId`, `sizeBytes`, `rankCount`, `scaleUpGroupCount`, `hasScaleUp` and `createdAt`; `MappingFileDetails` adds `description`, `hash`, `etag` and `duplicateOfExisting`. New `error.code` values: `MAPPING_FILE_INVALID`, `MAPPING_FILE_HASH_COLLISION`, `MAPPING_FILE_DELETED`, `MAPPING_REQUIRES_TRACESET`, `MAPPING_REQUIRES_CHAKRA_APP`, `MAPPING_RANK_COUNT_MISMATCH`, `MAPPING_PARAMS_LOCKED`, `TRACESET_CONFLICTS_WITH_MAPPING` and `MAPPING_FILE_DELETED_REFERENCE`, plus `MAPPING_FILE_MISSING` and `MAPPING_PARAMS_INCONSISTENT` on `500` platform faults. See [Chakra Mapping Files](./chakra-mapping-files.md) for the file format and the full flow.
+
+- **`activeMappingFile` on `ConfigurationDetails`**: names the attached mapping file as `{ "id", "name", "deleted" }`, or is `null`. `deleted` is resolved when the configuration is read, so a configuration that still refers to a deleted file reports it as deleted. Only attach and detach set it: a configuration update whose body carries `activeMappingFile` returns `400`. Attach requires at least one Chakra application (`422` `MAPPING_REQUIRES_CHAKRA_APP`), an attached traceset (`409` `MAPPING_REQUIRES_TRACESET`) that has a rank count (`422` `UNPROCESSABLE_ENTITY` otherwise, not resolved by retrying), a mapping file in the configuration's workspace that has not been deleted (`404` otherwise), and equal rank counts (`422` `MAPPING_RANK_COUNT_MISMATCH`, naming both counts). While a file is attached, a configuration update, an application-parameter update or an application create that would change `UseMapping` or `MappingFileName` returns `422` `MAPPING_PARAMS_LOCKED`, and a traceset with a different rank count returns `409` `TRACESET_CONFLICTS_WITH_MAPPING` on traceset attach and on configuration update.
+
+- **`appliedMappingFile` on `SimulationDetails`**: names the mapping file the simulation was created with, as `{ "id", "name", "deleted" }`, and is absent for a configuration with no mapping file. It keeps naming the file after a delete, with `deleted` reading `true`; deleting a mapping file never changes a simulation already created. `POST /api/v1/simulations` from a configuration whose attached mapping file has been deleted returns `409` `MAPPING_FILE_DELETED_REFERENCE`, naming the file. A mapped run never falls back to in-order placement: a file that cannot be delivered to the simulator fails the simulation. When the platform rejects the file while staging it, the `failureReason` reads `Mapping file <name> (<id>) could not be delivered`, with a long `<name>` possibly shortened to end in `…` and the id always in full; a failure not attributed to the mapping file reports a general failure reason.
+
 ### Fixed
 
 - **Simulation results endpoints**: Removed non-functional workspace ownership check that blocked all users from accessing results. `DefaultWorkspace.owner = 'system'` caused `verify_workspace_access` to reject every real user. Endpoints now correctly return results for any authenticated user. Affected: `GET /simulations/{id}/results`, `GET /simulations/{id}/results/download-url`, `GET /simulations/{id}/results/data`.
 
 ### Changed
+
+- **BREAKING**: `min` and `max` in a component schema (`ParameterValueSchema`, returned by `GET /api/v1/components/{id}`) are now `ParameterBound` objects instead of numbers. A numeric type's bound is `{"value": 1}`. A dimensional type's (`datarate`, `timeval`, `bytes`, `queuesize`) bound carries its unit, such as `{"value": 10, "unit": "us"}`, which can differ from the unit of the parameter's value. A dimensional bound of `0` is `{"value": 0}` with no unit. A model's bound that the platform cannot read is left out of the schema. To migrate: read `min.value` and `min.unit` where you read `min`.
 
 - **BREAKING**: `GET /api/v1/simulations` now accepts only a single `field:direction` pair in `sort` (for example `created_at:desc`). A compound sort such as `status:asc,created_at:desc` returns **400**; it previously returned 200 but could not be paginated correctly past the first page. A `next` cursor replayed with a different `sort` than the one that produced it also returns **400** instead of a wrong page. To migrate: send one sort field, and when you change `sort`, restart pagination without `next`.
 
@@ -40,16 +61,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **TrafficType output consolidation**: API responses now return `"chakra"` where `"coordinated"` was previously emitted for the `trafficType` field. Input is backward-compatible: both `"chakra"` and `"coordinated"` are accepted via serde alias. This reflects the A5 schema migration consolidating Coordinated into Chakra.
 
-- **BREAKING**: `PATCH /api/v1/configurations/{config_id}/traceset` now requires the traceset's metadata extraction to be complete before attaching. The endpoint previously accepted any valid traceset regardless of library state; it now enforces that `rank_count` is resolved and positive (required to populate `NumOfChakraFiles` in the Chakra workload model).
+- **BREAKING**: `PATCH /api/v1/configurations/{config_id}/traceset` now requires the traceset to have a positive rank count before attaching. The endpoint previously accepted any valid traceset regardless of library state; it now enforces that the rank count is present and positive (required to populate `NumOfChakraFiles` in the Chakra workload model).
 
-  Two new error responses are returned when the traceset metadata is incomplete or invalid:
+  Two new error responses are returned when the traceset's rank count is missing or invalid:
 
   | Condition | Status | Error code |
   |---|---|---|
-  | `rank_count` is `NULL` — metadata extraction still in progress | `409 Conflict` | `CONFLICT` |
+  | The traceset has no rank count | `422 Unprocessable Entity` | `UNPROCESSABLE_ENTITY` |
   | `rank_count` is present but ≤ 0 — data invariant violation | `422 Unprocessable Entity` | `UNPROCESSABLE_ENTITY` |
 
-  **Migration**: If you call this endpoint immediately after uploading a traceset, poll until the traceset's `metadataStatus` is `complete` before attaching. A `409` response indicates the traceset is not yet ready; retry after a short backoff. A `422` response indicates a permanent problem with the traceset metadata and will not resolve on retry.
+  **Migration**: Both responses are permanent for that traceset and do not resolve on retry. This endpoint first answered a traceset with no rank count with a retry-safe `409 Conflict`; see the next entry.
+
+- **BREAKING**: a traceset with no rank count is now answered `422 Unprocessable Entity` (`UNPROCESSABLE_ENTITY`) in place of the retry-safe `409 Conflict` (`CONFLICT`), by `PATCH /api/v1/configurations/{config_id}/traceset`, by `PATCH /api/v1/configurations/{config_id}/mapping-file`, and by `PATCH /api/v1/configurations/{config_id}` when a mapping file is attached and the body carries `activeTraceset`. The `409` said to retry after metadata extraction completed, but a traceset you upload never gained a rank count that way, so the retry never succeeded. The `422` names the traceset and does not resolve on retry.
+
+  **Migration**: Stop retrying the request on this response. A client that retries on `409` `CONFLICT` for these operations should treat the `422` as permanent for that traceset.
 
 ## [Previous Unreleased] - 2024-12-23
 

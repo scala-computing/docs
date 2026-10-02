@@ -616,11 +616,11 @@ Workload configuration management
 
 **400** - Invalid request: a malformed body, duplicate component or container names, a body that fails conversion or structural validation, a configuration in the template workspace, a body carrying activeMappingFile, which only the mapping-file attach and detach operations write, or, while a mapping file is attached, an activeTraceset naming no traceset (code VALIDATION_ERROR).
 
-**409** - Conflict, while a mapping file is attached and the body carries activeTraceset. Code TRACESET_CONFLICTS_WITH_MAPPING when that traceset's rank count differs from the mapping file's: detach the mapping file first, or use a traceset with its rank count. Code CONFLICT when that traceset's rank count is not yet resolved: metadata extraction is still in progress; retry after it completes.
+**409** - Conflict, while a mapping file is attached and the body carries activeTraceset. Code TRACESET_CONFLICTS_WITH_MAPPING when that traceset's rank count differs from the mapping file's: detach the mapping file first, or use a traceset with its rank count.
 
 **412** - Precondition failed (ETag mismatch)
 
-**422** - Unprocessable entity. Code MAPPING_PARAMS_LOCKED when a mapping file is attached and the updated configuration would leave a Chakra application without UseMapping true and MappingFileName chakra-mapping.txt: an edit of either parameter, an applications array that drops or changes them, or an application re-typed to Chakra. Detach the mapping file first, make the change, then attach it again.
+**422** - Unprocessable entity. Code MAPPING_PARAMS_LOCKED when a mapping file is attached and the updated configuration would leave a Chakra application without UseMapping true and MappingFileName chakra-mapping.txt: an edit of either parameter, an applications array that drops or changes them, or an application re-typed to Chakra. Detach the mapping file first, make the change, then attach it again. Code UNPROCESSABLE_ENTITY when a mapping file is attached, the body carries activeTraceset, and that traceset has no rank count: none was declared for it, none derives from its workloadMetadata, and none is recorded for its files. The refusal does not resolve on retry.
 
 ---
 
@@ -786,9 +786,9 @@ Sets the activeTraceset field on the configuration to reference the specified tr
 
 **412** - Precondition failed (ETag mismatch)
 
-**409** - Conflict. Code CONFLICT when the traceset rank count is not yet resolved: metadata extraction is still in progress; retry after it completes. Code TRACESET_CONFLICTS_WITH_MAPPING when a mapping file is attached to the configuration and its rank count differs from this traceset's: detach the mapping file first, or attach a traceset with its rank count.
+**409** - Conflict. Code TRACESET_CONFLICTS_WITH_MAPPING when a mapping file is attached to the configuration and its rank count differs from this traceset's: detach the mapping file first, or attach a traceset with its rank count.
 
-**422** - Traceset rank count is present but invalid (zero or negative). The traceset data is malformed and cannot be used for a Chakra simulation.
+**422** - Unprocessable entity, code UNPROCESSABLE_ENTITY, in three cases, none of which resolves on retry. The traceset has no rank count: none was declared for it, none derives from its workloadMetadata, and none is recorded for its files. The traceset's rank count is zero or negative: the traceset data is malformed and cannot be used for a Chakra simulation. The traceset's rank count exceeds the platform maximum of 4,096.
 
 ---
 
