@@ -45,6 +45,7 @@
             "pages": [
               "credits",
               "simulation-output-files",
+              "chakra-mapping-files",
               "api-changelog"
             ]
           },
@@ -62,7 +63,10 @@
           {
             "group": "Scala Switch",
             "pages": [
-              "models/scala-switch/index"
+              "models/scala-switch/index",
+              "models/scala-switch/packet-handling",
+              "models/scala-switch/shared-buffer",
+              "models/scala-switch/configuration"
             ]
           },
           {

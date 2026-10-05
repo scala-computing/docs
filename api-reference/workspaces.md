@@ -240,7 +240,7 @@ Workspace management
 
 **404** - Workspace not found
 
-**409** - Conflict — the workspace still holds an active simulation that is running platform compute. Deleting a workspace revokes reads of every simulation inside it, including the queries that are the only way to discover a simulation id, so those simulations must be terminated first. Active simulations with no platform link do not block deletion: they have no compute to strand and cannot be terminated.
+**409** - Conflict — the workspace still holds an active simulation that could be terminated. Deleting a workspace revokes reads of every simulation inside it, including the queries that are the only way to discover a simulation id, so those simulations must be terminated first. Which active simulations count depends on the backend: a scala-go one counts only while it carries a platform link, because without one nothing was launched and there is no compute to strand; an orchestrator-backed one never carries a link and counts whenever it is active, because it is terminable through the gateway all the same. A simulation that has already settled never blocks a deletion, whichever backend ran it.
 
 **500** - Internal server error
 
