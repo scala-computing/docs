@@ -356,6 +356,7 @@ Creates a traceset record and returns presigned S3 multipart upload URLs for eac
 | `tags` | array[string] | No | - |
 | `ttlDays` | integer | No | Custom TTL in days (1-365). Uses server default if omitted. |
 | `files` | array[UploadFileSpec] | Yes | - |
+| `workloadMetadata` | WorkloadMetadata | No | Workload characterization metadata for a traceset, given at upload (TracesetUploadUrlRequest.workloadMetadata) or on promotion. The canonical structure is owned by trace-service (see trace-service/openapi.json#WorkloadMetadata); this central-side schema is intentionally permissive (no `properties`, no `additionalProperties` constraint — accepts any JSON object shape) so customers can read whatever the trace-service emits without spec drift breaking SDK decoding. `additionalProperties: true` is omitted deliberately — the scala-openapi generator rejects that form unless paired with a `$ref` value type. |
 
 ```json
 {
