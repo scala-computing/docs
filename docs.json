@@ -41,6 +41,41 @@
             ]
           },
           {
+            "group": "Models",
+            "pages": [
+              {
+                "group": "Scala Switch",
+                "pages": [
+                  "models/scala-switch/index",
+                  "models/scala-switch/packet-handling",
+                  "models/scala-switch/shared-buffer",
+                  "models/scala-switch/configuration"
+                ]
+              },
+              {
+                "group": "Scala RoCE NIC",
+                "pages": [
+                  "models/scala-roce-nic/index"
+                ]
+              },
+              {
+                "group": "MRC NIC",
+                "pages": [
+                  "models/mrc-nic/index"
+                ]
+              },
+              {
+                "group": "Chakra Workload",
+                "pages": [
+                  "models/chakra-workload/index",
+                  "models/chakra-workload/workload-execution",
+                  "models/chakra-workload/records",
+                  "models/chakra-workload/configuration"
+                ]
+              }
+            ]
+          },
+          {
             "group": "Reference",
             "pages": [
               "credits",
