@@ -91,32 +91,6 @@
             ]
           }
         ]
-      },
-      {
-        "tab": "Models",
-        "groups": [
-          {
-            "group": "Scala Switch",
-            "pages": [
-              "models/scala-switch/index",
-              "models/scala-switch/packet-handling",
-              "models/scala-switch/shared-buffer",
-              "models/scala-switch/configuration"
-            ]
-          },
-          {
-            "group": "Scala RoCE NIC",
-            "pages": [
-              "models/scala-roce-nic/index"
-            ]
-          },
-          {
-            "group": "MRC NIC",
-            "pages": [
-              "models/mrc-nic/index"
-            ]
-          }
-        ]
       }
     ]
   },
