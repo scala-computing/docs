@@ -476,13 +476,13 @@ RoCE Transport Statistics files record detailed RDMA over Converged Ethernet (Ro
 | `ivl_max_calc_rtt_usec` | Float | Maximum calculated RTT in the interval (microseconds) |
 | `avg_calc_rtt_usec` | Float | Average calculated RTT (microseconds) |
 | `ivl_avg_calc_rtt_usec` | Float | Average calculated RTT in the interval (microseconds) |
-| `num_rx_drops` | Integer | Cumulative transport receive drops, summed over the four receive reasons below. Excludes NIC ingress-admission drops and transmit payload discards |
+| `num_rx_drops` | Integer | Cumulative transport receive drops, summed over the four receive reasons below. Excludes NIC ingress-admission drops and transmit payload discards. None of the four reasons is counted in `nd-stats` `rx_drops`: on `ScalaRoceNic`, `nd-stats` `rx_drops` is the NIC ingress-admission drops alone |
 | `ivl_num_rx_drops` | Integer | Receive-path discards in the interval |
-| `num_rx_drops_no_qp_data` | Integer | Data packets discarded because no QP context resolved for the flow id |
+| `num_rx_drops_no_qp_data` | Integer | Data packets discarded because no QP context resolved for the flow id, typically a late retransmit after its QP was torn down. Excluded from `nd-stats` `rx_drops` |
 | `ivl_num_rx_drops_no_qp_data` | Integer | No-QP data discards in the interval |
-| `num_rx_drops_no_qp_ctrl` | Integer | Control packets (ACK/SACK/NAK/CNP) discarded because no QP context resolved. Excluded from `nd-stats` `rx_drops`. The relation is `nd-stats` `rx_drops` = NIC ingress-admission drops + `num_rx_drops_no_qp_data` + `num_rx_drops_after_nak` |
+| `num_rx_drops_no_qp_ctrl` | Integer | Control packets (ACK/SACK/NAK/CNP) discarded because no QP context resolved. Excluded from `nd-stats` `rx_drops` |
 | `ivl_num_rx_drops_no_qp_ctrl` | Integer | No-QP control discards in the interval |
-| `num_rx_drops_after_nak` | Integer | Packets discarded because the QP has an unfilled hole: the NAK-triggering packet and everything behind it, until the hole fills |
+| `num_rx_drops_after_nak` | Integer | Packets discarded because the QP has an unfilled hole: the NAK-triggering packet and everything behind it, until the hole fills. Excluded from `nd-stats` `rx_drops` |
 | `ivl_num_rx_drops_after_nak` | Integer | After-NAK discards in the interval |
 | `num_rx_drops_ghost_ack` | Integer | Cumulative ACK or NAK packets discarded because their PSN exceeds the highest PSN transmitted by the QP. Excluded from `nd-stats` `rx_drops` |
 | `ivl_num_rx_drops_ghost_ack` | Integer | Ghost ACK or NAK discards in the interval. Excluded from `nd-stats` `rx_drops` |

@@ -344,7 +344,7 @@ Resolves a traceset to its S3 paths and DRA (Data Resource Accessor) mounting in
 
 <span class="api-method api-method-post">POST</span> `/api/v1/tracesets/upload-url`
 
-Creates a traceset record and returns presigned S3 multipart upload URLs for each file. Each file is split into parts based on size. After uploading all parts to their presigned URLs, call POST /api/v1/tracesets/upload-url/complete to finalize the upload.
+Creates a traceset record and returns presigned S3 multipart upload URLs for each file. Each file is split into parts based on size. After uploading all parts to their presigned URLs, call POST /api/v1/tracesets/upload-url/complete to finalize the upload. An upload with `primary` files must declare its rank count in `workloadMetadata`, as `shape.rankCount` or as parallelism degrees (`dp`, `tp`, `sp`, `ep`, `pp`, multiplied together); the declaration is checked before any upload URL is issued, and the traceset reports it as `rankCountDerived`. An upload of supporting files only needs no declaration.
 
 ### Request Body
 
@@ -362,11 +362,16 @@ Creates a traceset record and returns presigned S3 multipart upload URLs for eac
 {
   "workspaceId": "workspace_def456",
   "name": "GPT-175B Training Traces",
-  "description": "Chakra traces for GPT-175B on 256 ranks",
+  "description": "Chakra traces for GPT-175B on 2 ranks",
   "tags": [
     "gpt",
     "training"
   ],
+  "workloadMetadata": {
+    "shape": {
+      "rankCount": 2
+    }
+  },
   "files": [
     {
       "name": "rank_0.chakra.json",
@@ -405,12 +410,12 @@ Creates a traceset record and returns presigned S3 multipart upload URLs for eac
 }
 ```
 
-**400** - Invalid request (empty files list, missing required fields)
+**400** - Invalid request: empty files list or missing required fields; `primary` files without a declared rank count; a `shape.rankCount` or parallelism degree that is not a whole number of at least 1; a `shape.rankCount` that differs from the parallelism product; a declared rank count above 2,147,483,647; or a `workloadMetadata`, `shape` or `parallelism` that is neither an object nor null. The message names the field at fault.
 
 ```json
 {
   "error": {
-    "message": "At least one file is required"
+    "message": "Uploads with primary trace files must declare a rank count: set workloadMetadata.shape.rankCount, or workloadMetadata.parallelism degrees (dp, tp, sp, ep, pp)"
   }
 }
 ```
@@ -421,7 +426,7 @@ Creates a traceset record and returns presigned S3 multipart upload URLs for eac
 
 <span class="api-method api-method-post">POST</span> `/api/v1/tracesets/upload-url/complete`
 
-Finalizes a multipart upload session by providing the ETags returned by S3 for all uploaded parts. The traceset transitions from `uploading` to `processing` state while metadata extraction runs asynchronously. Returns 201 on first completion or 200 on idempotent retry.
+Finalizes a multipart upload session by providing the ETags returned by S3 for all uploaded parts. The traceset is `ready` when this returns, every file reports `metadataStatus` `complete`, and the platform does not process the trace files: the rank count is the one declared at upload. With exactly one `primary` file, that file reports `rankRange` 0 to N−1 for N declared ranks. Returns 201 on first completion or 200 on idempotent retry.
 
 ### Request Body
 
@@ -455,7 +460,7 @@ Finalizes a multipart upload session by providing the ETags returned by S3 for a
 {
   "id": "ts_abc123xyz",
   "name": "GPT-175B Training Traces",
-  "status": "processing",
+  "status": "ready",
   "files": [
     {
       "name": "rank_0.chakra.json",
@@ -473,7 +478,7 @@ Finalizes a multipart upload session by providing the ETags returned by S3 for a
 {
   "id": "ts_abc123xyz",
   "name": "GPT-175B Training Traces",
-  "status": "processing",
+  "status": "ready",
   "files": [
     {
       "name": "rank_0.chakra.json",
