@@ -13,7 +13,7 @@ The tables list the attributes the components API offers for the Scala Switch, g
 
 If you supply a switch's `typedParameters` yourself instead, for example in the `components` of `POST /api/v1/configurations`, include every attribute of each sub-component you send, such as `SharedBufferManager` or `EcnHandler`: an attribute left out of it runs the model's built-in value, which can differ from the Default shown here. Attributes at the switch's top level, and sub-components you leave out entirely, take their Defaults.
 
-**Type** is the value of the attribute's `type` field in the API, which a patch must repeat. Values of type `bytes`, `datarate`, and `timeval` carry a `unit`: `KB` is 1,000 bytes and `MB` is 1,000,000 bytes; data rates are in `Gbps`; times are in `ps`, `ns`, `us` (µs), `ms`, or `s`. A `bytes` value can be at most 4,294,967,295 bytes. Attributes of type `string` that hold a list, such as `PoolAllocationMap`, hold eight comma-separated entries, where the index is the traffic class or the pool number, 0 to 7. The platform shows them in square brackets, for example `[0.9, 0.1, 0, 0, 0, 0, 0, 0]`; send them without the brackets when you change one ([Change values in a configuration](#change-values-in-a-configuration)).
+**Type** is the value of the attribute's `type` field in the API, which a patch must repeat. Values of type `bytes`, `datarate`, and `timeval` carry a `unit`: `KB` is 1,000 bytes and `MB` is 1,000,000 bytes; data rates are in `Gbps`; times are in `ps`, `ns`, `us` (µs), `ms`, or `s`. A `bytes` value can be at most 4,294,967,295 bytes. Attributes of type `string` that hold a list, such as `PoolAllocationMap`, hold eight comma-separated entries, where the index is the traffic class or the pool number, 0 to 7. The platform shows them in square brackets, for example `[0.9, 0.1, 0, 0, 0, 0, 0, 0]`. Send them the same way when you change one: as a string, with the brackets and all eight entries ([Change values in a configuration](#change-values-in-a-configuration)).
 
 ## Switch
 
@@ -52,6 +52,15 @@ The `NetworkInterface` component holds three sub-components: `UplinkNetworkInter
 | --- | --- | --- | --- |
 | `Delay` | `timeval` | `500ns` | Propagation delay of the links between this switch and its uplink peers (`ps`, `ns`, `us`, or `ms`). A link takes its delay from the device at its lower end, so the links to this switch's downlink peers use those devices' own `Delay`. |
 
+## Packet trimmer
+
+The `PacketTrimmer` component reduces eligible packets to headers only during congestion, instead of dropping them. Trimming runs only with `UETPolicyEnabled` set to `true` and PFC off for every traffic class; otherwise the simulation stops (see [Configuration rules that stop a simulation](#configuration-rules-that-stop-a-simulation)). [Egress admission](./packet-handling.md#egress-admission) describes which packets are trimmed.
+
+| Attribute | Type | Default | Description |
+| --- | --- | --- | --- |
+| `TrimmingEnabled` | `bool` | `false` | Toggle to enable packet trimming. When enabled, eligible packets can be reduced to headers only during congestion. |
+| `TrimmingStatsEnabled` | `bool` | `false` | Toggle to enable packet trimming statistics reporting. Requires `TrimmingEnabled` to be `true`. |
+
 ## Load balancing flowlet
 
 The `LoadBalancingFlowlet` component holds the parameters of the `flowlet` load balancing method. The switch reads them only when `LoadBalancingMethod` is `flowlet`, but checks the range of `Gap` whenever the configuration carries the component.
@@ -68,6 +77,7 @@ These attributes sit in the `SharedBufferManager` object of the switch's `typedP
 | Attribute | Type | Default | Description |
 | --- | --- | --- | --- |
 | `TotalSharedBufferSize` | `bytes` | `256MB` | Total packet buffer of the switch. Headroom is reserved from it first, and the pools are allocated from the rest. |
+| `UETPolicyEnabled` | `bool` | `false` | When `true`, the buffer is partitioned as UET 1.0 recommends (sections 4.1.4.1 and 3.6.4.7) instead of by `PoolAllocationMap` and `TrafficClassPoolMapping`: three pools in the ratio 1.5 : 1 : 1, with traffic classes taken from the DSCP codepoint. Required for packet trimming. See [Buffer under the UET policy](./shared-buffer.md#buffer-under-the-uet-policy). |
 | `PoolAllocationMap` | `string` | `[0.9, 0.1, 0, 0, 0, 0, 0, 0]` | Fraction (0.0 to 1.0) of the buffer left after headroom that each pool gets; the index is the pool number. The entries are meant to sum to 1 ([what happens when they do not](#settings-the-switch-does-not-check)). A `0` disables that pool. |
 | `TrafficClassPoolMapping` | `string` | `[0, 1, 0, 0, 0, 0, 0, 0]` | Pool for each traffic class: the index is the traffic class and the value the pool number, so index 3 set to 2 assigns TC3 to pool 2. This forms the priority groups. Map each PFC-enabled class to the pool with its own number ([PFC traffic classes and pools](#pfc-traffic-classes-and-pools)). |
 | `EnablePFC` | `string` | `[1, 1, 0, 0, 0, 0, 0, 0]` | Which traffic classes are lossless: `1` enables PFC for the class at that index, `0` leaves it lossy. |
@@ -122,7 +132,8 @@ The patch repeats the nesting of the component's `typedParameters`, down to each
 - Only keys the component already has can be updated. An unknown key returns 400.
 - Each attribute's `type` must match the stored type, or the request returns 400. The request also returns 400 for an empty patch, or when a nested object is sent where an attribute is expected, or the reverse.
 - The `value` and the `unit` you send replace the stored ones, so send the `unit` with every dimensional value.
-- A string `value` cannot contain shell metacharacters, among them `[` `]` `{` `}` `(` `)` `'` `"` `;` `$` `*` `?` `#` `~`, or the request returns 400. Send a list attribute without its brackets, for example `"value": "0.8, 0.2, 0, 0, 0, 0, 0, 0"`.
+- A list attribute's `value` is a string with its square brackets and exactly eight entries, each made of letters, digits, `.`, `_`, `+`, or `-`, for example `"value": "[0.8, 0.2, 0, 0, 0, 0, 0, 0]"`. A list in any other form returns 400.
+- Where an attribute has `enum` values, its `value` must be one of them, or the request returns 400.
 - A 200 response returns the component's full, updated `typedParameters`.
 
 This example sets the switch's uplink `DataRate` to 800 Gbps and its `Delay` to 750 ns. An uplink runs at 800 Gbps only where the `DataRate` of the uplink peer's `DownlinkNetworkInterface` is also 800 Gbps or more, and the switch's `Delay` applies to the links to its uplink peers (see [Network interfaces](#network-interfaces)):
@@ -157,6 +168,8 @@ The switch checks these rules before or as the simulation starts, and stops the 
 - `LoadBalancingMethod` is `flowlet` and `EcmpHashMethod` is `dpr` or `dprWithFallback`.
 - `Gap` is outside `0s` to `2s`. This is checked whenever the configuration carries the `LoadBalancingFlowlet` component, whatever the method.
 - `LoadBalancingStatsReportInterval` is below `10us`.
+- `TrimmingEnabled` is `true` and `UETPolicyEnabled` is `false`. Packet trimming runs only under the UET policy.
+- `TrimmingEnabled` is `true` and any entry of `EnablePFC` is `1`. Trimming cannot be combined with PFC. The default `EnablePFC` enables TC0 and TC1, so set every entry to `0` before turning trimming on.
 
 ### Settings the switch does not check
 

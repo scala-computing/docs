@@ -55,7 +55,11 @@
               {
                 "group": "Scala RoCE NIC",
                 "pages": [
-                  "models/scala-roce-nic/index"
+                  "models/scala-roce-nic/index",
+                  "models/scala-roce-nic/transport",
+                  "models/scala-roce-nic/buffers-and-pfc",
+                  "models/scala-roce-nic/congestion-control",
+                  "models/scala-roce-nic/configuration"
                 ]
               },
               {

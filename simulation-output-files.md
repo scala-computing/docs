@@ -25,7 +25,7 @@ curl -X GET "https://api.scalacomputing.com/api/v1/simulations/{sim_id}/results/
   -H "Authorization: Bearer $SCALA_API_TOKEN"
 ```
 
-**Retrieve computed summary statistics (nd-stats, perf, pfc only):**
+**Retrieve computed summary statistics for a metric:**
 
 ```bash
 curl -X GET "https://api.scalacomputing.com/api/v1/simulations/{sim_id}/results/data?metric=nd-stats&tier=all" \
@@ -176,7 +176,7 @@ time_utc,sim_time,source,remote_trace_client_id,src_rank,dest_rank,string_buf,bu
 
 ### Network Device Statistics (nd-stats)
 
-Network Device Statistics files contain per-interface, per-time-step counters for every network device in the simulated topology. Each row captures packet counts, byte volumes, throughput rates, link utilization percentages, and drop counters. This is one of the three metric types that supports server-side summary aggregation via the results data endpoint.
+Network Device Statistics files contain per-interface, per-time-step counters for every network device in the simulated topology. Each row captures packet counts, byte volumes, throughput rates, link utilization percentages, and drop counters. The results data endpoint summarizes these files server-side (`metric=nd-stats`).
 
 **Filename pattern:** `{simulation}-nd-stats-{shard}.csv`
 
@@ -227,7 +227,7 @@ time_utc,sim_time_sec,component_name,nd_name,component_type,ifid,uldl,node_id,ti
 
 ### Performance Metrics (perf)
 
-Performance Metrics files capture application-level latency and transfer size measurements for each completed transaction. Each row represents one transaction observed by a traffic generator. This is one of the three metric types that supports server-side summary aggregation.
+Performance Metrics files capture application-level latency and transfer size measurements for each completed transaction. Each row represents one transaction observed by a traffic generator. The results data endpoint summarizes these files server-side (`metric=perf`).
 
 **Filename pattern:** `{simulation}-perf-{shard}.csv`
 
@@ -259,7 +259,7 @@ example,2026-01-13T19:11:40Z,0.00500019,ScalaApp,2.83117,NAN,NAN,478,4,0.0049973
 
 ### ECN/PFC Statistics (ecn-pfc-stats)
 
-ECN/PFC Statistics files record Priority Flow Control (PFC) frame counters and Explicit Congestion Notification (ECN) marking counts per interface, per priority level. Use this data to analyze congestion events and flow control behavior. This is one of the three metric types that supports server-side summary aggregation.
+ECN/PFC Statistics files record Priority Flow Control (PFC) frame counters and Explicit Congestion Notification (ECN) marking counts per interface, per priority level. Use this data to analyze congestion events and flow control behavior. The results data endpoint summarizes these files server-side (`metric=pfc`).
 
 **Filename pattern:** `{simulation}-ecn-pfc-stats-{shard}.csv`
 

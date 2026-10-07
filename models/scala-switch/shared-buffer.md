@@ -37,6 +37,8 @@ Two behaviors are worth knowing before anything else:
 
 Allocation happens once, when the switch starts, before any traffic flows. It runs in five stages, each using the output of the one before, so a change to an early attribute shifts every value after it.
 
+The stages below, the worked example and the sizing recipe describe the switch with `UETPolicyEnabled` at its default, `false`. With it set to `true`, Stages 2 to 4 work differently; see [Buffer under the UET policy](#buffer-under-the-uet-policy).
+
 ```mermaid
 flowchart TB
   T["TotalSharedBufferSize"]
@@ -292,8 +294,17 @@ When three things hold, the model has no ingress path left that drops a packet o
 
 In the default mapping, TC1 has pool 1 to itself, but TC0 shares pool 0 with the lossy classes TC2 to TC7. Their bytes count toward TC0's Xoff threshold, and they can fill the pool that TC0's arrivals are charged to before the port pauses. On the 128-port switch of the worked example, pool 1 is smaller than condition 2 asks: it needs at least 128 × 704,000 B = 90,112,000 B. Either change meets it:
 
-- Raise pool 1's `PoolAllocationMap` entry to at least 0.404 and lower pool 0's so the entries still sum to 1, for example `0.59, 0.41, 0, 0, 0, 0, 0, 0`.
+- Raise pool 1's `PoolAllocationMap` entry to at least 0.404 and lower pool 0's so the entries still sum to 1, for example `[0.59, 0.41, 0, 0, 0, 0, 0, 0]`.
 - Lower `StaticPoolXoffThreshold` to at most 170,400 B, with `StaticPoolXonThreshold` lowered below it.
+
+## Buffer under the UET policy
+
+With `UETPolicyEnabled` set to `true`, Stage 1 still reserves headroom and Stage 5 still sets the PFC thresholds, but the switch does not use `PoolAllocationMap` or `TrafficClassPoolMapping`:
+
+- **Pools.** The sizing total is split into three pools in the ratio 1.5 : 1 : 1. Pool 0 gets 1.5/3.5 of it, pool 1 gets 1/3.5, and pool 2 gets the rest.
+- **Traffic classes.** A packet's class comes from its DSCP codepoint, not from the DSCP value divided by 8. Control packets are TC2, trimmed packets (including those trimmed on the last hop) are TC1, and every other packet is TC0. Each class uses the pool with its own number.
+- **Egress queue limits.** Each egress queue has a fixed limit, so `LossyAlpha` is not used. The limit is `PlaneBDP` when packet trimming is on and `QueueDropThreshold` × `PlaneBDP` when it is off. A retransmission marked with the trimmable-retransmit codepoint may use 1.5 times that limit.
+- **PFC.** `EnablePFC` still applies to the classes it enables, but packet trimming cannot be combined with PFC.
 
 ## Configuration rules
 
