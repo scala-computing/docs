@@ -39,6 +39,8 @@ flowchart TB
 
 Every packet that is not a PFC frame gets a traffic class from its DSCP field: the DSCP value divided by 8, rounded down. DSCP 0 to 7 is TC0, DSCP 8 to 15 is TC1, and so on through DSCP 56 to 63, which is TC7. `TrafficClassPoolMapping` then gives the buffer pool the class uses, and `EnablePFC` says whether the class is lossless. Which classes carry traffic depends on the DSCP values the endpoints in the simulation assign.
 
+With `UETPolicyEnabled` set to `true` the switch classifies by DSCP codepoint instead: control packets are TC2, trimmed packets are TC1, and every other packet is TC0. See [Buffer under the UET policy](./shared-buffer.md#buffer-under-the-uet-policy).
+
 ## Ingress admission
 
 A frame received on a port takes this path:
@@ -59,7 +61,8 @@ After the route lookup picks an egress port (see [ECMP path selection](#ecmp-pat
 
 1. **Lossless classes are admitted with no limit check.** PFC has already bounded what could enter the switch on each ingress port.
 2. **Lossy classes are checked against two bounds:** the egress queue limit for the egress port and pool, and the pool's remaining egress capacity. The packet is dropped if either would be exceeded. The egress queue is per egress port and pool, so every class mapped to a pool shares one queue limit on each port. [Stage 4 of the buffer setup](./shared-buffer.md#stage-4-set-egress-queue-limits) gives the three forms the limit can take.
-3. **An egress drop releases the ingress charge** too, and counts as a transmit drop on the egress port in the device statistics.
+3. **With packet trimming on, an over-limit packet is trimmed instead of dropped** when its DSCP marks it trimmable (including the trimmable-retransmit codepoint) and it is IPv4 or IPv6. The switch cuts it down to its headers, re-marks it with the trimmed codepoint, and offers it again to the port's TC1 queue. A packet that cannot be trimmed is dropped.
+4. **An egress drop releases the ingress charge** too, and counts as a transmit drop on the egress port in the device statistics.
 
 An admitted packet is charged to the egress pool and the port's egress queue, the ECN marker updates its average for that queue, and the load balancer records which port the packet was admitted to.
 

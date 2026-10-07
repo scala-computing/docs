@@ -15,13 +15,13 @@ Collective operations are not replayed as single steps. Before the simulation st
 
 The results you reason about with it are how long each rank takes to finish its trace, how long each transfer and each collective takes on the simulated network, and how those times compare with an ideal time for the selected algorithm.
 
-The Chakra workload runs on servers with the Scala RoCE NIC, and it is the only application in its simulation: give the topology exactly as many servers as the traceset has ranks, each with a Scala RoCE NIC ([Placement](./workload-execution.md#placement)).
+The Chakra workload runs on servers that all have a Scala RoCE NIC or all have a Scala UET NIC, and it is the only application in its simulation. Give the topology exactly as many servers as the traceset has ranks ([Placement](./workload-execution.md#placement)).
 
 ## Features
 
 - **Chakra execution trace replay.** Per-rank traces in the MLCommons Chakra execution trace format are replayed as dependency graphs. An operation starts when every operation it depends on has finished, and ranks are ordered against one another only by their sends and receives. See [Dependencies](./workload-execution.md#dependencies).
 - **Ten collective types with selectable algorithms.** AllReduce, Reduce, AllGather, ReduceScatter, ReduceScatterBlock, Broadcast, Gather, Scatter, AllToAll, and Barrier, each expanded into point-to-point transfers with the algorithm you select (`ring`, `tree`, `double-tree`, `halving-doubling`, `halving`, `sequential`, `interleaved`, or `direct`, as each collective type allows). See [Collectives](./workload-execution.md#collectives).
-- **RDMA transfers through the NIC.** Each point-to-point send between ranks outside a shared scale-up group is an RDMA WRITE posted to the server's Scala RoCE NIC, so collective traffic is subject to the NIC's transport and the network's congestion and flow control. See [Communication](./workload-execution.md#communication).
+- **RDMA transfers through the NIC.** Each point-to-point send between ranks outside a shared scale-up group is an RDMA WRITE posted to the server's NIC, a Scala RoCE NIC or a Scala UET NIC. Collective traffic is therefore subject to that NIC's transport and to the network's congestion and flow control. See [Communication](./workload-execution.md#communication).
 - **Shared NPU compute.** Compute operations that run at the same time on a rank share that rank's NPU (its accelerator, such as a GPU) equally, for traces whose durations assume exclusive use of the device; durations measured on real hardware run as recorded. `TraceFamily` selects which. See [Compute](./workload-execution.md#compute).
 - **Process group serialization.** For traces that record the order in which collectives were issued, a rank runs at most one collective of a process group at a time, in that order. See [Ordering options](./workload-execution.md#ordering-options).
 - **Collective synchronization.** Every rank of a process group waits at a zero-byte barrier before the group's collective starts, so the collective's transfers begin together. See [Ordering options](./workload-execution.md#ordering-options).
@@ -42,7 +42,7 @@ flowchart TB
   AP["Chakra application, one per rank: dependency replay, compute, trace file"]
   CS["Compute sharing: equal split of the rank's compute capacity"]
   HH["Host handler: routes each transfer"]
-  NIC["Scala RoCE NIC: RDMA transport"]
+  NIC["Scala RoCE NIC or Scala UET NIC: RDMA transport"]
   NET["Simulated network"]
   SU["Scale-up fabric model"]
   ST["Collective statistics"]

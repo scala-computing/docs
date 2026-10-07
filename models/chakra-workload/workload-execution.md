@@ -60,7 +60,7 @@ The simulation runs one Chakra application for each rank, named `ChakraApp-<rank
 - **Without a mapping file**, ranks are placed in order: rank 0 on the server with the lowest server ID (the `serverId` a mapping file names), rank 1 on the next, and so on.
 - **With a mapping file**, each rank runs on the server the file names, and the file can also place ranks in scale-up groups ([Scale-up groups](#scale-up-groups)). [Chakra mapping files](../../chakra-mapping-files.md) describes the file format and how to attach one.
 
-Give the topology exactly as many servers as the traceset has ranks, each with a Scala RoCE NIC. The Chakra workload is the only application in the simulation. The `chakra-capable-hosts` and `chakra-mapping` records show which servers took part and where each rank ran ([Records](./records.md#placement-records)).
+Give the topology exactly as many servers as the traceset has ranks, all with a Scala RoCE NIC or all with a Scala UET NIC. The Chakra workload is the only application in the simulation. The `chakra-capable-hosts` and `chakra-mapping` records show which servers took part and where each rank ran ([Records](./records.md#placement-records)).
 
 ## Dependencies
 
@@ -91,7 +91,7 @@ Each node takes 20 µs, twice its trace duration, and the pair takes the same to
 
 ## Communication
 
-A `COMM_SEND_NODE` sends `comm_size` bytes to its partner rank as one RDMA WRITE, posted to the sending server's Scala RoCE NIC. The NIC carries the transfer over the simulated network to the partner rank's server, so the transfer is subject to the NIC's transport and the network's congestion and flow control. A transfer of zero bytes is sent as well.
+A `COMM_SEND_NODE` sends `comm_size` bytes to its partner rank as one RDMA WRITE, posted to the sending server's NIC. The NIC carries the transfer over the simulated network to the partner rank's server, so the transfer is subject to the NIC's transport and the network's congestion and flow control. A Scala RoCE NIC carries it with RoCEv2 over its queue pairs ([Scala RoCE NIC](../scala-roce-nic/index.md)); a Scala UET NIC carries it with Ultra Ethernet Transport (UET). Each NIC's own documentation describes its transport. A transfer of zero bytes is sent as well.
 
 The send node finishes, and releases the nodes that depend on it, when the NIC reports that every byte has been sent. The transfer is acknowledged later, when the receiver's acknowledgment reaches the sender, and at that moment the `chakra-perf` record writes one row for the transfer, with the time from the send node's start ([Records](./records.md#transfers)). On the receiving rank, the receive node finishes when the whole transfer has been received.
 

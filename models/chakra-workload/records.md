@@ -28,7 +28,7 @@ The platform also delivers each rank's trace with the time of every node written
 
 ### Placement records
 
-**`chakra-capable-hosts`** has one row for each server with a NIC, with two columns: `Host`, the server ID, and a second column that is `true` when the server has a Scala RoCE NIC, so that a rank can run on it. In a configuration that keeps to [Settings to keep](./configuration.md#settings-to-keep), it is `true` for every server.
+**`chakra-capable-hosts`** has one row for each server with a NIC, with two columns: `Host`, the server ID, and a second column that is `true` when a rank can run on the server. A rank can run on a server with a Scala RoCE NIC or a Scala UET NIC. In a configuration that keeps to [Settings to keep](./configuration.md#settings-to-keep), it is `true` for every server.
 
 **`chakra-mapping`** has one row for each rank, with the columns `ChakraId,Hostname,NicNodeID,ServerNodeID,ServerID,Core,IPAddress`: the rank, the name of its server, the simulator's node IDs of its NIC and server, the server ID, the simulator process that runs it, and the server's IP address. When a mapping file places ranks in scale-up groups, two more columns follow, `ScaleUpGroupId` and `ScaleUpSubgroupId`.
 
