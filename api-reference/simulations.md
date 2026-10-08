@@ -136,6 +136,9 @@ Creates and starts a new simulation based on the specified configuration. The si
   "transportStats": [
     "uet"
   ],
+  "networkTiers": [
+    "ssw"
+  ],
   "appliedMappingFile": {
     "id": "string",
     "name": "string",
@@ -260,6 +263,9 @@ Retrieves detailed information about a specific simulation, including its curren
   "transportStats": [
     "uet"
   ],
+  "networkTiers": [
+    "ssw"
+  ],
   "appliedMappingFile": {
     "id": "string",
     "name": "string",
@@ -338,6 +344,9 @@ Initiates termination of a simulation. There is no status pre-check: a simulatio
   },
   "transportStats": [
     "uet"
+  ],
+  "networkTiers": [
+    "ssw"
   ],
   "appliedMappingFile": {
     "id": "string",
@@ -465,7 +474,7 @@ Computes or retrieves cached summary statistics for simulation result CSV files 
 |------|-----|------|----------|-------------|
 | `sim_id` | path | string | Yes | Simulation ID in sim_xxx format (base32-encoded UUID with prefix) |
 | `metric` | query | string (enum) | Yes | Metric type to summarize. `rank-analysis` is published but returns 501 Not Implemented until its compute path ships. `uet-transport-stats` and `roce-transport-stats` are published: both serve `timeSeries` and return 501 for `summary` and `sampled` until those compute paths ship. |
-| `mode` | query | string (enum) | No | Output mode (default: summary). `timeSeries` is served for `nd-stats`, `pfc`, `uet-transport-stats` and `roce-transport-stats` and returns 501 Not Implemented for the other metrics; `sampled` is published but returns 501 Not Implemented until its compute path ships. `utilizationBins` (a binned distribution of link utilization over time) is offered for `nd-stats` only: every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, a permanent answer that must not be retried, and `nd-stats` returns 501 Not Implemented until the document is served. |
+| `mode` | query | string (enum) | No | Output mode (default: summary). `timeSeries` is served for `nd-stats`, `pfc`, `uet-transport-stats` and `roce-transport-stats` and returns 501 Not Implemented for the other metrics; `sampled` is published but returns 501 Not Implemented until its compute path ships. `utilizationBins` (a binned distribution of link utilization over time) is offered for `nd-stats` only: every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, a permanent answer that must not be retried, and `nd-stats` returns 501 Not Implemented until the document is served. `uplinkFairness` (uplink port fairness per switch over time) is offered for `nd-stats` only in the same way: every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, and `nd-stats` returns 501 Not Implemented until the document is served. |
 | `tier` | query | string (enum) | No | Tier filter for network device results (default: all) |
 | `nodeId` | query | array | No | Filter to these node ids. Comma-separated on the wire. An empty list is not accepted — omit the parameter instead. |
 | `ifid` | query | array | No | Filter to these interface ids. Comma-separated on the wire. An empty list is not accepted — omit the parameter instead. |
@@ -504,7 +513,7 @@ Computes or retrieves cached summary statistics for simulation result CSV files 
 }
 ```
 
-**400** - Invalid parameters (bad metric, mode, or tier value), with error code `VALIDATION_ERROR`; or, with error code `UNSUPPORTED_COMBINATION`, a result shape the requested projection does not offer (`mode=utilizationBins` on any metric but `nd-stats`). `UNSUPPORTED_COMBINATION` is permanent for the request and must not be retried; its message names the result shape and the projection, and only it carries `X-Ignored-Params`.
+**400** - Invalid parameters (bad metric, mode, or tier value), with error code `VALIDATION_ERROR`; or, with error code `UNSUPPORTED_COMBINATION`, a result shape the requested projection does not offer (`mode=utilizationBins` or `mode=uplinkFairness` on any metric but `nd-stats`). `UNSUPPORTED_COMBINATION` is permanent for the request and must not be retried; its message names the result shape and the projection, and only it carries `X-Ignored-Params`.
 
 **404** - Simulation not found or no data files available for the specified metric for a simulation that is not yet settled, or is invalid
 

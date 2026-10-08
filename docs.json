@@ -63,6 +63,18 @@
                 ]
               },
               {
+                "group": "Scala UET NIC",
+                "pages": [
+                  "models/scala-uet-nic/index",
+                  "models/scala-uet-nic/transport",
+                  "models/scala-uet-nic/multipath",
+                  "models/scala-uet-nic/congestion-control",
+                  "models/scala-uet-nic/buffers-and-pfc",
+                  "models/scala-uet-nic/records",
+                  "models/scala-uet-nic/configuration"
+                ]
+              },
+              {
                 "group": "MRC NIC",
                 "pages": [
                   "models/mrc-nic/index"

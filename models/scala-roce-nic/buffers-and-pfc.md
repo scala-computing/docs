@@ -67,15 +67,15 @@ Each time the network port can send, it takes the next frame in this order:
 | --- | --- |
 | `StrictPriority` (default) | The highest-numbered class with a packet waiting. |
 | `RoundRobin` | One packet from each class in turn, starting after the class served last. |
-| `WeightedRoundRobin` | Up to `WRRQueueWeights[c]` packets from class c, then the next class's turn. Turns start at the highest-numbered class and continue from class 0 upward, wrapping around; a class with nothing to send, or paused, gives up its turn. |
+| `WeightedRoundRobin` | Up to `WRRQueueWeights[c]` packets from class c, then the next class's turn; give each queue pair's data class and control class a weight of at least 1. Turns start at the highest-numbered class and continue from class 0 upward, wrapping around; a class with nothing to send, or paused, gives up its turn. |
 
 With the default `StrictPriority`, and the default data class 0 and control class 1, ACKs and NAKs are sent ahead of waiting data. `WRRQueueWeights` applies only with `WeightedRoundRobin`: with the default weights `[1, 3, 0, 0, 0, 0, 0, 0]`, class 1 sends up to three packets for each packet of class 0.
 
 ## Receive buffer
 
-Each packet the NIC receives is charged to the ingress pool of its traffic class, taken from the packet's DSCP. It stays charged until the NIC has handed it to the host interface, that is, until the PCIe transmit buffer accepts the write of its payload to host memory. Pool occupancy is therefore the received data the NIC holds for the host. It grows when the network delivers faster than the PCIe link can write, and it is what the PFC thresholds are compared with ([PFC](#pfc)). A packet that arrives when its pool cannot hold it is dropped and counted in `rx_drops`.
+Each packet the NIC receives is charged to the ingress pool of its traffic class, taken from the packet's DSCP. A data packet stays charged until the NIC has handed it to the host interface, that is, until the PCIe transmit buffer accepts the write of its payload to host memory, or until the NIC discards it. Pool occupancy is therefore the received data the NIC holds for the host. It grows when the network delivers faster than the PCIe link can write, and it is what the PFC thresholds are compared with ([PFC](#pfc)). A packet that arrives when its pool cannot hold it is dropped and counted in `rx_drops`.
 
-Received packets are written to the host in the order they arrive, whatever their traffic class. The ingress `QueueSchedulingType` and `WRRQueueWeights` don't change that order. The order in which traffic classes leave the NIC is set by the egress buffer's scheduling ([Transmit scheduling](#transmit-scheduling)).
+Received data packets are written to the host in the order they arrive, whatever their traffic class. The ingress `QueueSchedulingType` and `WRRQueueWeights` don't change that order. The order in which traffic classes leave the NIC is set by the egress buffer's scheduling ([Transmit scheduling](#transmit-scheduling)).
 
 A packet is charged its size without the Ethernet header and frame check sequence: 4,136 bytes for a data packet at `MSS` 4096. Received ACKs, NAKs, and congestion notification packets are charged on arrival and released as soon as the NIC has processed them. PFC frames are never charged.
 

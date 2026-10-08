@@ -32,7 +32,7 @@ The `NetworkInterface` component holds four sub-components: `UplinkNetworkInterf
 
 | Attribute | Type | Default | Description |
 | --- | --- | --- | --- |
-| `DataRate` | `datarate` | `400Gbps` | Line rate of the NIC's port. Every frame the NIC sends goes out at this rate, except a congested queue pair's data, which goes out at that queue pair's allowed rate ([Congestion control](./congestion-control.md#how-the-rate-is-applied)). It is also the base of the PFC pause time and of the congestion control floor. |
+| `DataRate` | `datarate` | `400Gbps` | Rate of the NIC's port. The link to the rack switch runs at the lower of this rate and the `DataRate` of the rack switch's `DownlinkNetworkInterface` ([Scala Switch configuration](../scala-switch/configuration.md#downlinknetworkinterface)). That lower rate is the NIC's line rate, and every other mention of `DataRate` on these pages means line rate. Every frame the NIC sends goes out at line rate, except a congested queue pair's data, which goes out at that queue pair's allowed rate ([Congestion control](./congestion-control.md#how-the-rate-is-applied)). Line rate is also the base of the PFC pause time and of the congestion control floor. |
 
 ### TransmissionMedium
 
@@ -47,7 +47,7 @@ The receive buffer. [Receive buffer](./buffers-and-pfc.md#receive-buffer) and [P
 | Attribute | Type | Default | Description |
 | --- | --- | --- | --- |
 | `TotalBufferSize` | `bytes` | `4MB` | Total size of the receive buffer. Each traffic class's receive pool is its `PoolAllocationVector` entry times this size. |
-| `QueueSchedulingType` | `string` | `StrictPriority` | Accepts `StrictPriority`, `RoundRobin`, or `WeightedRoundRobin`. Received packets are written to the host in arrival order with any of them ([Receive buffer](./buffers-and-pfc.md#receive-buffer)). |
+| `QueueSchedulingType` | `string` | `StrictPriority` | Accepts `StrictPriority`, `RoundRobin`, or `WeightedRoundRobin`. Received data packets are written to the host in arrival order with any of them ([Receive buffer](./buffers-and-pfc.md#receive-buffer)). |
 | `PoolAllocationVector` | `string` | `[0.9, 0.1, 0, 0, 0, 0, 0, 0]` | Fraction (0.0 to 1.0) of `TotalBufferSize` that each traffic class gets as its receive pool; the index is the traffic class. The non-zero entries must come first, from class 0 with no `0` between them; the classes after them have no receive pool. The pools are sized independently, so entries that sum to more than 1 allocate more than `TotalBufferSize` ([Buffer pools](./buffers-and-pfc.md#buffer-pools)). |
 | `PFCEnableVector` | `string` | `[1, 1, 0, 0, 0, 0, 0, 0]` | Which traffic classes the NIC sends PFC pause frames for: `1` enables PFC for the class at that index, and any other value leaves it disabled. The NIC honors pause frames it receives for every class, whatever this says. |
 | `WRRQueueWeights` | `string` | `[1, 3, 0, 0, 0, 0, 0, 0]` | Weights for `WeightedRoundRobin`, one per traffic class. They don't change the order of received packets ([Receive buffer](./buffers-and-pfc.md#receive-buffer)). |
@@ -64,7 +64,7 @@ The transmit buffer. [Egress buffer](./buffers-and-pfc.md#egress-buffer) and [Tr
 | `TotalBufferSize` | `bytes` | `256KB` | Total size of the transmit buffer. Each traffic class's transmit pool is its `PoolAllocationVector` entry times this size. |
 | `QueueSchedulingType` | `string` | `StrictPriority` | How the network port chooses the next traffic class to send: `StrictPriority` (highest-numbered class first), `RoundRobin`, or `WeightedRoundRobin`. PFC and congestion notification frames always go first ([Transmit scheduling](./buffers-and-pfc.md#transmit-scheduling)). |
 | `PoolAllocationVector` | `string` | `[0.9, 0.1, 0, 0, 0, 0, 0, 0]` | Fraction (0.0 to 1.0) of `TotalBufferSize` that each traffic class gets as its transmit pool; the index is the traffic class. The non-zero entries must come first, from class 0 with no `0` between them. Each queue pair's data class needs a pool of at least one full packet, and its control class a pool ([Egress buffer](./buffers-and-pfc.md#egress-buffer)). A pool bounds the data of its class the NIC has fetched from the host and not yet sent. The pools are sized independently. |
-| `WRRQueueWeights` | `string` | `[1, 3, 0, 0, 0, 0, 0, 0]` | With `WeightedRoundRobin`, the most packets each traffic class sends in one turn; the index is the traffic class. Not used by the other scheduling types. |
+| `WRRQueueWeights` | `string` | `[1, 3, 0, 0, 0, 0, 0, 0]` | With `WeightedRoundRobin`, the most packets each traffic class sends in one turn; the index is the traffic class. Give each queue pair's data class and control class a weight of at least 1 ([Queue pairs and messages](./transport.md#queue-pairs-and-messages)). Not used by the other scheduling types. |
 
 ## Host interface
 
@@ -84,8 +84,8 @@ On the NIC's end of the link, each attribute's path in the NIC's `typedParameter
 | --- | --- | --- | --- |
 | `RXHeaderBufferSize` | `queuesize` | `16KB` | Size of the transaction-layer buffers for the headers of transfers the NIC receives from the host. |
 | `TXHeaderBufferSize` | `queuesize` | `16KB` | Size of the transaction-layer buffers for the headers of transfers the NIC sends to the host. |
-| `RXDataBufferSize` | `queuesize` | `256KB` | Size of the transaction-layer buffers for the payload of transfers the NIC receives from the host. |
-| `TXDataBufferSize` | `queuesize` | `256KB` | Size of the transaction-layer buffers for the payload of transfers the NIC sends to the host, among them the writes that deliver received data. |
+| `RXDataBufferSize` | `queuesize` | `256KB` | Size of transaction-layer buffers for transfer payload on the NIC's end of the link. `RXDataBufferSize` and `TXDataBufferSize` together size the payload buffers in both directions. |
+| `TXDataBufferSize` | `queuesize` | `256KB` | Size of transaction-layer buffers for transfer payload on the NIC's end of the link. `RXDataBufferSize` and `TXDataBufferSize` together size the payload buffers in both directions. |
 | `LaneBps` | `datarate` | `31.52Gbps` | Rate of one PCIe lane in the NIC-to-host direction. Any rate can be set, so the link can represent any PCIe generation. |
 | `LaneCount` | `uint` | `16` | Number of PCIe lanes, `1` to `16`. The NIC-to-host direction runs at `LaneCount` × `LaneBps`. |
 | `ReadRequestSize` | `bytes` | `64B` | Size of each PCIe read request the NIC sends to fetch a segment's payload from host memory, one request per segment. It is the request's own cost on the NIC-to-host direction, not the size of the data it fetches. |
@@ -101,8 +101,8 @@ On the host's end of the link:
 | --- | --- | --- | --- |
 | `RXHeaderBufferSize` | `queuesize` | `16KB` | Size of the transaction-layer buffers for the headers of transfers the host receives from the NIC. |
 | `TXHeaderBufferSize` | `queuesize` | `16KB` | Size of the transaction-layer buffers for the headers of transfers the host sends to the NIC. |
-| `RXDataBufferSize` | `queuesize` | `256KB` | Size of the transaction-layer buffers for the payload of transfers the host receives from the NIC. |
-| `TXDataBufferSize` | `queuesize` | `256KB` | Size of the transaction-layer buffers for the payload of transfers the host sends to the NIC, among them the payload the NIC fetches. |
+| `RXDataBufferSize` | `queuesize` | `256KB` | Size of transaction-layer buffers for transfer payload on the host's end of the link. `RXDataBufferSize` and `TXDataBufferSize` together size the payload buffers in both directions. |
+| `TXDataBufferSize` | `queuesize` | `256KB` | Size of transaction-layer buffers for transfer payload on the host's end of the link. `RXDataBufferSize` and `TXDataBufferSize` together size the payload buffers in both directions. |
 | `LaneBps` | `datarate` | `31.52Gbps` | Rate of one PCIe lane in the host-to-NIC direction. |
 | `LaneCount` | `uint` | `16` | Number of PCIe lanes, `1` to `16`. The host-to-NIC direction runs at `LaneCount` × `LaneBps`. |
 
