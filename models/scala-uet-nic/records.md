@@ -173,7 +173,7 @@ The monitor's settings take effect once per simulator process, from one UET NIC:
 **Triggers.** A trigger selects a connection, both of its PDC ends, from the packet that meets it, and the connection stays selected for the rest of the run:
 
 - `TriggerLoggingOnRttEnable` fires on a received ACK whose RTT sample is at or above `TriggerLoggingOnRttThreshold`. Only rows for received ACKs carry an RTT.
-- `TriggerLoggingOnCWindPen` fires on a receiver penalty at or above `TriggerLoggingOnCWindPenThreshold`: the penalty an ACK carries, or, for a data packet the sender sends, the latest penalty it has received. At the default PCIe settings the penalty stays 0, so this trigger does not fire in a default run.
+- `TriggerLoggingOnCWindPen` fires on a receiver penalty at or above `TriggerLoggingOnCWindPenThreshold`: the penalty an ACK carries, or, for a data packet the sender sends, the latest penalty it has received. At the default PCIe settings the penalty stays 0, so with a threshold above 0 this trigger does not fire in a default run.
 
 The two triggers share one budget for each simulator process, `TriggeredLoggingPDCLimit` connections. Once it is spent, the triggers select no more connections, and packets of other connections are logged only if the filters select them, with `EnableUETMonitor` `true`.
 

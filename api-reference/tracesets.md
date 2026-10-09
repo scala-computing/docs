@@ -426,7 +426,7 @@ Creates a traceset record and returns presigned S3 multipart upload URLs for eac
 
 <span class="api-method api-method-post">POST</span> `/api/v1/tracesets/upload-url/complete`
 
-Finalizes a multipart upload session by providing the ETags returned by S3 for all uploaded parts. The traceset is `ready` when this returns, every file reports `metadataStatus` `complete`, and the platform does not process the trace files: the rank count is the one declared at upload. With exactly one `primary` file, that file reports `rankRange` 0 to N−1 for N declared ranks. Returns 201 on first completion or 200 on idempotent retry.
+Finalizes a multipart upload session by providing the ETags returned by S3 for all uploaded parts. The traceset is `ready` when this returns, every file reports `metadataStatus` `complete`, and the platform does not process the trace files: the rank count is the one declared at upload. With exactly one `primary` file, that file reports `rankRange` 0 to N−1 for N declared ranks. Returns 201 on first completion or 200 on idempotent retry. The completion keeps running if this request times out (408) or disconnects: retry the same request, which answers 409 while the completion runs, then 200 once it has finished or 400 if it failed.
 
 ### Request Body
 
@@ -510,12 +510,33 @@ Finalizes a multipart upload session by providing the ETags returned by S3 for a
 }
 ```
 
+**409** - The upload session is being completed by another request, or by an earlier request that timed out; retry until it answers 200, or 400 if the completion failed (open a new upload session)
+
+```json
+{
+  "error": {
+    "message": "Upload session is already being completed by another request"
+  }
+}
+```
+
 **410** - Upload session expired
 
 ```json
 {
   "error": {
     "message": "Upload session 'upload_ghi789' has expired"
+  }
+}
+```
+
+**413** - An uploaded file is larger than the size declared for it at upload-url; its staged object is deleted and the upload session fails, so open a new upload session
+
+```json
+{
+  "error": {
+    "code": "PAYLOAD_TOO_LARGE",
+    "message": "File rank_0.chakra.json is 2097152 bytes, larger than its declared size of 1048576 bytes"
   }
 }
 ```

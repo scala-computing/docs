@@ -39,7 +39,7 @@ The host posts each message as a work request, a SEND or a WRITE of a given numb
 Two rules shape how messages share the NIC:
 
 1. **One message at a time per queue pair.** A queue pair's packets in flight always belong to one message. Its next message starts only when every packet of the current one has been acknowledged, so consecutive messages on one queue pair are separated by at least a round trip. Several queue pairs are needed to keep messages overlapping.
-2. **Ready queue pairs take turns, one packet each.** The NIC serves its ready queue in order: it takes one segment from the queue pair at the head, then moves that queue pair to the tail if it has more of the message to send. Within a message there is no limit on the number of packets outstanding, that is, given a PSN and not yet acknowledged. What bounds the data in flight is the space in the egress pool ([Egress buffer](./buffers-and-pfc.md#egress-buffer)) and, under congestion, the queue pair's allowed rate ([Congestion control](./congestion-control.md)).
+2. **Ready queue pairs take turns, one packet each.** The NIC serves its ready queue in order: it takes one segment from the queue pair at the head, then moves that queue pair to the tail if it has more of the message to send. Within a message there is no limit on the number of packets outstanding, that is, given a PSN and not yet acknowledged. A queue pair sends as fast as the egress pool of its data class lets the NIC fetch its payload ([Egress buffer](./buffers-and-pfc.md#egress-buffer)) and, while the queue pair is congested, as fast as its allowed rate lets the port send its packets ([Congestion control](./congestion-control.md)).
 
 ## Segmentation
 
