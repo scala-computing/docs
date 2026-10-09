@@ -109,7 +109,7 @@ These attributes sit under `TransportProcessingLayers` → `PacketSpraying` → 
 
 | Attribute | Type | Default | Description |
 | --- | --- | --- | --- |
-| `REPSBufferSizeMaskBits` | `uint` | `3` | `0` to `16`. The load balancer keeps 2^`REPSBufferSizeMaskBits` entropy values that ACKs have reported as uncongested, 8 at the Default, and reuses the oldest for the next data packet. After freezing, one data packet in every 2^`REPSBufferSizeMaskBits` explores a new value ([Freezing and exploration](./multipath.md#freezing-and-exploration)). |
+| `REPSBufferSizeMaskBits` | `uint` | `3` | `0` to `16`. The load balancer keeps 2^`REPSBufferSizeMaskBits` entropy values that ACKs have reported as uncongested, 8 at the Default, and reuses the oldest for the next data packet. In the exploration window that follows freezing, one data packet in every 2^`REPSBufferSizeMaskBits` explores a new value ([Freezing and exploration](./multipath.md#freezing-and-exploration)). |
 | `EntropyValueSetSize` | `uint` | `65536` | `1` to `65536`. Exploring draws an entropy value at random from 0 to this value minus 1: 0 to 65,535 at the Default. `StartingPortOffset` does not apply. |
 | `FreezingTimeout` | `timeval` | `100us` | Shortest time the load balancer stays in freezing after a timeout on a path, from the retransmission timer or early failure detection. It leaves freezing when it next recycles a value after this time, normally on an ACK without the ECN echo; while freezing it reuses the values it holds and, once it has cached one, does not explore ([Freezing and exploration](./multipath.md#freezing-and-exploration)). |
 
@@ -166,7 +166,7 @@ Each filter matches exactly, and every filter that is not `All` must match: the 
 | `FilterOnPdc` | `string` | `All` | `All`, or one PDC id in the form `<IPv4>:<PDC id>`, for example `32.0.0.2:4500`, where the number after the colon is a PDC id, not a port: selects the packets of the PDC whose local or remote id it is. |
 | `TriggerLoggingOnRttEnable` | `bool` | `false` | When `true`, a connection whose sender measures an RTT at or above `TriggerLoggingOnRttThreshold` is selected for logging, within the `TriggeredLoggingPDCLimit` budget, and logged for the rest of the run. |
 | `TriggerLoggingOnRttThreshold` | `timeval` | `100us` | RTT at or above which `TriggerLoggingOnRttEnable` selects a connection. |
-| `TriggerLoggingOnCWindPen` | `bool` | `false` | When `true`, a connection on which a receiver penalty at or above `TriggerLoggingOnCWindPenThreshold` is seen is selected for logging, within the `TriggeredLoggingPDCLimit` budget, and logged for the rest of the run. At the default PCIe settings the penalty stays 0, so this trigger does not fire in a default run. |
+| `TriggerLoggingOnCWindPen` | `bool` | `false` | When `true`, a connection on which a receiver penalty at or above `TriggerLoggingOnCWindPenThreshold` is seen is selected for logging, within the `TriggeredLoggingPDCLimit` budget, and logged for the rest of the run. At the default PCIe settings the penalty stays 0, so with a threshold above 0 this trigger does not fire in a default run. |
 | `TriggerLoggingOnCWindPenThreshold` | `uint` | `127` | `0` to `127`. Receiver penalty at or above which `TriggerLoggingOnCWindPen` selects a connection; `127` is the full penalty. |
 | `TriggeredLoggingPDCLimit` | `uint` | `1` | `0` to `100`. The most connections the two triggers together can select in one simulator process. |
 
@@ -295,7 +295,7 @@ A configuration write returns 400 when a value breaks the rules in [Change value
 `POST /api/v1/configurations/{config_id}/validate` returns the configuration's validation errors and warnings. A configuration with a Scala UET NIC is `invalid` when:
 
 - A server with a Scala UET NIC runs an application other than the Chakra workload or the Scala RDMA application.
-- A switch has `UETPolicyEnabled` set to `true` and the configuration places a NIC other than the Scala UET NIC anywhere in the topology. Switch packet trimming also needs the UET policy, and PFC off for every class on that switch ([Configuration rules that stop a simulation](../scala-switch/configuration.md#configuration-rules-that-stop-a-simulation)).
+- A switch has `UETPolicyEnabled` set to `true` and the configuration places a NIC other than the Scala UET NIC or the MRC NIC anywhere in the topology. Switch packet trimming also needs the UET policy, and PFC off for every class on that switch ([Configuration rules that stop a simulation](../scala-switch/configuration.md#configuration-rules-that-stop-a-simulation)).
 - `LaneCount` is outside `1` to `16`.
 
 The validation also warns, without making the configuration `invalid`, when a NIC's `PacketSprayingType` is `Recycled Entropy Packet Spraying` and a switch's `LoadBalancingMethod` is `flowlet`.

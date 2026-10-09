@@ -30,7 +30,7 @@ Each queue pair has its own rate and its own loop. A queue pair starts at line r
 | Term | Meaning |
 | --- | --- |
 | Line rate | The NIC's `DataRate`. A queue pair that is not congested sends at line rate. |
-| Current rate | The rate a queue pair's data packets are sent at. Reductions lower it; increases move it toward the target rate. |
+| Current rate | The rate a queue pair's data packets are sent at. The reduction that begins an episode, and each reduction made during fast recovery, cut it; each reduction made during additive increase, and every increase, move it halfway toward the target rate. |
 | Target rate | The rate an increase moves the current rate toward. It is set when an episode begins; during additive increase, an increase raises it by the additive step and a reduction lowers it by one additive step. |
 | Episode | The time a queue pair is congested: from the CNP that finds it not congested until an increase brings it back within 0.1 Gbps of line rate. |
 | Control interval | `ControlIntervalDurationNs`, 45 µs by default. Each interval holds one reduction half and one increase half. |
@@ -65,8 +65,8 @@ The loop runs per queue pair while that queue pair is congested. It has these st
 1. **CNP reception starts an episode.** When a CNP arrives for a queue pair that is not congested, the loop runs at once, starting with a reduction. The queue pair is congested from then on, and its target rate is set to the rate it had when the episode began.
 2. **The control interval.** The loop then runs every half `ControlIntervalDurationNs`, alternating a reduction half and an increase half, so each control interval of 45 µs by default holds one of each. The CNP and packet counts are cleared after each reduction half, so each interval counts afresh.
 3. **The congestion estimate.** Every run of the loop updates the queue pair's congestion estimate, a moving average of how strongly the queue pair's traffic is being marked, taken from the CNPs it received and the packets it sent in the current interval. `CongestionProbabilityWeight` is the weight each new interval carries in the average: a higher weight makes the estimate rise faster and forget earlier congestion sooner.
-4. **Reduction.** In a reduction half that saw at least one CNP, the queue pair's rate is reduced. On the reduction that begins an episode, and during fast recovery, the current rate is cut by a fraction set by the congestion estimate, at most half, and the recovery count goes back to 0. Once the queue pair has moved on to additive increase, a reduction instead lowers the target rate by one additive step, sets the current rate halfway between the two, and takes one off the recovery count. When the count falls below `FastRecoveryAttempt`, the queue pair is back in fast recovery: its next increase leaves the target rate alone, and a reduction that comes before increases bring the count back to `FastRecoveryAttempt` is a fast recovery reduction. Under sustained CNPs, reductions outnumber increases (step 5), so the queue pair returns to fast recovery. A reduction half with no CNP leaves the rate alone.
-5. **Increase.** An increase half that has seen no CNP since the last reduction half raises the rate. An increase half that did see CNPs raises it only on every (`NumOfControlLoopsPerIncrease` + 1)-th such half, every sixth at the default 5.
+4. **Reduction.** In a reduction half that saw at least one CNP, the queue pair makes a reduction. On the reduction that begins an episode, and during fast recovery, the current rate is cut by a fraction set by the congestion estimate, at most half, and the recovery count goes back to 0. Once the queue pair has moved on to additive increase, a reduction instead first lowers the target rate by one additive step, then moves the current rate halfway toward the new target rate, and takes one off the recovery count. When the count falls below `FastRecoveryAttempt`, the queue pair is back in fast recovery: its next increase leaves the target rate alone, and a reduction that comes before increases bring the count back to `FastRecoveryAttempt` is a fast recovery reduction. A reduction half with no CNP leaves the rate alone.
+5. **Increase.** An increase half that has seen no CNP since the last reduction half makes an increase. An increase half that did see CNPs makes one only on every (`NumOfControlLoopsPerIncrease` + 1)-th such half, every sixth at the default 5.
 6. **Fast recovery.** While the recovery count is below `FastRecoveryAttempt`, each increase moves the current rate halfway toward the target rate, without changing the target, and adds one to the count. Each halves the gap between them.
 7. **Additive increase.** Once the recovery count reaches `FastRecoveryAttempt`, each further increase first raises the target rate by the additive step, up to line rate, and then moves the current rate halfway toward it. The step is fixed when the episode begins:
 
@@ -84,7 +84,7 @@ flowchart TB
   C["CNP for a queue pair that is not congested"] --> E["Start an episode: target rate = current rate; additive step fixed"]
   E --> RH["Reduction half"]
   RH --> RC{"CNP in this interval?"}
-  RC -->|"yes"| RD["Reduce the rate"]
+  RC -->|"yes"| RD["Make a reduction"]
   RC -->|"no"| W1["Leave the rate"]
   RD --> IH["Increase half, ControlIntervalDurationNs / 2 later"]
   W1 --> IH
@@ -111,11 +111,11 @@ All of these sit in the `ECNHandler` component and apply to every queue pair on 
 | --- | --- | --- |
 | `EnableECN` | `true` | Turns the NIC's part as a sender on: data is sent ECT(0), and CNPs drive the loop. With `false`, data is sent Not-ECT, CNPs are ignored, and every queue pair runs at line rate. |
 | `ControlIntervalDurationNs` | `45000` | Length of the control interval in nanoseconds. The loop runs every half interval, alternating reduction and increase, and the CNP and packet counts cover one interval. |
-| `CongestionProbabilityWeight` | `0.5` | Weight of each new interval in the congestion estimate's moving average. A higher weight makes the estimate, and so each reduction, respond faster to marks, and forget them sooner. |
+| `CongestionProbabilityWeight` | `0.5` | Weight of each new interval in the congestion estimate's moving average. A higher weight makes the estimate, and so the cut at the start of an episode and each cut during fast recovery, respond faster to marks, and forget them sooner. |
 | `FastRecoveryAttempt` | `3` | Recovery count at which fast recovery gives way to additive increase: the number of fast-recovery increases after a reduction that sets the count to 0. |
 | `InitialTargetRatePercentage` | `0.90` | Sizes the additive step: the step is `(1 − InitialTargetRatePercentage)` of the target rate at the start of the episode, divided by `NumberActiveIncreaseSteps`. It does not set a starting rate: the episode's first target is the rate the queue pair had when it began. |
-| `NumberActiveIncreaseSteps` | `10` | Divisor of the additive step: more steps mean a smaller step, and a slower climb in additive increase. |
-| `NumOfControlLoopsPerIncrease` | `5` | While CNPs keep arriving, the rate is raised only on every (this value + 1)-th increase half that saw CNPs. |
+| `NumberActiveIncreaseSteps` | `10` | Divisor of the additive step. More steps mean a smaller step: the most each increase during additive increase raises the target rate, and the amount each reduction during additive increase lowers the target rate. |
+| `NumOfControlLoopsPerIncrease` | `5` | While CNPs keep arriving, an increase is made only on every (this value + 1)-th increase half that saw CNPs. |
 | `MinimumRatePercentage` | `0.10` | Floor of the rate while congested, as a fraction of `DataRate`. |
 
 ## Worked example: the loop's timing and steps at the defaults

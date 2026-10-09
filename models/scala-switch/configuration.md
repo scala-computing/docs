@@ -168,6 +168,7 @@ The switch checks these rules before or as the simulation starts, and stops the 
 - `LoadBalancingMethod` is `flowlet` and `EcmpHashMethod` is `dpr` or `dprWithFallback`.
 - `Gap` is outside `0s` to `2s`. This is checked whenever the configuration carries the `LoadBalancingFlowlet` component, whatever the method.
 - `LoadBalancingStatsReportInterval` is below `10us`.
+- `UETPolicyEnabled` is `true` on any switch and the topology places a NIC other than the Scala UET NIC or the MRC NIC. Under the UET policy the switch takes each packet's traffic class from its DSCP codepoint, which those two NICs send ([Buffer under the UET policy](./shared-buffer.md#buffer-under-the-uet-policy)).
 - `TrimmingEnabled` is `true` and `UETPolicyEnabled` is `false`. Packet trimming runs only under the UET policy.
 - `TrimmingEnabled` is `true` and any entry of `EnablePFC` is `1`. Trimming cannot be combined with PFC. The default `EnablePFC` enables TC0 and TC1, so set every entry to `0` before turning trimming on.
 

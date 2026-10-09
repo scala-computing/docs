@@ -38,7 +38,7 @@ The `NetworkInterface` component holds four sub-components: `UplinkNetworkInterf
 
 | Attribute | Type | Default | Description |
 | --- | --- | --- | --- |
-| `Delay` | `timeval` | `100ns` | Propagation delay of the link between the NIC and its rack switch: a frame arrives this long after its serialization ends. It is also added to the PFC pause time the NIC computes ([PFC](./buffers-and-pfc.md#pfc)). |
+| `Delay` | `timeval` | `100ns` | Propagation delay of the link between the NIC and its rack switch: a frame arrives this long after its serialization ends. The link takes its delay from the NIC; the rack switch's own `Delay` does not apply to it. This delay is also added to the PFC pause time the NIC computes ([PFC](./buffers-and-pfc.md#pfc)). |
 
 ### IngressBufferManager
 
@@ -53,7 +53,7 @@ The receive buffer. [Receive buffer](./buffers-and-pfc.md#receive-buffer) and [P
 | `WRRQueueWeights` | `string` | `[1, 3, 0, 0, 0, 0, 0, 0]` | Weights for `WeightedRoundRobin`, one per traffic class. They don't change the order of received packets ([Receive buffer](./buffers-and-pfc.md#receive-buffer)). |
 | `PfcStaticXoffThreshold` | `string` | `[0.8, 0.8, 0, 0, 0, 0, 0, 0]` | Fraction of each class's receive pool at which the NIC sends a PFC pause frame: when the pool's occupancy, with an arriving packet, reaches it. The rest of the pool above it is headroom for what arrives after the pause ([Sizing the headroom](./buffers-and-pfc.md#sizing-the-headroom)). |
 | `PfcXonResumeThreshold` | `string` | `[0.4, 0.4, 0, 0, 0, 0, 0, 0]` | Fraction of each class's receive pool at or below which the NIC sends XON as received data drains to the host. At each refresh of a pause, every half pause time, the NIC also sends XON once occupancy is below the Xoff threshold ([Resuming](./buffers-and-pfc.md#resuming)). Set it below `PfcStaticXoffThreshold`: with Xon at or above Xoff, the NIC resumes the switch almost as soon as it pauses it. |
-| `QuantaValue` | `string` | `[65535, 65535, 0, 0, 0, 0, 0, 0]` | Pause quanta the NIC requests in each pause frame it sends for a class. One quantum is 512 bit times, so 65535 quanta pause a 400 Gbps port for 83.9 µs plus the link's propagation delay. The NIC also re-checks the pause every half of this time, measured at its own `DataRate` with the link's `Delay` added. |
+| `QuantaValue` | `string` | `[65535, 65535, 0, 0, 0, 0, 0, 0]` | Pause quanta the NIC requests in each pause frame it sends for a class. One quantum is 512 bit times, so 65535 quanta pause a 400 Gbps port for 83.9 µs plus the link's propagation delay. The NIC also re-checks the pause every half of this time, measured at line rate with the link's `Delay` added. |
 
 ### EgressBufferManager
 
@@ -127,7 +127,7 @@ The `ScalaRoceQpManager` component manages the NIC's queue pairs.
 
 | Attribute | Type | Default | Description |
 | --- | --- | --- | --- |
-| `MSS` | `bytes` | `4096B` | Largest payload of one data packet. A message of N bytes is sent as `ceil(N ÷ MSS)` packets, each `MSS` + 58 bytes on the wire at most. `MSS` must be from 1 to 9,216 bytes, and `MSS` + 58 bytes must be smaller than the configuration's global `Mtu` ([Segmentation](./transport.md#segmentation)). |
+| `MSS` | `bytes` | `4096B` | Largest payload of one data packet. A message of N bytes is sent as `ceil(N ÷ MSS)` packets, each `MSS` + 58 bytes on the wire at most; a message of 0 bytes is sent as one packet. `MSS` must be from 1 to 9,216 bytes, and `MSS` + 58 bytes must be smaller than the configuration's global `Mtu` ([Segmentation](./transport.md#segmentation)). |
 
 ## ECNHandler
 
@@ -137,12 +137,12 @@ The `ECNHandler` component holds the rate control loop's settings, which apply t
 | --- | --- | --- | --- |
 | `EnableECN` | `bool` | `true` | When `true`, data is sent ECN-capable, ECT(0), and the CNPs a queue pair receives drive its rate control loop. When `false`, data is sent Not-ECT, so switches do not mark it, CNPs are ignored, and every queue pair runs at line rate. The NIC sends CNPs for CE-marked packets it receives either way. |
 | `MinimumRatePercentage` | `double` | `0.10` | Floor of a congested queue pair's rate, as a fraction (0.0 to 1.0) of `DataRate`. |
-| `FastRecoveryAttempt` | `uint` | `3` | Number of fast-recovery increases after the reduction that begins an episode or a reduction made during fast recovery, each moving the rate halfway toward the target, before additive increase begins. Reductions during additive increase count back down toward fast recovery ([The rate control loop](./congestion-control.md#the-rate-control-loop)). |
+| `FastRecoveryAttempt` | `uint` | `3` | Each queue pair keeps a recovery count: the reduction that begins an episode, and each reduction made during fast recovery, set it to 0; each increase adds one; each reduction made during additive increase takes one off. While the count is below this value, the queue pair is in fast recovery; at or above it, the queue pair is in additive increase ([The rate control loop](./congestion-control.md#the-rate-control-loop)). |
 | `InitialTargetRatePercentage` | `double` | `0.90` | Sizes the additive step of an episode: one minus this value, times the target rate at the start of the episode, divided by `NumberActiveIncreaseSteps`. The episode's first target rate is the rate the queue pair had when it began. |
-| `NumberActiveIncreaseSteps` | `uint` | `10` | Divisor of the additive step. More steps mean a smaller step and a slower climb back to line rate. |
+| `NumberActiveIncreaseSteps` | `uint` | `10` | Divisor of the additive step. More steps mean a smaller step: the most each increase during additive increase raises the target rate, and the amount each reduction during additive increase lowers the target rate. |
 | `ControlIntervalDurationNs` | `uint` | `45000` | Length of the control interval, in nanoseconds. The loop runs every half interval, alternating a reduction half and an increase half, and counts CNPs and packets over one interval. |
 | `CongestionProbabilityWeight` | `double` | `0.5` | Weight of each new interval in the moving average of the congestion estimate. The higher the weight, the faster the estimate rises with marks and the sooner it forgets them. |
-| `NumOfControlLoopsPerIncrease` | `uint` | `5` | While CNPs keep arriving, the rate is raised only on every (this value + 1)-th increase half that saw CNPs. |
+| `NumOfControlLoopsPerIncrease` | `uint` | `5` | While CNPs keep arriving, an increase is made only on every (this value + 1)-th increase half that saw CNPs. |
 
 ## Setting attributes through the platform
 
