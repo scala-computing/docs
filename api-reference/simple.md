@@ -255,6 +255,8 @@ Validates the workload against operation/algorithm compatibility rules, resolves
 
 **401** - Missing or invalid authentication token
 
+**503** - Service Unavailable - the simulation service could not start the simulation. No simulation is created, so the request can be retried.
+
 ---
 
 ## Preview the derived topology for a simple simulation request

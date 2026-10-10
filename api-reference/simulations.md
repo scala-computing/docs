@@ -147,7 +147,7 @@ Creates and starts a new simulation based on the specified configuration. The si
 }
 ```
 
-**400** - Bad Request - Invalid simulation parameters
+**400** - Bad Request; no simulation is created. Code VALIDATION_ERROR when the simulation parameters are invalid. Code LAUNCH_CONFIG_INVALID when the configuration could not be prepared for the simulator: the message says why, and resubmitting it unchanged fails again.
 
 **402** - Payment Required - the platform's credit balance is exhausted. Add credits before launching simulations.
 
@@ -155,7 +155,9 @@ Creates and starts a new simulation based on the specified configuration. The si
 
 **409** - Conflict; no simulation is created. Code CONFLICT when a simulation with this name already exists in the workspace: choose another name. Code MAPPING_FILE_DELETED_REFERENCE when the Chakra mapping file attached to the configuration has been deleted: the message names the file. Detach it, or attach another mapping file, and create the simulation again.
 
-**422** - Configuration is not validated — must have status `validated` before starting a simulation
+**422** - No simulation is created. Code UNPROCESSABLE_ENTITY when the configuration is not validated: it must have status `validated` before starting a simulation. Code LAUNCH_REJECTED when the simulator rejected the configuration: resubmitting it unchanged fails again.
+
+**503** - Service Unavailable - the simulation service could not start the simulation. No simulation is created, so the request can be retried.
 
 ---
 
@@ -474,7 +476,7 @@ Computes or retrieves cached summary statistics for simulation result CSV files 
 |------|-----|------|----------|-------------|
 | `sim_id` | path | string | Yes | Simulation ID in sim_xxx format (base32-encoded UUID with prefix) |
 | `metric` | query | string (enum) | Yes | Metric type to summarize. `rank-analysis` is published but returns 501 Not Implemented until its compute path ships. `uet-transport-stats` and `roce-transport-stats` are published: both serve `timeSeries` and return 501 for `summary` and `sampled` until those compute paths ship. |
-| `mode` | query | string (enum) | No | Output mode (default: summary). `timeSeries` is served for `nd-stats`, `pfc`, `uet-transport-stats` and `roce-transport-stats` and returns 501 Not Implemented for the other metrics; `sampled` is published but returns 501 Not Implemented until its compute path ships. `utilizationBins` (a binned distribution of link utilization over time) is offered for `nd-stats` only: every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, a permanent answer that must not be retried, and `nd-stats` returns 501 Not Implemented until the document is served. `uplinkFairness` (uplink port fairness per switch over time) is offered for `nd-stats` only in the same way: every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, and `nd-stats` returns 501 Not Implemented until the document is served. `completionTimeBins` (a binned distribution of completion times over time) is offered on the Performance projection: `perf` and `chakra-perf` return 501 Not Implemented until the document is served, and every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, a permanent answer that must not be retried. |
+| `mode` | query | string (enum) | No | Output mode (default: summary). `timeSeries` is served for `nd-stats`, `pfc`, `uet-transport-stats` and `roce-transport-stats` and returns 501 Not Implemented for the other metrics; `sampled` is published but returns 501 Not Implemented until its compute path ships. `utilizationBins` (a binned distribution of link utilization over time) is offered for `nd-stats` only: every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, a permanent answer that must not be retried, and for `nd-stats` the response's `file` presigns a `UtilizationBinsDocument`. `uplinkFairness` (uplink port fairness per switch over time) is offered for `nd-stats` only in the same way: every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, and for `nd-stats` the response's `file` presigns an `UplinkFairnessDocument`. `completionTimeBins` (a binned distribution of completion times over time) is offered on the Performance projection: `perf` returns the envelope whose presigned URL serves a `CompletionTimeBinsDocument`; `chakra-perf` returns 404 Not Found, as a run with no result shards does, because this shape does not bin its completions; and every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, a permanent answer that must not be retried. |
 | `tier` | query | string (enum) | No | Tier filter for network device results (default: all) |
 | `nodeId` | query | array | No | Filter to these node ids. Comma-separated on the wire. An empty list is not accepted — omit the parameter instead. |
 | `ifid` | query | array | No | Filter to these interface ids. Comma-separated on the wire. An empty list is not accepted — omit the parameter instead. |
@@ -515,9 +517,9 @@ Computes or retrieves cached summary statistics for simulation result CSV files 
 
 **400** - Invalid parameters (bad metric, mode, or tier value), with error code `VALIDATION_ERROR`; or, with error code `UNSUPPORTED_COMBINATION`, a result shape the requested projection does not offer (`mode=utilizationBins` or `mode=uplinkFairness` on any metric but `nd-stats`, or `mode=completionTimeBins` on any metric but `perf` and `chakra-perf`). `UNSUPPORTED_COMBINATION` is permanent for the request and must not be retried; its message names the result shape and the projection, and only it carries `X-Ignored-Params`.
 
-**404** - Simulation not found or no data files available for the specified metric for a simulation that is not yet settled, or is invalid
+**404** - Simulation not found or no data files available for the specified metric for a simulation that is not yet settled, or is invalid. For `mode=utilizationBins` and `mode=uplinkFairness`, no data files answers 404 whether or not the simulation is settled. For `mode=completionTimeBins`, also a run with no perf result shards, settled or not, and every `metric=chakra-perf` request
 
-**413** - Payload Too Large - The summarized result set exceeds one of the server's size limits: its row count is over the ceiling, summarizing it would exceed the memory budget, or, for `mode=utilizationBins`, it spans more distinct sample times or more data files than that mode accepts. This condition is permanent for the request and must not be retried.
+**413** - Payload Too Large - The summarized result set exceeds one of the server's size limits: its row count is over the ceiling, summarizing it would exceed the memory budget, or, for `mode=utilizationBins` or `mode=uplinkFairness`, it spans more distinct sample times or more data files than that mode accepts, or, for `mode=uplinkFairness`, its switch uplinks hold more samples than the fold accepts, or, for `mode=completionTimeBins`, it lists more data files than that mode accepts. This condition is permanent for the request and must not be retried.
 
 **500** - Internal server error
 
