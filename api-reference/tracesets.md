@@ -344,7 +344,7 @@ Resolves a traceset to its S3 paths and DRA (Data Resource Accessor) mounting in
 
 <span class="api-method api-method-post">POST</span> `/api/v1/tracesets/upload-url`
 
-Creates a traceset record and returns presigned S3 multipart upload URLs for each file. Each file is split into parts based on size. After uploading all parts to their presigned URLs, call POST /api/v1/tracesets/upload-url/complete to finalize the upload. An upload with `primary` files must declare its rank count in `workloadMetadata`, as `shape.rankCount` or as parallelism degrees (`dp`, `tp`, `sp`, `ep`, `pp`, multiplied together); the declaration is checked before any upload URL is issued, and the traceset reports it as `rankCountDerived`. An upload of supporting files only needs no declaration.
+Creates a traceset record and returns presigned S3 multipart upload URLs for each file. Each file is split into parts based on size. PUT each part with its `size` bytes before `partUrlsExpireAt` (one hour by default); `expiresAt` is the 24-hour session lifetime, not the URLs'. After uploading all parts to their presigned URLs, call POST /api/v1/tracesets/upload-url/complete to finalize the upload. An upload with `primary` files must declare its rank count in `workloadMetadata`, as `shape.rankCount` or as parallelism degrees (`dp`, `tp`, `sp`, `ep`, `pp`, multiplied together); the declaration is checked before any upload URL is issued, and the traceset reports it as `rankCountDerived`. An upload of supporting files only needs no declaration.
 
 ### Request Body
 
@@ -401,9 +401,11 @@ Creates a traceset record and returns presigned S3 multipart upload URLs for eac
       "parts": [
         {
           "partNumber": 1,
+          "size": 1048576,
           "url": "https://scala-traces.s3.amazonaws.com/...?X-Amz-Algorithm=..."
         }
-      ]
+      ],
+      "partUrlsExpireAt": "2026-02-23T15:30:00Z"
     }
   ],
   "expiresAt": "2026-02-24T14:30:00Z"

@@ -81,25 +81,25 @@ flowchart TB
   PDL --> MON
 ```
 
-| Component | C++ class | Responsibility | Configured by |
-| --- | --- | --- | --- |
-| NIC node | `ScalaUETNIC` | Holds the other components, gives each received packet a traffic class from its DSCP codepoint, sends PFC pause and resume frames when receive pools cross their thresholds, and holds a traffic class's transmission while a received pause lasts. | [NIC](./configuration.md#nic) |
-| Network port | `ScalaNetDeviceBase` | The NIC's one Ethernet port to its rack switch. Sends frames at the link's rate, the lower of `DataRate` and the rack switch's downlink rate. | [UplinkNetworkInterface](./configuration.md#uplinknetworkinterface) |
-| Link | `ScalaChannel` | Carries frames between the port and the rack switch with the NIC's propagation delay. | [TransmissionMedium](./configuration.md#transmissionmedium) |
-| Ingress buffer manager | `ScalaUETIngressBufferManager` | Divides the receive buffer into per-class pools, charges each received packet to its pool until the host write is accepted or the packet has been processed, drops packets that do not fit, and applies the PFC thresholds. | [IngressBufferManager](./configuration.md#ingressbuffermanager) |
-| Egress buffer manager | `ScalaUETEgressBufferManager` | Divides the transmit buffer into per-class pools, holds each packet's reservation until it has been sent, and schedules transmission across traffic classes. | [EgressBufferManager](./configuration.md#egressbuffermanager) |
-| PDS manager | `ScalaUETPdsManager` | Creates and tracks PDCs and PDC groups, keeps the groups that are ready to send, sets the ACK-request flag on outgoing data, and holds the delivery settings: trimming marks, the retransmission timer, the prefetch buffer, and the spraying type. | [ScalaUETPdsManager](./configuration.md#scalauetpdsmanager) |
-| Ack tracker | `ScalaAckTracker` | Records, for each PDC, which packets beyond the next expected one have arrived, for the selective acknowledgements. | None |
-| Default packet spraying | `ScalaUETPacketSprayDefault` | Under `Default Packet Spraying`, gives each data packet the next entropy value in a round robin. | [DefaultPacketSpraying](./configuration.md#defaultpacketspraying) |
-| Recycled entropy packet spraying | `ScalaUETLoadBalancerReps` | Under `Recycled Entropy Packet Spraying`, chooses entropy values from the feedback that ACKs, NACKs, and timeouts give about each path. | [RecycledEntropyPacketSpraying](./configuration.md#recycledentropypacketspraying) |
-| Congestion control | `ScalaUETCongestionControl` | Keeps each PDC group's congestion window and runs NSCC on ACKs, NACKs, and timeouts. | [ScalaUETCongestionControl](./configuration.md#scalauetcongestioncontrol) |
-| Event processing layer | `EventProcessingLayer` | Receives the host's events, such as a new message or a closed PDC, and passes completions and received data to the host. | None |
-| Semantic layer | `SemanticLayer` | Cuts each message into segments of at most `RdmaDataMSS` bytes, requests each segment's payload over PCIe, adds the semantic header, and reports send and receive completions. | [SemanticLayer](./configuration.md#semanticlayer) |
-| Packet delivery sublayer | `PacketDeliverySublayer` | Assigns PSNs, adds the PDS and UDP headers with the entropy value, sends ACKs and NACKs and processes those it receives, and runs the retransmission timer. | None |
-| IP layer | `UETIpPacketProcessingLayer` | Adds the IPv4 header with the packet's DSCP codepoint and the ECN field, and finds the PDC of each received packet. | None |
-| UET Monitor | `ScalaUETMonitor` | Writes the per-packet `uet-monitor` record when it is turned on or one of its triggers fires. | [ScalaUETMonitor](./configuration.md#scalauetmonitor) |
-| PCIe interface | `ScalaPCIeDeviceLayer`, `GenericPCIeTransactionLayer`, `GenericPCIeDataLinkLayer`, `GenericPCIePhysicalLayer` | The PCIe link between the NIC and its host, one stack on each end: transaction-layer buffers, link framing, and the lane rate and count. | [Host interface](./configuration.md#host-interface) |
-| PCIe handlers | `ScalaUETNICDeviceLayerHandler`, `HostDeviceLayerHandler` | On the NIC side, sends the read requests that fetch payload and the writes that deliver received data; on the host side, answers each read with the requested data at once. | [Host interface](./configuration.md#host-interface) |
+| Component | Responsibility | Configured by |
+| --- | --- | --- |
+| NIC node | Holds the other components, gives each received packet a traffic class from its DSCP codepoint, sends PFC pause and resume frames when receive pools cross their thresholds, and holds a traffic class's transmission while a received pause lasts. | [NIC](./configuration.md#nic) |
+| Network port | The NIC's one Ethernet port to its rack switch. Sends frames at the link's rate, the lower of `DataRate` and the rack switch's downlink rate. | [UplinkNetworkInterface](./configuration.md#uplinknetworkinterface) |
+| Link | Carries frames between the port and the rack switch with the NIC's propagation delay. | [TransmissionMedium](./configuration.md#transmissionmedium) |
+| Ingress buffer manager | Divides the receive buffer into per-class pools, charges each received packet to its pool until the host write is accepted or the packet has been processed, drops packets that do not fit, and applies the PFC thresholds. | [IngressBufferManager](./configuration.md#ingressbuffermanager) |
+| Egress buffer manager | Divides the transmit buffer into per-class pools, holds each packet's reservation until it has been sent, and schedules transmission across traffic classes. | [EgressBufferManager](./configuration.md#egressbuffermanager) |
+| PDS manager | Creates and tracks PDCs and PDC groups, keeps the groups that are ready to send, sets the ACK-request flag on outgoing data, and holds the delivery settings: trimming marks, the retransmission timer, the prefetch buffer, and the spraying type. | [ScalaUETPdsManager](./configuration.md#scalauetpdsmanager) |
+| Ack tracker | Records, for each PDC, which packets beyond the next expected one have arrived, for the selective acknowledgements. | None |
+| Default packet spraying | Under `Default Packet Spraying`, gives each data packet the next entropy value in a round robin. | [DefaultPacketSpraying](./configuration.md#defaultpacketspraying) |
+| Recycled entropy packet spraying | Under `Recycled Entropy Packet Spraying`, chooses entropy values from the feedback that ACKs, NACKs, and timeouts give about each path. | [RecycledEntropyPacketSpraying](./configuration.md#recycledentropypacketspraying) |
+| Congestion control | Keeps each PDC group's congestion window and runs NSCC on ACKs, NACKs, and timeouts. | [ScalaUETCongestionControl](./configuration.md#scalauetcongestioncontrol) |
+| Event processing layer | Receives the host's events, such as a new message or a closed PDC, and passes completions and received data to the host. | None |
+| Semantic layer | Cuts each message into segments of at most `RdmaDataMSS` bytes, requests each segment's payload over PCIe, adds the semantic header, and reports send and receive completions. | [SemanticLayer](./configuration.md#semanticlayer) |
+| Packet delivery sublayer | Assigns PSNs, adds the PDS and UDP headers with the entropy value, sends ACKs and NACKs and processes those it receives, and runs the retransmission timer. | None |
+| IP layer | Adds the IPv4 header with the packet's DSCP codepoint and the ECN field, and finds the PDC of each received packet. | None |
+| UET Monitor | Writes the per-packet `uet-monitor` record when it is turned on or one of its triggers fires. | [ScalaUETMonitor](./configuration.md#scalauetmonitor) |
+| PCIe interface | The PCIe link between the NIC and its host, one stack on each end: transaction-layer buffers, link framing, and the lane rate and count. | [Host interface](./configuration.md#host-interface) |
+| PCIe handlers | On the NIC side, sends the read requests that fetch payload and the writes that deliver received data; on the host side, answers each read with the requested data at once. | [Host interface](./configuration.md#host-interface) |
 
 ## How to read these pages
 
