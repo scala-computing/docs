@@ -9,7 +9,7 @@ Welcome to the Scala Network Simulation API documentation. This API provides pro
 
 With the Network Simulation API, you can:
 
-- **Create Workspaces** - Organize your simulations into logical workspaces
+- **Use Workspaces** - Organize your simulations into logical workspaces
 - **Configure Simulations** - Define network topologies, components, and parameters
 - **Run Simulations** - Execute simulations and monitor their progress
 - **Retrieve Results** - Access simulation outputs, logs, and metrics

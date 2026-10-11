@@ -135,9 +135,11 @@ curl -X POST "https://api.scalacomputing.com/api/v1/mapping-files/upload-url" \
   "parts": [
     {
       "partNumber": 1,
+      "size": 4520,
       "url": "https://example.com/presigned-part-url"
     }
   ],
+  "partUrlsExpireAt": "2026-09-16T15:30:00Z",
   "expiresAt": "2026-09-17T14:30:00Z"
 }
 ```

@@ -57,14 +57,14 @@ flowchart TB
   AP -->|"completions"| ST
 ```
 
-| Component | C++ class | Responsibility | Configured by |
-| --- | --- | --- | --- |
-| Trace preparation | (runs before the simulation) | Expands every collective into point-to-point sends and receives with the selected algorithm, applies process group serialization and collective synchronization, and prepares the per-rank traces the simulator reads. | [Collective algorithms](./configuration.md#collective-algorithms), [Ordering and preparation](./configuration.md#ordering-and-preparation) |
-| Chakra master | `ChakraMaster` | Reads the workload's settings, places each rank on a server, installs one application per rank, writes the placement records, and ends the simulation when every rank has finished. | [Ranks and placement](./configuration.md#ranks-and-placement) |
-| Chakra application | `ChakraApplication` | Replays one rank's trace: starts each operation when its dependencies have finished, schedules compute, hands sends and receives to the host handler, and writes the operation times back into the rank's trace. | [Compute and scaling](./configuration.md#compute-and-scaling) |
-| Compute sharing | `ComputeContentionTracker` | Divides a rank's compute capacity equally among the compute operations running on it and recomputes their completion times whenever one starts or ends. | `TraceFamily` in [Compute and scaling](./configuration.md#compute-and-scaling) |
-| Host handler | `ChakraHostHandlerImpl` | Posts each scale-out send (to a rank outside the sender's scale-up group) to the NIC as an RDMA WRITE and matches completions to receives, or carries the transfer over the scale-up fabric model when both ranks are in the same scale-up group. | [Scale-up](./configuration.md#scale-up) |
-| Collective statistics | `ChakraCommCollectiveStats` | Records each collective's start and end across its participants and summarizes run times against an ideal time for the selected algorithm. | `UseMaxAsCommCollectiveStartTime` in [Ordering and preparation](./configuration.md#ordering-and-preparation) |
+| Component | Responsibility | Configured by |
+| --- | --- | --- |
+| Trace preparation | Expands every collective into point-to-point sends and receives with the selected algorithm, applies process group serialization and collective synchronization, and prepares the per-rank traces the simulator reads. | [Collective algorithms](./configuration.md#collective-algorithms), [Ordering and preparation](./configuration.md#ordering-and-preparation) |
+| Chakra master | Reads the workload's settings, places each rank on a server, installs one application per rank, writes the placement records, and ends the simulation when every rank has finished. | [Ranks and placement](./configuration.md#ranks-and-placement) |
+| Chakra application | Replays one rank's trace: starts each operation when its dependencies have finished, schedules compute, hands sends and receives to the host handler, and writes the operation times back into the rank's trace. | [Compute and scaling](./configuration.md#compute-and-scaling) |
+| Compute sharing | Divides a rank's compute capacity equally among the compute operations running on it and recomputes their completion times whenever one starts or ends. | `TraceFamily` in [Compute and scaling](./configuration.md#compute-and-scaling) |
+| Host handler | Posts each scale-out send (to a rank outside the sender's scale-up group) to the NIC as an RDMA WRITE and matches completions to receives, or carries the transfer over the scale-up fabric model when both ranks are in the same scale-up group. | [Scale-up](./configuration.md#scale-up) |
+| Collective statistics | Records each collective's start and end across its participants and summarizes run times against an ideal time for the selected algorithm. | `UseMaxAsCommCollectiveStartTime` in [Ordering and preparation](./configuration.md#ordering-and-preparation) |
 
 ## How to read these pages
 

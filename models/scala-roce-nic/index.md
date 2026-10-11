@@ -73,21 +73,21 @@ flowchart TB
   TRN --> EVT
 ```
 
-| Component | C++ class | Responsibility | Configured by |
-| --- | --- | --- | --- |
-| NIC node | `ScalaRoceNic` | Holds the other components, sends PFC pause and resume frames when receive pools cross their thresholds, and holds a traffic class's transmission while a received pause lasts. | [NIC](./configuration.md#nic) |
-| Network port | `ScalaNetDeviceBase`, `ScalaRoceNicNetworkPortHandler` | The NIC's one Ethernet port to its rack switch. Sends every frame at `DataRate`, or a queue pair's data at its allowed rate. | [UplinkNetworkInterface](./configuration.md#uplinknetworkinterface) |
-| Link | `ScalaChannel` | Carries frames between the port and the rack switch with the configured propagation delay. | [TransmissionMedium](./configuration.md#transmissionmedium) |
-| Ingress buffer manager | `ScalaRoceNicIngressBufferManager` | Divides the receive buffer into per-class pools, charges each received packet to its pool until the host has accepted it, drops packets that do not fit, and applies the PFC thresholds. | [IngressBufferManager](./configuration.md#ingressbuffermanager) |
-| Egress buffer manager | `ScalaRoceNicEgressBufferManager` | Divides the transmit buffer into per-class pools, reserves space for each packet before its payload is fetched, and schedules transmission across traffic classes. | [EgressBufferManager](./configuration.md#egressbuffermanager) |
-| Event processing layer | `ScalaRoceEventProcessingLayer` | Receives the host's work requests (doorbells) and reports completions and received messages to the host. | None |
-| Packet generation layer | `RoceNetworkPacketGenerationLayer` | Takes the ready queue pairs in turn, cuts each message into segments, reserves egress space, and requests each segment's payload over PCIe. | None |
-| Transport layer | `RoceTransportProcessingLayer` | Assigns sequence numbers, checks the order of received packets, sends ACKs and NAKs, runs the transport timer, and sends CNPs for ECN-marked packets. | [RoceTransportLayer](./configuration.md#rocetransportlayer) |
-| IP layer | `RoceIpPacketProcessingLayer` | Adds the IPv4 header with the traffic class's DSCP and the ECN field, and finds the queue pair of each received packet. | None |
-| Queue pair manager | `ScalaRoceQpManager` | Creates and tracks queue pairs and their messages, and sets the segment size. | [ScalaRoceQpManager](./configuration.md#scalaroceqpmanager) |
-| ECN handler | `ScalaRoceNicEcnHandler` | Keeps each queue pair's allowed rate and runs the rate control loop when CNPs arrive. | [ECNHandler](./configuration.md#ecnhandler) |
-| PCIe interface | `ScalaPCIeDeviceLayer`, `GenericPCIeTransactionLayer`, `GenericPCIeDataLinkLayer`, `GenericPCIePhysicalLayer` | The PCIe link between the NIC and its host, one stack on each end: transaction-layer buffers, link framing, and the lane rate and count. | [Host interface](./configuration.md#host-interface) |
-| PCIe handlers | `ScalaRoceNicDeviceLayerHandler`, `HostDeviceLayerHandler` | On the NIC side, sends the read requests that fetch payload and the writes that deliver received data; on the host side, answers each read with the requested data. | [Host interface](./configuration.md#host-interface) |
+| Component | Responsibility | Configured by |
+| --- | --- | --- |
+| NIC node | Holds the other components, sends PFC pause and resume frames when receive pools cross their thresholds, and holds a traffic class's transmission while a received pause lasts. | [NIC](./configuration.md#nic) |
+| Network port | The NIC's one Ethernet port to its rack switch. Sends every frame at `DataRate`, or a queue pair's data at its allowed rate. | [UplinkNetworkInterface](./configuration.md#uplinknetworkinterface) |
+| Link | Carries frames between the port and the rack switch with the configured propagation delay. | [TransmissionMedium](./configuration.md#transmissionmedium) |
+| Ingress buffer manager | Divides the receive buffer into per-class pools, charges each received packet to its pool until the host has accepted it, drops packets that do not fit, and applies the PFC thresholds. | [IngressBufferManager](./configuration.md#ingressbuffermanager) |
+| Egress buffer manager | Divides the transmit buffer into per-class pools, reserves space for each packet before its payload is fetched, and schedules transmission across traffic classes. | [EgressBufferManager](./configuration.md#egressbuffermanager) |
+| Event processing layer | Receives the host's work requests (doorbells) and reports completions and received messages to the host. | None |
+| Packet generation layer | Takes the ready queue pairs in turn, cuts each message into segments, reserves egress space, and requests each segment's payload over PCIe. | None |
+| Transport layer | Assigns sequence numbers, checks the order of received packets, sends ACKs and NAKs, runs the transport timer, and sends CNPs for ECN-marked packets. | [RoceTransportLayer](./configuration.md#rocetransportlayer) |
+| IP layer | Adds the IPv4 header with the traffic class's DSCP and the ECN field, and finds the queue pair of each received packet. | None |
+| Queue pair manager | Creates and tracks queue pairs and their messages, and sets the segment size. | [ScalaRoceQpManager](./configuration.md#scalaroceqpmanager) |
+| ECN handler | Keeps each queue pair's allowed rate and runs the rate control loop when CNPs arrive. | [ECNHandler](./configuration.md#ecnhandler) |
+| PCIe interface | The PCIe link between the NIC and its host, one stack on each end: transaction-layer buffers, link framing, and the lane rate and count. | [Host interface](./configuration.md#host-interface) |
+| PCIe handlers | On the NIC side, sends the read requests that fetch payload and the writes that deliver received data; on the host side, answers each read with the requested data. | [Host interface](./configuration.md#host-interface) |
 
 ## How to read these pages
 

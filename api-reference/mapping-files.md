@@ -468,7 +468,7 @@ Returns a presigned URL for the mapping file's stored bytes. The served bytes ar
 
 <span class="api-method api-method-post">POST</span> `/api/v1/mapping-files/upload-url`
 
-Creates an upload session and returns presigned S3 multipart upload URLs for one Chakra mapping file. After PUTting every part, call POST /api/v1/mapping-files/upload-url/complete to validate and store it. Nothing is stored until that call succeeds.
+Creates an upload session and returns presigned S3 multipart upload URLs for one Chakra mapping file. PUT each part with its `size` bytes (or fewer, since `sizeBytes` is an upper bound) before `partUrlsExpireAt` (one hour by default); `expiresAt` is the 24-hour session lifetime, not the URLs'. After PUTting every part, call POST /api/v1/mapping-files/upload-url/complete to validate and store it. Nothing is stored until that call succeeds.
 
 ### Request Body
 
@@ -499,9 +499,11 @@ Creates an upload session and returns presigned S3 multipart upload URLs for one
   "parts": [
     {
       "partNumber": 1,
+      "size": 4096,
       "url": "https://scala-traces.s3.amazonaws.com/uploads/upload_2cVQ8f0YyQ3nT1hKpR7mBz4LsXd/gpt-175b-256n.txt?partNumber=1&X-Amz-Algorithm=..."
     }
   ],
+  "partUrlsExpireAt": "2026-09-16T15:30:00Z",
   "expiresAt": "2026-09-17T14:30:00Z"
 }
 ```
