@@ -13,12 +13,10 @@ Trace file management (feature-gated: enable_trace_routes)
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/api/v1/tracesets` | List tracesets |
-| POST | `/api/v1/tracesets` | Create traceset (direct upload) |
 | GET | `/api/v1/tracesets/{id}` | Get traceset |
 | DELETE | `/api/v1/tracesets/{id}` | Delete traceset |
 | GET | `/api/v1/tracesets/{id}/download` | Get traceset download URL |
 | POST | `/api/v1/tracesets/{id}/validate` | Validate traceset |
-| GET | `/api/v1/tracesets/{id}/resolve` | Resolve traceset |
 | POST | `/api/v1/tracesets/upload-url` | Initiate multipart traceset upload |
 | POST | `/api/v1/tracesets/upload-url/complete` | Complete multipart traceset upload |
 
@@ -75,18 +73,6 @@ List all tracesets. Supports pagination, filtering by workspace/status, full-tex
   }
 }
 ```
-
----
-
-## Create traceset (direct upload)
-
-<span class="api-method api-method-post">POST</span> `/api/v1/tracesets`
-
-Direct single-file traceset upload. Not yet available for external use — returns 501 Not Implemented. Use POST /api/v1/tracesets/upload-url for multipart upload.
-
-### Responses
-
-**501** - Not implemented — use POST /api/v1/tracesets/upload-url instead
 
 ---
 
@@ -278,73 +264,11 @@ Runs validation checks on a traceset including file integrity and metadata compl
 
 ---
 
-## Resolve traceset
-
-<span class="api-method api-method-get">GET</span> `/api/v1/tracesets/{id}/resolve`
-
-Resolves a traceset to its S3 paths and DRA (Data Resource Accessor) mounting information for use by the simulation orchestrator. The response format depends on the library layout: CAS (content-addressed) layout returns individual file S3 keys; prefix layout returns a file count and root path.
-
-### Parameters
-
-| Name | In | Type | Required | Description |
-|------|-----|------|----------|-------------|
-| `id` | path | string | Yes | Traceset ID (format: `ts_xxx`) |
-
-### Responses
-
-**200** - Resolved traceset with S3 paths and DRA mount info
-
-```json
-{
-  "traceset_id": "ts_abc123xyz",
-  "name": "GPT-175B Training Traces",
-  "layout": "cas",
-  "dra": {
-    "bucket": "scala-traces",
-    "s3_path": "s3://scala-traces/libraries/lib_def456/",
-    "lustre_path": "/lustre/traces/lib_def456/"
-  },
-  "files": [
-    {
-      "name": "rank_0.chakra.json",
-      "role": "primary",
-      "s3_key": "libraries/lib_def456/ab/cdef1234567890",
-      "s3_path": "s3://scala-traces/libraries/lib_def456/ab/cdef1234567890",
-      "lustre_path": "/lustre/traces/lib_def456/ab/cdef1234567890",
-      "size": 1048576
-    }
-  ],
-  "total_size": 4194304
-}
-```
-
-**400** - Traceset cannot be resolved (no files, missing library entry for prefix layout)
-
-```json
-{
-  "error": {
-    "message": "Traceset has no files to resolve"
-  }
-}
-```
-
-**404** - Traceset not found
-
-```json
-{
-  "error": {
-    "message": "Traceset 'ts_notfound' not found"
-  }
-}
-```
-
----
-
 ## Initiate multipart traceset upload
 
 <span class="api-method api-method-post">POST</span> `/api/v1/tracesets/upload-url`
 
-Creates a traceset record and returns presigned S3 multipart upload URLs for each file. Each file is split into parts based on size. After uploading all parts to their presigned URLs, call POST /api/v1/tracesets/upload-url/complete to finalize the upload. An upload with `primary` files must declare its rank count in `workloadMetadata`, as `shape.rankCount` or as parallelism degrees (`dp`, `tp`, `sp`, `ep`, `pp`, multiplied together); the declaration is checked before any upload URL is issued, and the traceset reports it as `rankCountDerived`. An upload of supporting files only needs no declaration.
+Creates a traceset record and returns presigned S3 multipart upload URLs for each file. Each file is split into parts based on size. PUT each part with its `size` bytes before `partUrlsExpireAt` (one hour by default); `expiresAt` is the 24-hour session lifetime, not the URLs'. After uploading all parts to their presigned URLs, call POST /api/v1/tracesets/upload-url/complete to finalize the upload. An upload with `primary` files must declare its rank count in `workloadMetadata`, as `shape.rankCount` or as parallelism degrees (`dp`, `tp`, `sp`, `ep`, `pp`, multiplied together); the declaration is checked before any upload URL is issued, and the traceset reports it as `rankCountDerived`. An upload of supporting files only needs no declaration.
 
 ### Request Body
 
@@ -401,9 +325,11 @@ Creates a traceset record and returns presigned S3 multipart upload URLs for eac
       "parts": [
         {
           "partNumber": 1,
+          "size": 1048576,
           "url": "https://scala-traces.s3.amazonaws.com/...?X-Amz-Algorithm=..."
         }
-      ]
+      ],
+      "partUrlsExpireAt": "2026-02-23T15:30:00Z"
     }
   ],
   "expiresAt": "2026-02-24T14:30:00Z"

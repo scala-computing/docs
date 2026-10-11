@@ -55,15 +55,15 @@ flowchart TB
   PN --- LN
 ```
 
-| Component | C++ class | Responsibility | Configured by |
-| --- | --- | --- | --- |
-| Switch node | `ScalaSwitch` | Computes the ECMP flow hash for each packet, asks the load balancer which equal-cost member to use, and hands every ingress and egress admission decision to the shared buffer manager. | [Switch](./configuration.md#switch) |
-| Load balancer | `ScalaSwitchLoadBalancerNone`, `ScalaSwitchLoadBalancerFlowlet` | Selects the member of an equal-cost set. With `none` it leaves the member as the flow hash modulo the set size and records what was assigned to each member; with `flowlet` it keeps a flow table and moves flows at gaps. | [Switch](./configuration.md#switch), [Load balancing flowlet](./configuration.md#load-balancing-flowlet) |
-| Shared buffer manager | `ScalaSwitchSharedBufferManager` | Owns the switch-wide packet buffer. Divides it into pools, reserves headroom, accounts for every byte entering and leaving, sends and honors PFC frames, and admits or drops every packet. | [Shared buffer manager](./configuration.md#shared-buffer-manager) |
-| ECN marker | `ScalaSwitchEcnMarker` | Keeps a moving average of each egress queue's occupancy and marks ECN-capable packets as they start transmitting. | [ECN handler](./configuration.md#ecn-handler) |
-| Buffer statistics | `ScalaSwitchInternalBufferStatsHandler` | Samples ingress, egress, and shared-buffer occupancy per pool and writes the aggregate buffer record. | `BufferStatsReportInterval` in [Shared buffer manager](./configuration.md#shared-buffer-manager) |
-| Port | `ScalaSwitchEthNetDevice` | One per connected port. Receives frames, hands them to the switch for admission, and transmits with a strict-priority scheduler over eight per-class queues plus a dedicated PFC control queue. | [Network interfaces](./configuration.md#network-interfaces) |
-| Link | `ScalaChannel` | Carries frames between the port and its peer with the configured propagation delay. | [Network interfaces](./configuration.md#network-interfaces) |
+| Component | Responsibility | Configured by |
+| --- | --- | --- |
+| Switch node | Computes the ECMP flow hash for each packet, asks the load balancer which equal-cost member to use, and hands every ingress and egress admission decision to the shared buffer manager. | [Switch](./configuration.md#switch) |
+| Load balancer | Selects the member of an equal-cost set. With `none` it leaves the member as the flow hash modulo the set size and records what was assigned to each member; with `flowlet` it keeps a flow table and moves flows at gaps. | [Switch](./configuration.md#switch), [Load balancing flowlet](./configuration.md#load-balancing-flowlet) |
+| Shared buffer manager | Owns the switch-wide packet buffer. Divides it into pools, reserves headroom, accounts for every byte entering and leaving, sends and honors PFC frames, and admits or drops every packet. | [Shared buffer manager](./configuration.md#shared-buffer-manager) |
+| ECN marker | Keeps a moving average of each egress queue's occupancy and marks ECN-capable packets as they start transmitting. | [ECN handler](./configuration.md#ecn-handler) |
+| Buffer statistics | Samples ingress, egress, and shared-buffer occupancy per pool and writes the aggregate buffer record. | `BufferStatsReportInterval` in [Shared buffer manager](./configuration.md#shared-buffer-manager) |
+| Port | One per connected port. Receives frames, hands them to the switch for admission, and transmits with a strict-priority scheduler over eight per-class queues plus a dedicated PFC control queue. | [Network interfaces](./configuration.md#network-interfaces) |
+| Link | Carries frames between the port and its peer with the configured propagation delay. | [Network interfaces](./configuration.md#network-interfaces) |
 
 ## How to read these pages
 

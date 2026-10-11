@@ -34,9 +34,7 @@
               "api-reference/topology",
               "api-reference/tracesets",
               "api-reference/mapping-files",
-              "api-reference/libraries",
               "api-reference/workspaces",
-              "api-reference/billing",
               "api-reference/charts"
             ]
           },
@@ -94,7 +92,6 @@
           {
             "group": "Reference",
             "pages": [
-              "credits",
               "simulation-output-files",
               "chakra-mapping-files",
               "api-changelog"
