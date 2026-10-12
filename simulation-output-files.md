@@ -147,6 +147,8 @@ example,2026-01-13T19:11:39Z,0.003,0,1498198,0,0,0,0,0,0,0,0,1498198,5.84884437,
 
 Remote Trace Log files record individual remote MPI operations at trace level, capturing the source and destination ranks, buffer contents, and channel timing for each remote call. This file is useful for debugging specific MPI communication patterns and diagnosing latency in remote operations.
 
+This file is written only when `EnableRemoteTraceLogging` is `true`; the default is `false`. Each cross-rank message adds a row on the sending rank and a row on each receiving rank, so the file can reach hundreds of gigabytes on large multi-rank runs, enough to fill the run's disk and stop the simulation.
+
 **Filename pattern:** `{simulation}-scala-remote-trace-log-{shard}.csv`
 
 #### Columns

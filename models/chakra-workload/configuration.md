@@ -93,13 +93,13 @@ A Chakra simulation needs a configuration with the Chakra application and a trac
 
 ### Read the workload's parameters
 
-`GET /api/v1/components?category=application` lists the application models the platform offers; the `ScalaChakraGenerator` entry gives the Chakra workload's `id` and its `versions`. `GET /api/v1/components/{component_id}`, with the `version` query parameter set to the model version these pages describe, returns the workload's `typedParameters`. Each attribute in the tables above appears there as an object with its `value`, its `type`, a `unit` for `bytes` values, and, where the model sets them, its `default` (with `defaultUnit` for `bytes` values), `description`, `min` and `max` (each an object with a `value`), `readonly`, and allowed values in `enum`. `ChakraConfiguration` is a nested object.
+`GET /api/v1/components?category=application` lists the application models the platform offers; the `ChakraWorkload` entry gives the Chakra workload's `id` and its `versions`. `GET /api/v1/components/{component_id}`, with the `version` query parameter set to the model version these pages describe, returns the workload's `typedParameters`. Each attribute in the tables above appears there as an object with its `value`, its `type`, a `unit` for `bytes` values, and, where the model sets them, its `default` (with `defaultUnit` for `bytes` values), `description`, `min` and `max` (each an object with a `value`), `readonly`, and allowed values in `enum`. `ChakraConfiguration` is a nested object.
 
 ```bash
 curl -X GET "https://api.scalacomputing.com/api/v1/components?category=application" \
   -H "Authorization: Bearer $SCALA_API_TOKEN"
 
-# Set COMPONENT_ID to the id of the ScalaChakraGenerator entry in that response.
+# Set COMPONENT_ID to the id of the ChakraWorkload entry in that response.
 export COMPONENT_ID="model_..."
 
 curl -X GET "https://api.scalacomputing.com/api/v1/components/$COMPONENT_ID?version=4.0.3" \
@@ -115,7 +115,7 @@ curl -X POST "https://api.scalacomputing.com/api/v1/configurations/$CONFIG_ID/ap
   -H "Authorization: Bearer $SCALA_API_TOKEN"
 ```
 
-The Chakra workload is the only application in its simulation. Give the configuration's topology exactly as many servers as the traceset has ranks, all with a Scala RoCE NIC or all with a Scala UET NIC ([Placement](./workload-execution.md#placement)).
+The Chakra workload is the only application in its simulation. Give the configuration's topology exactly as many servers as the traceset has ranks, all with a Scala RoCE NIC, all with a Scala UET NIC, or all with a Scala MRC NIC ([Placement](./workload-execution.md#placement)).
 
 ### Attach a traceset
 
@@ -167,7 +167,7 @@ A simulation can start only from a configuration whose `status` is `validated`; 
 - It has another application besides the Chakra workload, or a second Chakra workload.
 - A `ChakraConfiguration` value is outside the attribute's allowed values (`enum`) or its range (`min`, `max`), or a `bytes` value has no valid unit.
 - `NumOfChakraFiles` is greater than the number of servers connected to a NIC.
-- A server has a NIC other than the Scala RoCE NIC or the Scala UET NIC.
+- A server has a NIC other than the Scala RoCE NIC, the Scala UET NIC, or the Scala MRC NIC.
 - `LogicalGroupId` is not the logical group of the servers.
 
 The traceset attach returns 422, and attaches nothing, when the traceset has no rank count or its rank count is 0 or more than 4,096. `POST /api/v1/configurations` and `PATCH /api/v1/configurations/{config_id}` return 400 when a Chakra workload's `NumOfChakraFiles` differs from the number of servers in the topology.
@@ -184,7 +184,7 @@ The run stops before the simulation starts when:
 
 These pages describe a Chakra simulation that follows these settings:
 
-- Give the topology exactly as many servers as the traceset has ranks, all with a Scala RoCE NIC or all with a Scala UET NIC.
+- Give the topology exactly as many servers as the traceset has ranks, all with a Scala RoCE NIC, all with a Scala UET NIC, or all with a Scala MRC NIC.
 - Set the traceset with `PATCH /api/v1/configurations/{config_id}/traceset`, not as `activeTraceset` in a configuration create or update body.
 - Keep `UseMaxAsCommCollectiveStartTime` at `true`.
 - Set `ProfilingInterval` greater than `0`.
