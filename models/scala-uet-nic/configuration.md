@@ -295,7 +295,7 @@ A configuration write returns 400 when a value breaks the rules in [Change value
 `POST /api/v1/configurations/{config_id}/validate` returns the configuration's validation errors and warnings. A configuration with a Scala UET NIC is `invalid` when:
 
 - A server with a Scala UET NIC runs an application other than the Chakra workload or the Scala RDMA application.
-- A switch has `UETPolicyEnabled` set to `true` and the configuration places a NIC other than the Scala UET NIC or the MRC NIC anywhere in the topology. Switch packet trimming also needs the UET policy, and PFC off for every class on that switch ([Configuration rules that stop a simulation](../scala-switch/configuration.md#configuration-rules-that-stop-a-simulation)).
+- A switch has `UETPolicyEnabled` set to `true` and the configuration places a NIC other than the Scala UET NIC or the [Scala MRC NIC](../scala-mrc-nic/index.md) anywhere in the topology. Switch packet trimming also needs the UET policy, and PFC off for every class on that switch ([Configuration rules that stop a simulation](../scala-switch/configuration.md#configuration-rules-that-stop-a-simulation)).
 - `LaneCount` is outside `1` to `16`.
 
 The validation also warns, without making the configuration `invalid`, when a NIC's `PacketSprayingType` is `Recycled Entropy Packet Spraying` and a switch's `LoadBalancingMethod` is `flowlet`.
