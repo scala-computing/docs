@@ -9,9 +9,10 @@ You upload a mapping file once and attach it to a simulation configuration, and 
 
 ## Current limitations
 
-Uploading, listing, downloading, deleting, attaching, and detaching mapping files work today, and a simulation created from a configuration with a mapping file attached records it in `appliedMappingFile`. A simulation cannot yet run to completion with a mapping file:
+A simulation created from a configuration with a mapping file attached runs to completion on a traceset you upload, and records the file in `appliedMappingFile`. These limits remain:
 
-- **Tracesets you upload.** Attaching a mapping file requires the configuration's traceset to have a rank count. A traceset you upload reports its rank count as `rankCountDerived` on `GET /api/v1/tracesets/{id}`; when that field is present, the traceset has a rank count. An upload of trace files declares its rank count in `workloadMetadata`, as `shape.rankCount` or as parallelism degrees (`dp`, `tp`, `sp`, `ep`, `pp`, multiplied together, with an absent degree counting as 1), and `POST /api/v1/tracesets/upload-url` refuses one that declares neither. A traceset uploaded before rank counts were declared may report no rank count. Behind an uploaded traceset with no rank count, the mapping-file attach answers `422` `UNPROCESSABLE_ENTITY`, and retrying does not change the answer: upload the traces again with a declaration. The traceset attach refuses the same traceset with the same `422`, although a configuration create or update can still name it as `activeTraceset`.
+- **Generating a mapping file.** The platform does not generate a mapping file for a configuration. Write one yourself, or generate one with the mapping file toolkit Scala provides (see [Generate a mapping file](#generate-a-mapping-file)), and upload it.
+- **Tracesets you upload need a rank count.** Attaching a mapping file requires the configuration's traceset to have a rank count. A traceset you upload reports its rank count as `rankCountDerived` on `GET /api/v1/tracesets/{id}`; when that field is present, the traceset has a rank count. An upload of trace files declares its rank count in `workloadMetadata`, as `shape.rankCount` or as parallelism degrees (`dp`, `tp`, `sp`, `ep`, `pp`, multiplied together, with an absent degree counting as 1), and `POST /api/v1/tracesets/upload-url` refuses one that declares neither. A traceset uploaded before rank counts were declared may report no rank count. Behind an uploaded traceset with no rank count, the mapping-file attach answers `422` `UNPROCESSABLE_ENTITY`, and retrying does not change the answer: upload the traces again with a declaration. The traceset attach refuses the same traceset with the same `422`, although a configuration create or update can still name it as `activeTraceset`.
 - **The platform's own Chakra tracesets (coming soon).** These have a rank count, so a mapping file attaches to a configuration that uses one. A simulation created from that configuration currently fails before the simulator starts, with the `failureReason` `Mapping file <name> (<id>) could not be delivered`, until an update to the platform's simulation hosts is in service.
 
 The rest of this page describes the file format and the full flow as the API defines it.
@@ -101,6 +102,163 @@ Two things depend on a configuration, so they are checked later:
 
 - **Rank count.** Attach requires the file's `rankCount` to equal the rank count of the configuration's traceset.
 - **Chakra-capable servers.** Whether each `serverId` names a Chakra-capable server is a fact about the topology. A file that names another server uploads and attaches, and the simulation fails when the simulator starts, with the simulator's error naming the `serverId`.
+
+## Generate a mapping file
+
+The platform does not generate a mapping file for a configuration. Scala provides a mapping file toolkit for writing one: a generator script, `chakra_mapping_generator/generate_mapping.py`, that writes a mapping file from a short JSON config; sample configs to start from, in `chakra_mapping_generator/examples`; and this documentation. Request the generator and its sample configs from Scala.
+
+The generator places rank `i` on `serverId` `i`, and can place the ranks in scale-up groups stamped from templates you define. Every file it writes follows the rules in [The file format](#the-file-format). It needs Python 3.10 or later and nothing outside the standard library.
+
+### Run the generator
+
+```bash
+python3 chakra_mapping_generator/generate_mapping.py --config my-mapping.json --output chakra-mapping.txt
+```
+
+Without `--output`, the file is written to standard output. When the config breaks a rule, the generator writes nothing, prints `error: <field>: <reason>`, and exits with status 2.
+
+The generator does not read your topology. It assumes servers `0` through `rankCount - 1` are Chakra-capable servers in it. As with any mapping file, a `serverId` that is not Chakra-capable is reported when the simulation starts.
+
+### Start from an example
+
+The `chakra_mapping_generator/examples` directory holds three configs, each with the file it generates beside it:
+
+| Config | What it shows |
+|--------|---------------|
+| `identity-8.json` | 8 ranks, no scale-up groups. Change `rankCount` and run. |
+| `single-template-256.json` | 256 ranks in 32 identical groups of 8, each split into two subgroups of 4. |
+| `two-templates-18.json` | The [worked example](#worked-example) below: two templates, the cycle wrapping, and a partial last group. |
+
+Copy the one closest to what you need, set `rankCount` to your traceset's rank count, and run the generator on your copy:
+
+```bash
+cp chakra_mapping_generator/examples/single-template-256.json my-mapping.json
+python3 chakra_mapping_generator/generate_mapping.py --config my-mapping.json --output chakra-mapping.txt
+```
+
+The bandwidth and latency values in the examples illustrate the format; they do not describe any particular hardware. Replace them with your fabric's values. A `rankCount` that differs from the traceset's rank count makes the attach fail with `422` `MAPPING_RANK_COUNT_MISMATCH`.
+
+### The config file
+
+```json
+{
+  "rankCount": 18,
+  "scaleUp": {
+    "groupCount": 2,
+    "defaults": {
+      "size": 6,
+      "subgroupSize": 3,
+      "bandwidthGbps": 800.0,
+      "perHopSwitchLatencyNs": 100.0,
+      "npuCableLatencyNs": 10.0
+    },
+    "overrides": {
+      "1": { "size": 4, "bandwidthGbps": 400.0, "subgroupSize": null }
+    }
+  }
+}
+```
+
+| Field | Required | Meaning |
+|-------|----------|---------|
+| `rankCount` | Yes | Number of ranks, 1 to 4,294,967,295. It must equal the rank count of the traceset you attach the file behind. |
+| `scaleUp` | No | Scale-up grouping. Leave it out, or set `groupCount` to `0`, for a plain 1:1 file with no scale-up groups. |
+| `scaleUp.groupCount` | Yes, in `scaleUp` | Number of templates, from `0` to `rankCount`: every group holds at least one rank, so more templates than ranks could never be used. |
+| `scaleUp.defaults` | No | Template fields every template starts from. |
+| `scaleUp.overrides` | No | Per-template changes, keyed by template index (`"0"` to `"groupCount - 1"`, written without leading zeros). Each replaces only the fields it names. |
+
+Template fields, in `defaults` or in an override:
+
+| Field | Required | Meaning |
+|-------|----------|---------|
+| `size` | Yes | Ranks in each group stamped from this template; an integer of at least 1. |
+| `subgroupSize` | No | Splits each group's ranks, in order, into subgroups of this many; an integer from 1 to `size`. Without it, every rank in the group is in subgroup 0. `null` in an override removes a value the template inherited from `defaults`. |
+| `bandwidthGbps` | Yes | The group's `ScaleUpBandwidthGbps`. |
+| `perHopSwitchLatencyNs` | Yes | The group's `ScaleUpPerHopSwitchLatencyNs`. |
+| `npuCableLatencyNs` | Yes | The group's `ScaleUpNpuCableLatencyNs`. |
+
+The three numeric fields accept the values Section II accepts (see [Section II](#section-ii-scale-up-group-parameters-optional)). After overrides are applied, every template must have `size`, `bandwidthGbps`, `perHopSwitchLatencyNs` and `npuCableLatencyNs`. The generator has no built-in bandwidth or latency. Unknown and repeated keys are refused, so a misspelled field fails instead of being ignored.
+
+### How the config expands
+
+1. **Build the templates.** `groupCount` creates templates numbered `0` to `groupCount - 1`. Each starts as a copy of `defaults`, and its entry in `overrides`, if it has one, replaces the fields that entry names.
+2. **Stamp groups in turn.** Ranks are taken in order. Template 0 stamps the first group from the next `size` ranks, template 1 the next group from the ranks after that, and so on. After the last template the cycle returns to template 0. Every block is a **new** group, numbered `0, 1, 2, …` in the order it is created, so group `g` uses template `g mod groupCount`.
+3. **Number the subgroups.** Inside each group, ranks are split in order into subgroups of `subgroupSize`. Subgroup ids restart at 0 in every group, and the last subgroup is smaller when `subgroupSize` does not divide the group.
+4. **Stop at the last rank.** When the ranks run out partway through a block, that last group has fewer ranks than its template's `size`. It is still a group.
+5. **Write the file.** Section I has one row per rank: `rank,serverId,ScaleUpGroupId,ScaleUpSubgroupId`, with `serverId` equal to the rank. Section II has one row per group created, carrying its template's bandwidth and latencies. Without templates, each row is `rank,serverId` and there is no Section II.
+
+Groups stamped from the same template are separate scale-up domains, as two racks of the same model are. Traffic between them uses the scale-out network.
+
+### Worked example
+
+The config above, with 18 ranks and two templates.
+
+**Step 1, the templates.** Template 0 has no override, so it is the defaults. Template 1 overrides three fields and inherits both latencies.
+
+| Template | `size` | `subgroupSize` | `bandwidthGbps` | `perHopSwitchLatencyNs` | `npuCableLatencyNs` |
+|----------|--------|----------------|-----------------|-------------------------|---------------------|
+| 0 | 6 | 3 | 800.0 | 100.0 | 10.0 |
+| 1 | 4 | none | 400.0 | 100.0 | 10.0 |
+
+**Steps 2 to 4, the groups.**
+
+| Group | Template | Ranks | Subgroups |
+|-------|----------|-------|-----------|
+| 0 | 0 | 0–5 | ranks 0–2 in subgroup 0, ranks 3–5 in subgroup 1 |
+| 1 | 1 | 6–9 | all in subgroup 0 |
+| 2 | 0 (the cycle wraps) | 10–15 | ranks 10–12 in subgroup 0, ranks 13–15 in subgroup 1 |
+| 3 | 1 | 16–17 (2 of 4: the ranks ran out) | all in subgroup 0 |
+
+**Step 5, the file.**
+
+```text
+# Generated by chakra_mapping_generator: rankCount 18, scale-up templates 2, groups 4
+# Section I: ChakraLogicalId,serverId,ScaleUpGroupId,ScaleUpSubgroupId
+0,0,0,0
+1,1,0,0
+2,2,0,0
+3,3,0,1
+4,4,0,1
+5,5,0,1
+6,6,1,0
+7,7,1,0
+8,8,1,0
+9,9,1,0
+10,10,2,0
+11,11,2,0
+12,12,2,0
+13,13,2,1
+14,14,2,1
+15,15,2,1
+16,16,3,0
+17,17,3,0
+@@@@@@@@
+@ Section II: ScaleUpGroupId,ScaleUpBandwidthGbps,ScaleUpPerHopSwitchLatencyNs,ScaleUpNpuCableLatencyNs
+0,800.0,100.0,10.0
+1,400.0,100.0,10.0
+2,800.0,100.0,10.0
+3,400.0,100.0,10.0
+```
+
+Section II has a row for each of the four groups, not for each of the two templates: groups 0 and 2 carry template 0's values, groups 1 and 3 template 1's.
+
+**What the simulator does with it.** Two ranks in the same group exchange traffic over the scale-up fabric at the group's bandwidth; a rank sending to, or receiving from, several ranks at once shares that bandwidth equally among them. In the same subgroup the path crosses 1 switch hop and 2 cable segments; in different subgroups of the same group, 3 switch hops and 4 cable segments. Ranks in different groups use the scale-out network.
+
+| Traffic | Same group? | Same subgroup? | Path |
+|---------|-------------|----------------|------|
+| rank 0 to rank 2 | Yes, group 0 | Yes | Scale-up at 800 Gbps; 1 × 100 + 2 × 10 = 120 ns of switch and cable latency |
+| rank 0 to rank 4 | Yes, group 0 | No | Scale-up at 800 Gbps; 3 × 100 + 4 × 10 = 340 ns |
+| rank 6 to rank 9 | Yes, group 1 | Yes | Scale-up at 400 Gbps; 120 ns |
+| rank 0 to rank 6 | No, groups 0 and 1 | — | Scale-out network |
+| rank 0 to rank 10 | No, groups 0 and 2 | — | Scale-out network, although both groups come from template 0 |
+
+### More cases
+
+- With `rankCount` `4` and the same `scaleUp`, only group 0 is created, with ranks 0 to 3: ranks 0 to 2 in subgroup 0 and rank 3 in subgroup 1. Section II has one row.
+- With `rankCount` `20`, group 3 is full (ranks 16 to 19).
+- With no `scaleUp`, or `groupCount` `0`, every row is `rank,rank` and the file has no Section II.
+- A whole number in a numeric field is written as a decimal: `800` is written `800.0`, and `0` is written `0.0`.
+- A file larger than 64,000,000 bytes, the upload limit, is refused before anything is written.
 
 ## Upload, attach, and simulate
 
