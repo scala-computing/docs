@@ -545,7 +545,7 @@ Retrieves paginated logs from a simulation with optional filtering by log level 
 | `level` | query | string (enum) | No | Filter logs by minimum severity level |
 | `component` | query | string | No | Filter logs by component name (e.g., `simulator`, `flownizer`, `annotator`) |
 | `since` | query | string | No | Filter logs to entries at or after this time (ISO 8601 / RFC 3339) |
-| `limit` | query | integer | No | Maximum number of log entries to return (default: 100, max: 1000). A truncated read may return one entry more than `limit`: the in-band truncation notice does not count against it. |
+| `limit` | query | integer | No | Maximum number of log entries to return (default: 100, max: 1000). A page may return up to two entries more than `limit`: the in-band truncation notice and the in-progress-log notice do not count against it. |
 | `next` | query | string | No | Opaque cursor token from previous response's `nextCursor` for pagination |
 
 ### Responses

@@ -116,6 +116,7 @@
             "pages": [
               "simulation-output-files",
               "chakra-mapping-files",
+              "workload-metadata",
               "api-changelog"
             ]
           },

@@ -30,8 +30,8 @@ Validates the workload against operation/algorithm compatibility rules, resolves
 |-------|------|----------|-------------|
 | `name` | string | No | Optional human-readable name for the simulation. Auto-generated when omitted. SECURITY: this value is interpolated into command strings and Slurm entrypoints executed on cluster nodes, so it is restricted to letters, digits, '-' and '_' (1–255 characters), and must start with a letter or digit (no whitespace, other punctuation, or non-ASCII characters, and no leading '-' or '_'). |
 | `topology` | string | No | Optional topology reference (reserved for K2 orchestration). |
-| `topologyConstraints` | TopologyConstraints | No | Hardware constraints for topology derivation. The solver derives a valid CLOS topology from the specified switch radix and oversubscription ratio. A 2-tier topology is used when ranks fit within the radix capacity (ports × hosts_per_leaf); otherwise a 3-tier pod-based topology (RSW → FSW → SSW) is derived with all switches fully utilized. When present, rank count is not restricted to the reference values — any count satisfying the constraints is valid. |
-| `workload` | SimpleWorkload | No | Sequential workload specification. All ranks execute the same ordered phases. Mutually exclusive with groups. Not all algorithms are valid for every operation; see GET /api/v1/simple/compatibility for the full operation/algorithm compatibility matrix including defaults and power-of-two constraints. |
+| `topologyConstraints` | TopologyConstraints | No | Hardware constraints for topology derivation. Mutually exclusive with topology. |
+| `workload` | SimpleWorkload | No | Sequential workload: all ranks execute the same phases. Mutually exclusive with groups. |
 | `groups` | array[SimpleGroupSpec] | No | Parallel groups: ranks partitioned into independent groups executing concurrently. Mutually exclusive with workload. |
 
 **Example: 128-rank AllReduce with default topology**
@@ -271,8 +271,8 @@ Runs the full validation and topology derivation pipeline against the provided w
 |-------|------|----------|-------------|
 | `name` | string | No | Optional human-readable name for the simulation. Auto-generated when omitted. SECURITY: this value is interpolated into command strings and Slurm entrypoints executed on cluster nodes, so it is restricted to letters, digits, '-' and '_' (1–255 characters), and must start with a letter or digit (no whitespace, other punctuation, or non-ASCII characters, and no leading '-' or '_'). |
 | `topology` | string | No | Optional topology reference (reserved for K2 orchestration). |
-| `topologyConstraints` | TopologyConstraints | No | Hardware constraints for topology derivation. The solver derives a valid CLOS topology from the specified switch radix and oversubscription ratio. A 2-tier topology is used when ranks fit within the radix capacity (ports × hosts_per_leaf); otherwise a 3-tier pod-based topology (RSW → FSW → SSW) is derived with all switches fully utilized. When present, rank count is not restricted to the reference values — any count satisfying the constraints is valid. |
-| `workload` | SimpleWorkload | No | Sequential workload specification. All ranks execute the same ordered phases. Mutually exclusive with groups. Not all algorithms are valid for every operation; see GET /api/v1/simple/compatibility for the full operation/algorithm compatibility matrix including defaults and power-of-two constraints. |
+| `topologyConstraints` | TopologyConstraints | No | Hardware constraints for topology derivation. Mutually exclusive with topology. |
+| `workload` | SimpleWorkload | No | Sequential workload: all ranks execute the same phases. Mutually exclusive with groups. |
 | `groups` | array[SimpleGroupSpec] | No | Parallel groups: ranks partitioned into independent groups executing concurrently. Mutually exclusive with workload. |
 
 **Example: 128-rank AllReduce — produces 2-tier topology**

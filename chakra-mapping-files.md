@@ -58,6 +58,13 @@ ScaleUpGroupId, ScaleUpBandwidthGbps, ScaleUpPerHopSwitchLatencyNs, ScaleUpNpuCa
 | `ScaleUpPerHopSwitchLatencyNs` | ns | 0, or a decimal number of at least 1e-3 and below 1.8446744073709552e16. |
 | `ScaleUpNpuCableLatencyNs` | ns | 0, or a decimal number of at least 1e-3 and below 1.8446744073709552e16. |
 
+The two latency fields are also bounded as a pair, using the group's switch latency `s` and cable latency `c`, both in picoseconds:
+
+- The smallest crossing, `1 × s + 2 × c` (one switch hop and two cable segments, the crossing between two ranks of the same subgroup), is at least 1 ps. A group with both latencies at 0 is refused. A group with one latency at 0 and the other positive is accepted.
+- The largest round trip, `2 × (3 × s + 4 × c)`, is not more than 9223372036854775807 ps, the largest time the simulator represents. A switch latency of about 1.5e15 ns, or a cable latency of about 1.15e15 ns, reaches this limit on its own, well below the per-field ceiling in the table.
+
+The per-field rule still applies on its own: a switch latency of 0.0005 ns with a cable latency of 0.001 ns meets the pair bound, but the switch latency is below 1e-3 and is refused.
+
 Every group a Section I entry names must have a Section II line. Hexadecimal and non-finite values are not accepted. If the file has no scale-up groups, leave Section II out.
 
 ### Examples
@@ -177,7 +184,7 @@ Template fields, in `defaults` or in an override:
 | `perHopSwitchLatencyNs` | Yes | The group's `ScaleUpPerHopSwitchLatencyNs`. |
 | `npuCableLatencyNs` | Yes | The group's `ScaleUpNpuCableLatencyNs`. |
 
-The three numeric fields accept the values Section II accepts (see [Section II](#section-ii-scale-up-group-parameters-optional)). After overrides are applied, every template must have `size`, `bandwidthGbps`, `perHopSwitchLatencyNs` and `npuCableLatencyNs`. The generator has no built-in bandwidth or latency. Unknown and repeated keys are refused, so a misspelled field fails instead of being ignored.
+The three numeric fields accept the values Section II accepts (see [Section II](#section-ii-scale-up-group-parameters-optional)). Each template must also meet the bound on the two latencies as a pair, so a template with both latencies at 0 is refused. After overrides are applied, every template must have `size`, `bandwidthGbps`, `perHopSwitchLatencyNs` and `npuCableLatencyNs`. The generator has no built-in bandwidth or latency. Unknown and repeated keys are refused, so a misspelled field fails instead of being ignored.
 
 ### How the config expands
 

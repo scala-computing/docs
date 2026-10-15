@@ -562,6 +562,26 @@ component_name,component_type,tier,subtier,node_id,net_device,dev_id,peer_compon
 ScalaFabricSwitch-0-0-0-0-1-0,Switch,1,4294967295,0,scala_switch::ScalaSwitchEthNetDevice,0,ScalaRackSwitch-2-2-0-0-2-0,Switch,2,4294967295,2,scala_switch::ScalaSwitchEthNetDevice,0,800,500
 ```
 
+#### Scale-Up Groups
+
+A run that has scale-up groups (Section II of the Chakra mapping file) also reports each group in this file. The report shows a group as a two-tier switched tree. The columns do not change.
+
+- Each subgroup has one switch component, named `scaleup-g<group>-sg<subgroup>`. Its component type is `ScaleUpSwitch`, its tier is 5, and its subtier is 1.
+- A group with more than one subgroup also has one spine component, named `scaleup-g<group>-spine`. Its component type is `ScaleUpSwitch`, its tier is 5, and its subtier is 2.
+- The `net_device` of every end that is a switch or a spine, and the `peer_net_device` of every member, is `ScaleUpSwitchPort`.
+- Each link has two rows, one from each end.
+
+| Link | `linkspeed_Gbps` | `prop_delay_ns` |
+|------|------------------|-----------------|
+| Member to subgroup switch | The group bandwidth | Cable latency + half the switch latency |
+| Subgroup switch to spine | The group bandwidth multiplied by the number of members in the subgroup | Cable latency + switch latency |
+
+On the member side, the row has the component name, type, tier, subtier and node ID of the member's server. Its `dev_id` is the number of devices on the server's node, so it does not match the `dev_id` of any other link of that server. Its `net_device` is the class name of the scale-up port. On the switch side, the `dev_id` of a member is the position of the member in its subgroup, in ascending order of Chakra ID. The link to the spine has the next number after the last member. On the spine, the `dev_id` of a subgroup is the position of the subgroup in the group, in ascending order of subgroup ID.
+
+The delay of a scale-up row includes the switch latency, so the delays along a path add up to the crossing time of the group. Between two members of one subgroup, the delays add up to 1 switch latency and 2 cable latencies. Between members of different subgroups, they add up to 3 switch latencies and 4 cable latencies. A scale-up row writes `prop_delay_ns` with four digits after the decimal point, so a half picosecond is exact. A switch latency of 1 ps with a cable latency of 0 gives 0.0005 ns for a member link.
+
+When the run uses more than one core, the file of each shard holds the rows that the shard owns. The shard of a member holds both rows of the link of that member. The shard of the lowest Chakra ID of a group holds the rows of the links between that group's switches and spine. The files of all shards together describe each link once from each end.
+
 ---
 
 ### Switch Buffer Statistics (scala-switch-agg-buff-stats)
