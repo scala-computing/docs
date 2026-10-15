@@ -69,8 +69,8 @@ Curated example configurations
 | `category` | TemplateCategory | Yes | Category of template |
 | `components` | array[ComponentDeclaration] | No | Component declarations with typedParameters |
 | `containers` | array[ContainerDefinition] | No | Container definitions |
-| `topology` | TopologyDefinition | No | Active network topology definition |
-| `globalParameters` | TypedParameters | No | Hierarchical parameters structure. Leaf nodes are ParameterValue objects, branch nodes are nested TypedParameters representing ModelComponents. |
+| `topology` | TopologyDefinition | No | Topology definition with links as ComponentDeclaration (type: layer) |
+| `globalParameters` | TypedParameters | No | Global parameters in TypedParameters format |
 | `applications` | array[ApplicationDefinition] | No | Traffic generator and workload applications |
 | `links` | array[ComponentDeclaration] | No | Layer components defining spine plane linking configuration (type='layer') |
 

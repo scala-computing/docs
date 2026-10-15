@@ -280,7 +280,7 @@ Creates a traceset record and returns presigned S3 multipart upload URLs for eac
 | `tags` | array[string] | No | - |
 | `ttlDays` | integer | No | Custom TTL in days (1-365). Uses server default if omitted. |
 | `files` | array[UploadFileSpec] | Yes | - |
-| `workloadMetadata` | WorkloadMetadata | No | Workload characterization metadata for a traceset, given at upload (TracesetUploadUrlRequest.workloadMetadata) or on promotion. The canonical structure is owned by trace-service (see trace-service/openapi.json#WorkloadMetadata); this central-side schema is intentionally permissive (no `properties`, no `additionalProperties` constraint — accepts any JSON object shape) so customers can read whatever the trace-service emits without spec drift breaking SDK decoding. `additionalProperties: true` is omitted deliberately — the scala-openapi generator rejects that form unless paired with a `$ref` value type. |
+| `workloadMetadata` | UploadWorkloadMetadata | No | Workload characterization metadata, stored on the traceset as given. It declares the traceset's rank count, which an upload with primary files must declare: either shape.rankCount, or the parallelism degrees parallelism.dp, tp, sp, ep and pp, multiplied together, with an absent degree counting as 1 (cp and fsdp are not factors). When both are given they must be equal. Each value must be a whole number of at least 1. The traceset reports that count as rankCountDerived, and attaching the traceset to a configuration uses it; it cannot be changed after upload. UploadWorkloadMetadata describes the rank-count members; this field accepts any JSON object of at most 65,536 bytes when serialized whose rank-count members are valid, including members UploadWorkloadMetadata does not describe. |
 
 ```json
 {
