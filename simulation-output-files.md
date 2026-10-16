@@ -564,21 +564,28 @@ ScalaFabricSwitch-0-0-0-0-1-0,Switch,1,4294967295,0,scala_switch::ScalaSwitchEth
 
 #### Scale-Up Groups
 
-A run that has scale-up groups (Section II of the Chakra mapping file) also reports each group in this file. The report shows a group as a two-tier switched tree. The columns do not change.
+A run that has scale-up groups (Section II of the Chakra mapping file) also reports each group in this file. The columns do not change. Each link has two rows, one from each end.
+
+A group that names neither a fabric type nor a number of planes in Section II is an untyped group. The report shows an untyped group as a two-tier switched tree:
 
 - Each subgroup has one switch component, named `scaleup-g<group>-sg<subgroup>`. Its component type is `ScaleUpSwitch`, its tier is 5, and its subtier is 1.
 - A group with more than one subgroup also has one spine component, named `scaleup-g<group>-spine`. Its component type is `ScaleUpSwitch`, its tier is 5, and its subtier is 2.
-- The `net_device` of every end that is a switch or a spine, and the `peer_net_device` of every member, is `ScaleUpSwitchPort`.
-- Each link has two rows, one from each end.
+- The `net_device` of every end that is a switch or a spine, and the `peer_net_device` of every member row, is `ScaleUpSwitchPort`.
+
+A group that names a fabric type and a number of planes in Section II is a typed group. A typed group reports each plane separately.
+
+- A typed group of fabric type EPS has the same tree for each plane `<k>`, counted from 0. The switch of a subgroup is named `scaleup-g<group>-p<k>-sg<subgroup>`, and the spine is named `scaleup-g<group>-p<k>-spine`. Their component type, tier, subtier and `net_device` are the same as above.
+- A typed group of fabric type `OCS-XBar` has one crossbar for each plane `<k>`, named `scaleup-g<group>-p<k>-ocs`. Its component type is `ScaleUpOpticalSwitch`, its tier is 5, and its subtier is 1. The `net_device` of the crossbar end of a link is `ScaleUpOpticalSwitchPort`. Each member has one link to the crossbar of each plane. A group of this type has no spine. The `peer_net_device` of every member row is `ScaleUpOpticalSwitchPort`. The OCS controller writes no rows.
 
 | Link | `linkspeed_Gbps` | `prop_delay_ns` |
 |------|------------------|-----------------|
-| Member to subgroup switch | The group bandwidth | Cable latency + half the switch latency |
-| Subgroup switch to spine | The group bandwidth multiplied by the number of members in the subgroup | Cable latency + switch latency |
+| Member to subgroup switch | The group bandwidth. For a typed group, the group bandwidth divided by the number of planes | Cable latency + half the switch latency |
+| Subgroup switch to spine | The group bandwidth multiplied by the number of members in the subgroup. For a typed group, the group bandwidth divided by the number of planes, multiplied by the number of members in the subgroup | Cable latency + switch latency |
+| Member to crossbar | The group bandwidth divided by the number of planes | Cable latency + half the switch latency |
 
-On the member side, the row has the component name, type, tier, subtier and node ID of the member's server. Its `dev_id` is the number of devices on the server's node, so it does not match the `dev_id` of any other link of that server. Its `net_device` is the class name of the scale-up port. On the switch side, the `dev_id` of a member is the position of the member in its subgroup, in ascending order of Chakra ID. The link to the spine has the next number after the last member. On the spine, the `dev_id` of a subgroup is the position of the subgroup in the group, in ascending order of subgroup ID.
+On the member side, the row has the component name, type, tier, subtier and node ID of the member's server. Its `dev_id` is the number of devices on the server's node, plus the plane for a typed group, so it does not match the `dev_id` of any other link of that server. Its `net_device` is the class name of the scale-up port. On the crossbar side, the `dev_id` of a member is the position of the member in its group, in ascending order of Chakra ID. On the side of a subgroup switch, the `dev_id` of a member is the position of the member in its subgroup, in ascending order of Chakra ID. The link to the spine has the next number after the last member. On the spine, the `dev_id` of a subgroup is the position of the subgroup in the group, in ascending order of subgroup ID.
 
-The delay of a scale-up row includes the switch latency, so the delays along a path add up to the crossing time of the group. Between two members of one subgroup, the delays add up to 1 switch latency and 2 cable latencies. Between members of different subgroups, they add up to 3 switch latencies and 4 cable latencies. A scale-up row writes `prop_delay_ns` with four digits after the decimal point, so a half picosecond is exact. A switch latency of 1 ps with a cable latency of 0 gives 0.0005 ns for a member link.
+The delay of a scale-up row includes the switch latency, so the delays along a path add up to the crossing time of the group. In an untyped group and on an EPS plane, between two members of one subgroup, the delays add up to 1 switch latency and 2 cable latencies. Between members of different subgroups, they add up to 3 switch latencies and 4 cable latencies. On an `OCS-XBar` plane, between any two members, they add up to 1 switch latency and 2 cable latencies, whatever their subgroups. A scale-up row writes `prop_delay_ns` with four digits after the decimal point, so a half picosecond is exact. A switch latency of 1 ps with a cable latency of 0 gives 0.0005 ns for a member link.
 
 When the run uses more than one core, the file of each shard holds the rows that the shard owns. The shard of a member holds both rows of the link of that member. The shard of the lowest Chakra ID of a group holds the rows of the links between that group's switches and spine. The files of all shards together describe each link once from each end.
 
