@@ -10,7 +10,6 @@ This example demonstrates a complete workflow for running a network simulation, 
 We'll simulate a data center network with:
 - A leaf-spine topology
 - Multiple host nodes
-- Checkpointing enabled for long-running simulations
 
 ## 1. Set Up Environment
 
@@ -36,7 +35,7 @@ curl -X GET "$API_BASE/components" \
 {
   "components": [
     {
-      "id": "comp_switch",
+      "id": "model_37w6uUurBkspg7voji4julJIPSP",
       "model": "ScalaSwitch",
       "name": "ScalaSwitch",
       "category": "model",
@@ -46,7 +45,7 @@ curl -X GET "$API_BASE/components" \
       "versions": ["1.1", "1.0"]
     },
     {
-      "id": "comp_nic",
+      "id": "model_2nE5kQ8xVb1Rt4Yc7Wm0Lp3Hs9D",
       "model": "ScalaRoceNic",
       "name": "ScalaRoceNic",
       "category": "model",
@@ -66,7 +65,7 @@ curl -X GET "$API_BASE/components" \
 Get detailed schema for a component:
 
 ```bash
-curl -X GET "$API_BASE/components/comp_switch" \
+curl -X GET "$API_BASE/components/model_37w6uUurBkspg7voji4julJIPSP" \
   -H "Authorization: Bearer $SCALA_API_TOKEN"
 ```
 
@@ -118,8 +117,8 @@ curl -X POST "$API_BASE/configurations" \
 
 ```json
 {
-  "id": "cfg_spineleaf",
-  "workspaceId": "ws_prod123",
+  "id": "config_9012",
+  "workspaceId": "workspace_prod123",
   "name": "Leaf-Spine 48 Hosts",
   "status": "draft",
   "version": 1,
@@ -129,26 +128,28 @@ curl -X POST "$API_BASE/configurations" \
 }
 ```
 
+The response is the full configuration. This example shows only its summary fields. The full response also carries `components`, `containers`, `applications`, `links`, `topology`, and `globalParameters`.
+
 ## 4. Validate Configuration
 
 ```bash
-curl -X POST "$API_BASE/configurations/cfg_spineleaf/validate" \
+curl -X POST "$API_BASE/configurations/config_9012/validate" \
   -H "Authorization: Bearer $SCALA_API_TOKEN"
 ```
 
-If there are validation issues, fix them and update:
+If there are validation issues, fix them and update. Pass the configuration's current version, in quotes, as `If-Match`. A version that no longer matches returns 412.
 
 ```bash
-curl -X PATCH "$API_BASE/configurations/cfg_spineleaf" \
+curl -X PATCH "$API_BASE/configurations/config_9012" \
   -H "Authorization: Bearer $SCALA_API_TOKEN" \
-  -H "If-Match: \"v1\"" \
+  -H "If-Match: \"1\"" \
   -H "Content-Type: application/json" \
   -d '{
     "topology": { ... }
   }'
 ```
 
-## 5. Start Long-Running Simulation with Checkpointing
+## 5. Start the Simulation
 
 With a validated configuration, start the simulation:
 
@@ -157,26 +158,22 @@ curl -X POST "$API_BASE/simulations" \
   -H "Authorization: Bearer $SCALA_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "configurationId": "cfg_spineleaf",
+    "configurationId": "config_9012",
     "name": "leaf-spine-stress-test",
-    "duration": "3600s",
-    "checkpointing": {
-      "enabled": true,
-      "interval": "300s"
-    }
+    "duration": "3600s"
   }'
 ```
 
-The simulation is created asynchronously—this endpoint returns immediately after queuing. The initial status will be `provisioning` while resources are prepared.
+The simulation is created asynchronously—this endpoint returns immediately after queuing. The initial status is `validating` or `provisioning`. Some simulations skip `validating` and start in `provisioning` while resources are prepared.
 
 ```json
 {
   "id": "sim_stress001",
-  "workspaceId": "ws_prod123",
-  "configurationId": "cfg_spineleaf",
+  "workspaceId": "workspace_prod123",
+  "configurationId": "config_9012",
   "configurationVersion": 1,
   "name": "leaf-spine-stress-test",
-  "status": "provisioning",
+  "status": "validating",
   "createdAt": "2024-01-15T10:40:00Z"
 }
 ```
@@ -212,7 +209,7 @@ Response:
     {
       "timestamp": "2024-01-15T10:42:00Z",
       "level": "error",
-      "component": "spine-0",
+      "component": "simulator",
       "message": "Buffer overflow on port 3"
     }
   ],
@@ -238,7 +235,7 @@ while true; do
   echo "$(date): Status = $STATUS"
   
   case $STATUS in
-    completed|failed|terminated)
+    completed|failed|terminated|invalid)
       echo "Simulation finished with status: $STATUS"
       break
       ;;
@@ -257,9 +254,11 @@ curl -X POST "$API_BASE/simulations/$SIM_ID/terminate" \
   -H "Authorization: Bearer $SCALA_API_TOKEN"
 ```
 
+The response is the simulation's details. A simulation that has already finished keeps the status it ended with. Otherwise the status can keep reading `running` for a while after the request, until the run stops; it then becomes `terminated`, and results written up to that point stay available.
+
 ## 8. Retrieve and Analyze Results
 
-### Get Summary
+### List Result Files
 
 ```bash
 curl -X GET "$API_BASE/simulations/$SIM_ID/results" \
@@ -269,44 +268,54 @@ curl -X GET "$API_BASE/simulations/$SIM_ID/results" \
 ```json
 {
   "simulationId": "sim_stress001",
-  "duration": "3600s",
-  "summary": {
-    "totalPackets": 450000000,
-    "avgLatency": "4.2ms",
-    "throughput": "1.2Tbps",
-    "dropRate": 0.0005
-  },
-  "dashboardUrl": "https://app.scalacomputing.com/simulations/sim_stress001/dashboard",
+  "duration": "01:02:17",
   "files": [
     {
       "type": "csv",
-      "name": "latency_histogram.csv",
-      "size": "2.5MB",
+      "name": "sim_stress001-nd-stats-0.csv",
+      "size": "2621440",
       "downloadUrl": "https://..."
     },
     {
-      "type": "pcap",
-      "name": "sample_capture.pcap",
-      "size": "500MB",
+      "type": "csv",
+      "name": "sim_stress001-ecn-pfc-stats-0.csv",
+      "size": "524288",
       "downloadUrl": "https://..."
     },
     {
       "type": "json",
-      "name": "flow_completion_times.json",
-      "size": "15MB",
+      "name": "sim_stress001-global-sim-report-0.json",
+      "size": "4096",
       "downloadUrl": "https://..."
     }
-  ]
+  ],
+  "pagination": {
+    "count": 3,
+    "hasMore": false
+  }
 }
 ```
 
+The list returns at most 100 files at a time. When `pagination.hasMore` is `true`, pass `pagination.nextCursor` as the `next` query parameter to get the next page. [Simulation output files](../simulation-output-files.md) describes each file.
+
 ### Download Result Files
+
+Set `FILE_NAME` to a name from the list:
 
 ```bash
 # Download a specific file
-curl -o latency_histogram.csv "$(curl -s "$API_BASE/simulations/$SIM_ID/results" \
-  -H "Authorization: Bearer $SCALA_API_TOKEN" \
-  | jq -r '.files[] | select(.name == "latency_histogram.csv") | .downloadUrl')"
+curl -o "$FILE_NAME" "$(curl -s "$API_BASE/simulations/$SIM_ID/results/download-url?fileName=$FILE_NAME" \
+  -H "Authorization: Bearer $SCALA_API_TOKEN" | jq -r '.downloadUrl')"
+```
+
+### Get Computed Results
+
+The platform can compute results from the files for you. The response links to a zstd-compressed JSON document:
+
+```bash
+URL=$(curl -s "$API_BASE/simulations/$SIM_ID/results/data?metric=nd-stats&tier=all" \
+  -H "Authorization: Bearer $SCALA_API_TOKEN" | jq -r '.file.downloadUrl')
+curl -s "$URL" | zstd -d > nd-stats-summary.json
 ```
 
 ## 9. Cleanup
@@ -326,7 +335,7 @@ Always check response status codes and handle errors:
 response=$(curl -s -w "\n%{http_code}" -X POST "$API_BASE/simulations" \
   -H "Authorization: Bearer $SCALA_API_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"configurationId": "cfg_spineleaf", "name": "error-handling-demo", "duration": "3600s"}')
+  -d '{"configurationId": "config_9012", "name": "error-handling-demo", "duration": "3600s"}')
 
 body=$(echo "$response" | head -n -1)
 status=$(echo "$response" | tail -n 1)

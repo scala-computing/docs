@@ -195,7 +195,7 @@ WQE posting continues through the recording window and the cool-down, until the 
 
 ### Records a simulation writes
 
-With the defaults, the Scala RDMA application writes these records. Each file is named after the record, in the form `{simulation-name}-{record}-{shard-index}.csv`, as [Simulation output files](../../simulation-output-files.md#file-naming-convention) describes. When a simulation runs as several simulator processes, each process writes its own shard, covering the instances that process ran.
+With the defaults, the Scala RDMA application writes these records. Each file is named after the record, in the form `{simulation}-{record}-{shard-index}.csv`, as [Simulation output files](../../simulation-output-files.md#file-naming-convention) describes. When a simulation runs as several simulator processes, each process writes its own shard, covering the instances that process ran.
 
 | Record | One row for | When |
 | --- | --- | --- |

@@ -70,6 +70,14 @@ Curated example configurations
 | `components` | array[ComponentDeclaration] | No | Component declarations with typedParameters |
 | `containers` | array[ContainerDefinition] | No | Container definitions |
 | `topology` | TopologyDefinition | No | Topology definition with links as ComponentDeclaration (type: layer) |
+| `topology.name` | string (nullable) | No | Topology instance name (e.g., 'TestTopology') |
+| `topology.type` | TopologyType | Yes, within `topology` | Network topology architecture type |
+| `topology.topologyTiers` | integer | Yes, within `topology` | Number of tiers in CLOS topology (e.g., 3 for spine-fabric-rack) |
+| `topology.allowedComponents` | array[string] | Yes, within `topology` | Component types allowed at topology level (e.g., ['switch', 'layer', 'pod']) |
+| `topology.components` | array[ComponentReference] | Yes, within `topology` | Top-level component references (spine switches, pods). Containers are referenced by name with type='rack' or type='pod'. |
+| `topology.appDistribution` | AppDistribution | No | Application distribution settings for random placement |
+| `topology.appDistribution.description` | string (nullable) | No | Human-readable description of the distribution strategy |
+| `topology.appDistribution.randomApplicationDistribution` | array[RandomApplicationDistribution] | Yes, within `topology.appDistribution` | List of applications with their distribution percentages |
 | `globalParameters` | TypedParameters | No | Global parameters in TypedParameters format |
 | `applications` | array[ApplicationDefinition] | No | Traffic generator and workload applications |
 | `links` | array[ComponentDeclaration] | No | Layer components defining spine plane linking configuration (type='layer') |

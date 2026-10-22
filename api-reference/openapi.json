@@ -3688,7 +3688,7 @@
       },
       "post": {
         "summary": "Start simulation",
-        "description": "Creates and starts a new simulation based on the specified configuration. The simulation will begin in `validating` status, then progress through `provisioning` to `running`. Poll the GET endpoint to monitor progress.",
+        "description": "Creates and starts a new simulation based on the specified configuration. The simulation begins in `validating` status, or in `provisioning` for simulations that skip that status, then progresses to `running`. Poll the GET endpoint to monitor progress. `checkpointing` is accepted but not yet supported.",
         "tags": [
           "simulations"
         ],
@@ -3704,11 +3704,7 @@
                 "configurationId": "config_def456",
                 "configurationVersion": 1,
                 "name": "production-network-test",
-                "duration": "1h",
-                "checkpointing": {
-                  "enabled": true,
-                  "interval": "10m"
-                }
+                "duration": "1h"
               }
             }
           }
@@ -4017,7 +4013,7 @@
             }
           },
           "500": {
-            "description": "Internal Server Error - A fault a retry cannot clear: the gateway or broker refused central's own request or credentials, or the termination event could not be built",
+            "description": "Internal Server Error - A fault a retry cannot clear: the gateway or scala-go refused central's own request or credentials, or answered in a form central could not read",
             "content": {
               "application/json": {
                 "schema": {
@@ -4047,7 +4043,7 @@
     "/api/v1/simulations/{sim_id}/results": {
       "get": {
         "summary": "Get simulation results",
-        "description": "Retrieves results for a completed simulation including summary metrics, dashboard URL, and downloadable result files (pcap, traces, etc.).",
+        "description": "Retrieves results for a completed simulation including the run's duration and downloadable result files (pcap, traces, etc.).",
         "tags": [
           "simulations"
         ],
@@ -4164,6 +4160,26 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "Service Unavailable - The simulation's state could not be read from its backend: the backend's database is not configured, or it gave the read no connection within the read's time budget. The first persists until the backend is configured; the second usually clears on its own. The response body does not distinguish them, so a client should retry with backoff under a bounded attempt count rather than indefinitely.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Gateway Timeout - Reading the simulation's state from its backend's database exceeded the read's time budget. The request may be retried.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4256,6 +4272,26 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "Service Unavailable - The simulation's state could not be read from its backend: the backend's database is not configured, or it gave the read no connection within the read's time budget. The first persists until the backend is configured; the second usually clears on its own. The response body does not distinguish them, so a client should retry with backoff under a bounded attempt count rather than indefinitely.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Gateway Timeout - Reading the simulation's state from its backend's database exceeded the read's time budget. The request may be retried.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4287,7 +4323,7 @@
             "name": "metric",
             "in": "query",
             "required": true,
-            "description": "Metric type to summarize. `rank-analysis` is published but returns 501 Not Implemented until its compute path ships. `uet-transport-stats` and `roce-transport-stats` are published: both serve `timeSeries` and return 501 for `summary` and `sampled` until those compute paths ship.",
+            "description": "Metric type to summarize. `rank-analysis` is published but returns 501 Not Implemented until its compute path ships. `uet-transport-stats` and `roce-transport-stats` serve `summary`, which carries the whole-run `transport` projection, and `timeSeries`. Both return 501 for `sampled` until that compute path ships. `scala-switch-agg-buff-stats` serves `summary`, which carries the whole-run `bufferPools` projection unless the run settled with no buffer rows, and `timeSeries`, one group per buffer pool. It returns 501 for `sampled` until that compute path ships.",
             "schema": {
               "type": "string",
               "enum": [
@@ -4300,14 +4336,15 @@
                 "cdf",
                 "rank-analysis",
                 "uet-transport-stats",
-                "roce-transport-stats"
+                "roce-transport-stats",
+                "scala-switch-agg-buff-stats"
               ]
             }
           },
           {
             "name": "mode",
             "in": "query",
-            "description": "Output mode (default: summary). `timeSeries` is served for `nd-stats`, `pfc`, `uet-transport-stats` and `roce-transport-stats` and returns 501 Not Implemented for the other metrics; `sampled` is published but returns 501 Not Implemented until its compute path ships. `utilizationBins` (a binned distribution of link utilization over time) is offered for `nd-stats` only: every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, a permanent answer that must not be retried, and for `nd-stats` the response's `file` presigns a `UtilizationBinsDocument`. `uplinkFairness` (uplink port fairness per switch over time) is offered for `nd-stats` only in the same way: every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, and for `nd-stats` the response's `file` presigns an `UplinkFairnessDocument`. `completionTimeBins` (a binned distribution of completion times over time) is offered on the Performance projection: `perf` returns the envelope whose presigned URL serves a `CompletionTimeBinsDocument`; `chakra-perf` returns 404 Not Found, as a run with no result shards does, because this shape does not bin its completions; and every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, a permanent answer that must not be retried.",
+            "description": "Output mode (default: summary). `timeSeries` is served for `nd-stats`, `pfc`, `uet-transport-stats`, `roce-transport-stats` and `scala-switch-agg-buff-stats` and returns 501 Not Implemented for the other metrics; `sampled` is published but returns 501 Not Implemented until its compute path ships. `utilizationBins` (a binned distribution of link utilization over time) is offered for `nd-stats` only: every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, a permanent answer that must not be retried, and for `nd-stats` the response's `file` presigns a `UtilizationBinsDocument`. `uplinkFairness` (uplink port fairness per switch over time) is offered for `nd-stats` only in the same way: every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, and for `nd-stats` the response's `file` presigns an `UplinkFairnessDocument`. `completionTimeBins` (a binned distribution of completion times over time) is offered on the Performance projection: `perf` returns the envelope whose presigned URL serves a `CompletionTimeBinsDocument`; `chakra-perf` returns 404 Not Found, as a run with no result shards does, because this shape does not bin its completions; and every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, a permanent answer that must not be retried.",
             "schema": {
               "type": "string",
               "enum": [
@@ -4579,7 +4616,7 @@
             }
           },
           "504": {
-            "description": "Gateway Timeout - Summary computation exceeded the server's time budget. The request may be retried.",
+            "description": "Gateway Timeout - Summary computation, or reading the simulation's state from its backend's database, exceeded the server's time budget. The request may be retried.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4706,7 +4743,17 @@
             }
           },
           "503": {
-            "description": "Orchestrator database not configured",
+            "description": "Service Unavailable - The simulation's state could not be read from its backend: the backend's database is not configured, or it gave the read no connection within the read's time budget. The first persists until the backend is configured; the second usually clears on its own. The response body does not distinguish them, so a client should retry with backoff under a bounded attempt count rather than indefinitely.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Gateway Timeout - Reading the simulation's state from its backend's database exceeded the read's time budget. The request may be retried.",
             "content": {
               "application/json": {
                 "schema": {
@@ -6359,7 +6406,7 @@
                     "value": {
                       "error": {
                         "code": "VALIDATION_ERROR",
-                        "message": "ranks must be one of [8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096], got 100"
+                        "message": "ranks must be one of [4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096], got 100"
                       }
                     }
                   },
@@ -6589,7 +6636,7 @@
                     "value": {
                       "error": {
                         "code": "VALIDATION_ERROR",
-                        "message": "ranks must be one of [8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096], got 100"
+                        "message": "ranks must be one of [4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096], got 100"
                       }
                     }
                   }
@@ -9250,24 +9297,6 @@
           }
         }
       },
-      "ResultsSummary": {
-        "type": "object",
-        "properties": {
-          "totalPackets": {
-            "type": "integer"
-          },
-          "avgLatency": {
-            "type": "string"
-          },
-          "throughput": {
-            "type": "string"
-          },
-          "dropRate": {
-            "type": "number",
-            "format": "double"
-          }
-        }
-      },
       "ResultFile": {
         "type": "object",
         "properties": {
@@ -9503,13 +9532,6 @@
           "duration": {
             "type": "string"
           },
-          "summary": {
-            "$ref": "#/components/schemas/ResultsSummary"
-          },
-          "dashboardUrl": {
-            "type": "string",
-            "format": "uri"
-          },
           "files": {
             "type": "array",
             "items": {
@@ -9646,7 +9668,8 @@
               "collectives",
               "cdf",
               "uet-transport-stats",
-              "roce-transport-stats"
+              "roce-transport-stats",
+              "scala-switch-agg-buff-stats"
             ]
           },
           "mode": {
@@ -9880,6 +9903,10 @@
           "transport": {
             "description": "Whole-run transport statistics (for the uet-transport-stats and roce-transport-stats metrics). Omitted when the summary carries no transport projection.",
             "$ref": "#/components/schemas/TransportSummary"
+          },
+          "bufferPools": {
+            "description": "Aggregate switch buffer pool statistics (for the scala-switch-agg-buff-stats metric). Omitted when the summary carries no buffer pool projection.",
+            "$ref": "#/components/schemas/BufferPoolSummary"
           },
           "computedAt": {
             "type": "string",
@@ -10630,7 +10657,7 @@
       },
       "TransportSummary": {
         "type": "object",
-        "description": "Whole-run transport statistics: one cross-NIC aggregate per whole-run column of the writer's row, reduced over each NIC's final row. Counters are summed, maxima maxed, minima minned, and means averaged unweighted over NICs, an idle NIC's 0.0 included.",
+        "description": "Whole-run transport statistics: one cross-NIC aggregate per whole-run column of the writer's row, reduced over each NIC's final row, and on RoCE one more, numPktsRcvdSum, the received-packet total the service sums from the writer's seven per-type received counters (connection packets, ACKs, SACKs, NACKs, writes, sends and CNPs), because the RoCE writer records no received total. Counters are summed, maxima maxed, minima minned, and means averaged unweighted over NICs, an idle NIC's 0.0 included.",
         "additionalProperties": false,
         "properties": {
           "nicCount": {
@@ -10655,6 +10682,119 @@
           "type": "number",
           "format": "double"
         }
+      },
+      "BufferPoolSummary": {
+        "type": "object",
+        "description": "Aggregate switch buffer pool statistics.",
+        "additionalProperties": false,
+        "properties": {
+          "pools": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BufferPoolStats"
+            },
+            "description": "Pool groups sorted by tier, buffer class, direction and pool number."
+          }
+        },
+        "required": [
+          "pools"
+        ]
+      },
+      "BufferPoolStats": {
+        "type": "object",
+        "description": "Statistics over rows for one tier, buffer class, direction and pool.",
+        "additionalProperties": false,
+        "properties": {
+          "tier": {
+            "type": "string",
+            "description": "Network tier name."
+          },
+          "bufferClass": {
+            "$ref": "#/components/schemas/BufferClass",
+            "description": "Buffer class emitted by the switch writer."
+          },
+          "direction": {
+            "$ref": "#/components/schemas/BufferDirection",
+            "description": "Uplink or downlink; omitted for shared buffers."
+          },
+          "pool": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Pool number."
+          },
+          "peakBytes": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Maximum interval peak occupancy, bytes."
+          },
+          "minBytes": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Minimum interval occupancy, bytes."
+          },
+          "meanBytes": {
+            "type": "number",
+            "format": "double",
+            "description": "Arithmetic mean of interval mean occupancy, bytes."
+          },
+          "peakUtilPct": {
+            "type": "number",
+            "format": "double",
+            "description": "Maximum interval peak utilization, percent of the pool's buffer limit, computed from bytes and not clamped; a lossless egress pool can exceed 100."
+          },
+          "meanUtilPct": {
+            "type": "number",
+            "format": "double",
+            "description": "Arithmetic mean interval utilization, percent of the pool's buffer limit, computed from bytes and not clamped; a lossless egress pool can exceed 100."
+          },
+          "bufferLimitBytes": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Maximum buffer limit, bytes."
+          },
+          "switchCount": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "description": "Number of distinct switch component names."
+          },
+          "rowCount": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "description": "Number of source rows in the pool group."
+          }
+        },
+        "required": [
+          "tier",
+          "bufferClass",
+          "pool",
+          "peakBytes",
+          "minBytes",
+          "meanBytes",
+          "peakUtilPct",
+          "meanUtilPct",
+          "bufferLimitBytes",
+          "switchCount",
+          "rowCount"
+        ]
+      },
+      "BufferClass": {
+        "type": "string",
+        "description": "Aggregate switch buffer class.",
+        "enum": [
+          "sharedBuffer",
+          "ingressUsage",
+          "egressQueue"
+        ]
+      },
+      "BufferDirection": {
+        "type": "string",
+        "description": "Direction of an ingress or egress pool.",
+        "enum": [
+          "ul",
+          "dl"
+        ]
       },
       "AlignedSummaryMap": {
         "type": "object",
@@ -11008,43 +11148,43 @@
             "nullable": true,
             "minimum": 1,
             "maximum": 2147483647,
-            "description": "Total rank count: a whole number from 1 to 2,147,483,647. When parallelism degrees are also given, their product must equal it. JSON null counts as absent."
+            "description": "Total rank count: a whole number from 1 to 2,147,483,647. Declaring it alone is enough; parallelism degrees are optional. When parallelism degrees are also given, their product must equal it. JSON null counts as absent."
           }
         }
       },
       "WorkloadParallelism": {
         "type": "object",
-        "description": "Parallelism degrees. When at least one of `dp`, `tp`, `sp`, `ep` and `pp` is given, the rank count is their product, with an absent degree counting as 1, and must not exceed 2,147,483,647. Each of those five degrees that is given must be a whole number of at least 1. Other members, such as `cp` and `fsdp`, are not factors; upload stores them as given without checking them, and promotion checks `cp` and `fsdp`. JSON null counts as absent.",
+        "description": "Parallelism degrees. When at least one of `dp`, `tp`, `sp`, `ep` and `pp` is given, the rank count is their product, with an absent degree counting as 1, and must not exceed 2,147,483,647. Each of those five degrees that is given must be a whole number of at least 1. Each of the five is an independent factor; some training frameworks count an axis differently, for example expert parallelism within data parallelism, and when the rank count is not this product, declare `shape.rankCount` and give degrees only if their product equals it. Other members, such as `cp` and `fsdp`, are not factors; upload stores them as given without checking them, and promotion checks `cp` and `fsdp`. `cp` is the context parallelism degree: the number of ranks that split the attention computation over a long sequence's context. `fsdp` is the fully sharded data parallel (FSDP) degree: the number of data-parallel ranks the model's parameters, gradients and optimizer state are sharded across; it divides `dp` rather than adding ranks. JSON null counts as absent.",
         "properties": {
           "dp": {
             "type": "integer",
             "nullable": true,
             "minimum": 1,
-            "description": "Data parallelism degree"
+            "description": "Data parallelism degree: the number of data-parallel ranks, each processing its own share of the global batch and synchronizing gradients with the others. Without FSDP each holds a full replica of the model; with `fsdp`, each group of `fsdp` of them holds one replica between them, so there are `dp` ÷ `fsdp` replicas."
           },
           "tp": {
             "type": "integer",
             "nullable": true,
             "minimum": 1,
-            "description": "Tensor parallelism degree"
+            "description": "Tensor parallelism degree: the number of ranks that split each layer's weight matrices, and the layer's computation, between them."
           },
           "sp": {
             "type": "integer",
             "nullable": true,
             "minimum": 1,
-            "description": "Sequence parallelism degree"
+            "description": "Sequence parallelism degree: the number of ranks that split each input sequence along its length."
           },
           "ep": {
             "type": "integer",
             "nullable": true,
             "minimum": 1,
-            "description": "Expert parallelism degree (MoE)"
+            "description": "Expert parallelism degree: the number of ranks a mixture-of-experts (MoE) model's experts are distributed across, each rank holding a subset of the experts and exchanging tokens with the others."
           },
           "pp": {
             "type": "integer",
             "nullable": true,
             "minimum": 1,
-            "description": "Pipeline parallelism degree"
+            "description": "Pipeline parallelism degree: the number of pipeline stages, each a contiguous group of the model's layers on its own ranks, that microbatches pass through in turn."
           }
         }
       },
@@ -12010,7 +12150,7 @@
           "ranks": {
             "type": "integer",
             "minimum": 1,
-            "description": "Number of participating ranks. Without topologyConstraints, must be one of the reference topology sizes: 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096. Large sizes (8192, 16384, 32768, 65536) require the enable_large_simple_sim_topologies flag. With topologyConstraints, any positive value satisfying the constraint solver is accepted."
+            "description": "Number of participating ranks. Without topologyConstraints, must be one of the reference topology sizes: 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096. Large sizes (8192, 16384, 32768, 65536) require the enable_large_simple_sim_topologies flag. With topologyConstraints, any count the constraint solver can satisfy is accepted; a count above 4096 still requires the enable_large_simple_sim_topologies flag."
           },
           "phases": {
             "type": "array",
@@ -12068,7 +12208,7 @@
       },
       "TopologyConstraints": {
         "type": "object",
-        "description": "Hardware constraints for topology derivation. The solver derives a valid CLOS topology from the specified switch radix and oversubscription ratio. A 2-tier topology is used when ranks fit within the radix capacity (ports × hosts_per_leaf); otherwise a 3-tier pod-based topology (RSW → FSW → SSW) is derived with all switches fully utilized. When present, rank count is not restricted to the reference values — any count satisfying the constraints is valid.",
+        "description": "Hardware constraints for topology derivation. The solver derives a valid CLOS topology from the specified switch radix and oversubscription ratio. A 2-tier topology is used when ranks fit within the radix capacity (ports × hosts_per_leaf); otherwise a 3-tier pod-based topology (RSW → FSW → SSW) is derived with all switches fully utilized. When present, rank count is not restricted to the reference values — any count satisfying the constraints is valid, and a count above 4096 still requires the enable_large_simple_sim_topologies flag.",
         "properties": {
           "switchRadix": {
             "type": "string",

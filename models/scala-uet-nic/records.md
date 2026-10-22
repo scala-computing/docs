@@ -9,7 +9,7 @@ For every record but `pcie-stats`, it also describes what one row holds. The rec
 
 ## Records a simulation writes
 
-With the defaults, a simulation writes these records for every Scala UET NIC. Each file is named after the record, in the form `{simulation-name}-{record}-{shard-index}.csv`, as [Simulation output files](../../simulation-output-files.md) describes. When a simulation runs as several simulator processes, each process writes its own shard.
+With the defaults, a simulation writes these records for every Scala UET NIC. Each file is named after the record, in the form `{simulation}-{record}-{shard-index}.csv`, as [Simulation output files](../../simulation-output-files.md) describes. When a simulation runs as several simulator processes, each process writes its own shard.
 
 | Record | One row for | Written | Turned on by |
 | --- | --- | --- | --- |
@@ -34,7 +34,7 @@ A periodic record writes its first row at `StartTime` + `ClientStartOffset` + it
 
 `GET /api/v1/simulations/{sim_id}/results` lists a simulation's result files, among them every record on this page; its `type` query parameter filters by file type, for example `csv`. `GET /api/v1/simulations/{sim_id}/results/download-url`, with the `fileName` query parameter set to a file's name, returns a link to download that file.
 
-`GET /api/v1/simulations/{sim_id}/results/data` computes results on the platform from the record files and returns a link to download them. With `metric=uet-transport-stats` and `mode=timeSeries`, it computes a time series from the simulation's `uet-transport-stats` files; `timeSeries` is the only mode it serves for that metric. [Simulation output files](../../simulation-output-files.md) shows the same endpoint for `nd-stats`, and the [Simulations API reference](../../api-reference/simulations.md) lists its parameters.
+`GET /api/v1/simulations/{sim_id}/results/data` computes results on the platform from the record files and returns a link to download them. With `metric=uet-transport-stats` and `mode=timeSeries`, it computes a time series from the simulation's `uet-transport-stats` files; with `mode=summary`, it summarizes the whole run over every NIC. [Simulation output files](../../simulation-output-files.md) shows the same endpoint for `nd-stats`, and the [Simulations API reference](../../api-reference/simulations.md) lists its parameters.
 
 Set `SIM_ID` to the simulation's ID and `FILE_NAME` to a name from the list:
 
@@ -102,7 +102,7 @@ A mean is taken over every sample from every congestion window on the NIC, not p
 - With `NSCCEnable` set to `false`, the average queueing delay columns and `num_quick_adapt` stay 0; the RTT columns are still written.
 - At the default PCIe settings the receiver-penalty columns stay 0: the host interface drains received data faster than the link delivers it.
 
-`GET /api/v1/simulations/{sim_id}/results/data` serves this record as a time series ([Getting the records](#getting-the-records)).
+`GET /api/v1/simulations/{sim_id}/results/data` serves this record as a time series or a whole-run summary ([Getting the records](#getting-the-records)).
 
 ## nd-stats
 
@@ -112,7 +112,7 @@ With the defaults, `nd-stats` has a row for the NIC's network port every `NDStat
 
 With the defaults, `ecn-pfc-stats` has a row for each traffic class with a receive pool, classes 0 and 1 at the defaults, every `NDStatsReportInterval`; `priority` is the class. A row is written only once one of its counters is non-zero, and the counters count from the start of the simulation, so a class's rows start with the first PFC frame the NIC sends or receives for that class and continue every interval after. With the default `PFCEnableVector` the NIC sends no PFC frames, so its rows appear only after the rack switch pauses it.
 
-`pfcxoff_tx` and `pfcxon_tx` count the pause and XON frames the NIC sends for the class; `pfcxoff_rx` and `pfcxon_rx` the frames it receives from the switch ([PFC](./buffers-and-pfc.md#pfc)). [ECN/PFC Statistics](../../simulation-output-files.md#ecnpfc-statistics-ecn-pfc-stats) lists every column.
+`pfcxoff_tx` and `pfcxon_tx` count the pause and XON frames the NIC sends for the class; `pfcxoff_rx` and `pfcxon_rx` the frames it receives from the switch ([PFC](./buffers-and-pfc.md#pfc)). [ECN/PFC Statistics](../../simulation-output-files.md#ecn-and-pfc-statistics-ecn-pfc-stats) lists every column.
 
 ## Records turned on by attributes
 
