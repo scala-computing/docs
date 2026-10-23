@@ -212,7 +212,7 @@ The load balancing interval record is written by default, with `none` as well as
 
 ## Records a simulation writes
 
-With the defaults, a simulation writes these records for every Scala Switch. Each file is named after the record, for example `{simulation-name}-nd-stats-{shard-index}.csv`, and [Simulation output files](../../simulation-output-files.md) lists the columns of `nd-stats`, `ecn-pfc-stats`, and `scala-switch-agg-buff-stats`.
+With the defaults, a simulation writes these records for every Scala Switch. Each file is named after the record, for example `{simulation}-nd-stats-{shard-index}.csv`, and [Simulation output files](../../simulation-output-files.md) lists the columns of `nd-stats`, `ecn-pfc-stats`, and `scala-switch-agg-buff-stats`.
 
 | Record | One row for | What a row holds | Spacing |
 | --- | --- | --- | --- |

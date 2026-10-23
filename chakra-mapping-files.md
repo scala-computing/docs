@@ -45,10 +45,10 @@ All fields are non-negative base-10 integers that fit in 32 bits, and `429496729
 
 ### Section II: scale-up group parameters (optional)
 
-Section II begins at the first line that starts with `@`, after at least one Section I entry. Every line starting with `@` is a comment, so the marker line can carry a heading, and inside Section II both `#` and `@` start a comment anywhere in a line. Each remaining line declares one group, with exactly four fields:
+Section II begins at the first line that starts with `@`, after at least one Section I entry. Every line starting with `@` is a comment, so the marker line can carry a heading, and inside Section II both `#` and `@` start a comment anywhere in a line. Each remaining line declares one group, with four fields or six fields:
 
 ```text
-ScaleUpGroupId, ScaleUpBandwidthGbps, ScaleUpPerHopSwitchLatencyNs, ScaleUpNpuCableLatencyNs
+ScaleUpGroupId, ScaleUpBandwidthGbps, ScaleUpPerHopSwitchLatencyNs, ScaleUpNpuCableLatencyNs[, Type, NumOfPlanes]
 ```
 
 | Field | Units | Accepted values |
@@ -57,6 +57,26 @@ ScaleUpGroupId, ScaleUpBandwidthGbps, ScaleUpPerHopSwitchLatencyNs, ScaleUpNpuCa
 | `ScaleUpBandwidthGbps` | Gbit/s | A positive decimal number of at least 1e-9 and below 1.8446744073709552e10. |
 | `ScaleUpPerHopSwitchLatencyNs` | ns | 0, or a decimal number of at least 1e-3 and below 1.8446744073709552e16. |
 | `ScaleUpNpuCableLatencyNs` | ns | 0, or a decimal number of at least 1e-3 and below 1.8446744073709552e16. |
+| `Type` | none | `EPS` or `OCS-XBar`. The match is exact, including uppercase and lowercase letters. A line gives `Type` and `NumOfPlanes` together, or neither. |
+| `NumOfPlanes` | none | A base-10 integer from 1 to 64. The bandwidth in bit/s must divide by it with no remainder. |
+
+A line with four fields is an untyped group. An untyped group is an `EPS` group with one plane. A line with six fields is a typed group. A line with five fields, or with more than six fields, is refused.
+
+The bandwidth in bit/s is `ScaleUpBandwidthGbps × 1e9`, truncated to a whole number. For a typed group it must divide by `NumOfPlanes` with no remainder: 100 Gbit/s on 3 planes is refused, and 99 Gbit/s on 3 planes is accepted. On an `OCS-XBar` group, `ScaleUpPerHopSwitchLatencyNs` is the latency of one pass through the crossbar.
+
+A typed group (`EPS` or `OCS-XBar`, with any `NumOfPlanes`, including 1) needs a `scale_up_plane` attribute on every scale-up SEND and RECV node of the workload. A scale-up node is a node whose partner is in the same scale-up group. The attribute selects the plane of the transfer, and its value is an unsigned integer from 1 to `NumOfPlanes`. In the Chakra trace, `scale_up_plane` is an entry in the node's `attr` list. The entry has `name` set to `scale_up_plane`, and its value is a JSON integer under the key `uint64Val`. The value is not a string. A string under `uint64Val` (the form `comm_size` uses) stops the run, and so does a value under any other key. For plane 2, the entry is:
+
+```json
+{"name": "scale_up_plane", "uint64Val": 2}
+```
+
+The run stops when a scale-up node of a typed group:
+
+- has no `scale_up_plane` attribute,
+- has a value that is not a JSON integer under `uint64Val`, or
+- has a value outside 1 to `NumOfPlanes`.
+
+An untyped group needs no `scale_up_plane` attribute, and it ignores one.
 
 The two latency fields are also bounded as a pair, using the group's switch latency `s` and cable latency `c`, both in picoseconds:
 
@@ -99,6 +119,18 @@ An 8-rank file with two scale-up groups. Ranks 0 to 5 are group members; ranks 6
 @ Section II: ScaleUpGroupId, ScaleUpBandwidthGbps, ScaleUpPerHopSwitchLatencyNs, ScaleUpNpuCableLatencyNs
 0, 800.0, 100.0, 100.0
 1, 800.0, 50.0, 50.0
+```
+
+A 4-rank file with one typed group. Group 0 is an `OCS-XBar` group of 8 planes. Its switch latency is 0, which the pair rule accepts because its cable latency is positive:
+
+```text
+# Section I: ChakraLogicalId, serverId, ScaleUpGroupId, ScaleUpSubgroupId
+0, 0, 0, 0
+1, 1, 0, 0
+2, 2, 0, 1
+3, 3, 0, 1
+@ Section II: ScaleUpGroupId, ScaleUpBandwidthGbps, ScaleUpPerHopSwitchLatencyNs, ScaleUpNpuCableLatencyNs, Type, NumOfPlanes
+0, 1600.0, 0.0, 5.0, OCS-XBar, 8
 ```
 
 ### When each rule is checked

@@ -31,7 +31,12 @@ Validates the workload against operation/algorithm compatibility rules, resolves
 | `name` | string | No | Optional human-readable name for the simulation. Auto-generated when omitted. SECURITY: this value is interpolated into command strings and Slurm entrypoints executed on cluster nodes, so it is restricted to letters, digits, '-' and '_' (1–255 characters), and must start with a letter or digit (no whitespace, other punctuation, or non-ASCII characters, and no leading '-' or '_'). |
 | `topology` | string | No | Optional topology reference (reserved for K2 orchestration). |
 | `topologyConstraints` | TopologyConstraints | No | Hardware constraints for topology derivation. Mutually exclusive with topology. |
+| `topologyConstraints.switchRadix` | string | No | Switch port configuration for TH5-class (51200 Gbps switching capacity). Format: PortsxSpeed (e.g. 128x400G). 64x800G: 64 ports at 800 Gbps. 128x400G: 128 ports at 400 Gbps (default). 256x200G: 256 ports at 200 Gbps. |
+| `topologyConstraints.subscriptionRatio` | string | No | Target oversubscription ratio (downlink BW : uplink BW) applied at every switch tier. 1:1: equal uplink and downlink bandwidth (default). 2:1, 3:1, and 4:1: more downlink capacity, fewer uplinks. The ratio is applied to both rack switches (RSW) and fabric switches (FSW) in 3-tier topologies. Actual ratios may differ slightly from the target due to integer port rounding. |
+| `topologyConstraints.nicNetworkPortSpeed` | integer | No | NIC network port speed in Gbps. Determines the data rate of each host-to-switch connection. When omitted, defaults to the switch link speed from switchRadix (e.g. 400 for 128x400G). The effective link speed between a NIC and its rack switch is min(nicNetworkPortSpeed, switchLinkSpeed) — the lower of the two is used for both topology capacity planning and the generated configuration. PCIe generation is auto-selected to match the effective NIC speed. Allowed values: 50, 100, 200, 400, 800 Gbps. |
 | `workload` | SimpleWorkload | No | Sequential workload: all ranks execute the same phases. Mutually exclusive with groups. |
+| `workload.ranks` | integer | Yes, within `workload` | Number of participating ranks. Without topologyConstraints, must be one of the reference topology sizes: 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096. Large sizes (8192, 16384, 32768, 65536) require the enable_large_simple_sim_topologies flag. With topologyConstraints, any count the constraint solver can satisfy is accepted; a count above 4096 still requires the enable_large_simple_sim_topologies flag. |
+| `workload.phases` | array[SimpleWorkloadPhase] | Yes, within `workload` | Ordered list of collective operation phases (1–16). Operations execute sequentially via ctrlDeps chaining. |
 | `groups` | array[SimpleGroupSpec] | No | Parallel groups: ranks partitioned into independent groups executing concurrently. Mutually exclusive with workload. |
 
 **Example: 128-rank AllReduce with default topology**
@@ -226,7 +231,7 @@ Validates the workload against operation/algorithm compatibility rules, resolves
 {
   "error": {
     "code": "VALIDATION_ERROR",
-    "message": "ranks must be one of [8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096], got 100"
+    "message": "ranks must be one of [4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096], got 100"
   }
 }
 ```
@@ -272,7 +277,12 @@ Runs the full validation and topology derivation pipeline against the provided w
 | `name` | string | No | Optional human-readable name for the simulation. Auto-generated when omitted. SECURITY: this value is interpolated into command strings and Slurm entrypoints executed on cluster nodes, so it is restricted to letters, digits, '-' and '_' (1–255 characters), and must start with a letter or digit (no whitespace, other punctuation, or non-ASCII characters, and no leading '-' or '_'). |
 | `topology` | string | No | Optional topology reference (reserved for K2 orchestration). |
 | `topologyConstraints` | TopologyConstraints | No | Hardware constraints for topology derivation. Mutually exclusive with topology. |
+| `topologyConstraints.switchRadix` | string | No | Switch port configuration for TH5-class (51200 Gbps switching capacity). Format: PortsxSpeed (e.g. 128x400G). 64x800G: 64 ports at 800 Gbps. 128x400G: 128 ports at 400 Gbps (default). 256x200G: 256 ports at 200 Gbps. |
+| `topologyConstraints.subscriptionRatio` | string | No | Target oversubscription ratio (downlink BW : uplink BW) applied at every switch tier. 1:1: equal uplink and downlink bandwidth (default). 2:1, 3:1, and 4:1: more downlink capacity, fewer uplinks. The ratio is applied to both rack switches (RSW) and fabric switches (FSW) in 3-tier topologies. Actual ratios may differ slightly from the target due to integer port rounding. |
+| `topologyConstraints.nicNetworkPortSpeed` | integer | No | NIC network port speed in Gbps. Determines the data rate of each host-to-switch connection. When omitted, defaults to the switch link speed from switchRadix (e.g. 400 for 128x400G). The effective link speed between a NIC and its rack switch is min(nicNetworkPortSpeed, switchLinkSpeed) — the lower of the two is used for both topology capacity planning and the generated configuration. PCIe generation is auto-selected to match the effective NIC speed. Allowed values: 50, 100, 200, 400, 800 Gbps. |
 | `workload` | SimpleWorkload | No | Sequential workload: all ranks execute the same phases. Mutually exclusive with groups. |
+| `workload.ranks` | integer | Yes, within `workload` | Number of participating ranks. Without topologyConstraints, must be one of the reference topology sizes: 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096. Large sizes (8192, 16384, 32768, 65536) require the enable_large_simple_sim_topologies flag. With topologyConstraints, any count the constraint solver can satisfy is accepted; a count above 4096 still requires the enable_large_simple_sim_topologies flag. |
+| `workload.phases` | array[SimpleWorkloadPhase] | Yes, within `workload` | Ordered list of collective operation phases (1–16). Operations execute sequentially via ctrlDeps chaining. |
 | `groups` | array[SimpleGroupSpec] | No | Parallel groups: ranks partitioned into independent groups executing concurrently. Mutually exclusive with workload. |
 
 **Example: 128-rank AllReduce — produces 2-tier topology**
@@ -388,7 +398,7 @@ Runs the full validation and topology derivation pipeline against the provided w
 {
   "error": {
     "code": "VALIDATION_ERROR",
-    "message": "ranks must be one of [8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096], got 100"
+    "message": "ranks must be one of [4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096], got 100"
   }
 }
 ```

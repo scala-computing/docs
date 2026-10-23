@@ -23,6 +23,10 @@ The rules:
 - A `parallelism` object that holds none of `dp`, `tp`, `sp`, `ep` and `pp` declares nothing, and promotion refuses such a `parallelism`.
 - The key is `rankCount`. A `shape.rank_count` is not read as a declaration.
 
+Declaring `shape.rankCount` alone is enough; the parallelism degrees are optional.
+
+The product treats each of `dp`, `tp`, `sp`, `ep` and `pp` as an independent factor of the rank count. Some training frameworks count an axis differently, for example expert parallelism within data parallelism, sequence parallelism within the tensor-parallel group, or context parallelism as a factor of the rank count. When your rank count is not this product, declare `shape.rankCount`, and give degrees only if their product equals it.
+
 An upload of supporting files only (no `primary` file) does not need a rank count.
 
 The traceset reports its rank count as `rankCountDerived` on `GET /api/v1/tracesets/{id}`. A rank count cannot be changed after upload.
@@ -46,13 +50,16 @@ Other members of `shape` are stored and returned as given.
 
 | Member | Type | Description |
 |---|---|---|
-| `dp` | integer, at least 1, or null | Data parallelism degree |
-| `tp` | integer, at least 1, or null | Tensor parallelism degree |
-| `sp` | integer, at least 1, or null | Sequence parallelism degree |
-| `ep` | integer, at least 1, or null | Expert parallelism degree (MoE) |
-| `pp` | integer, at least 1, or null | Pipeline parallelism degree |
+| `dp` | integer, at least 1, or null | Data parallelism degree: the number of data-parallel ranks, each processing its own share of the global batch and synchronizing gradients with the others. Without FSDP each holds a full replica of the model; with `fsdp`, each group of `fsdp` of them holds one replica between them, so there are `dp` ÷ `fsdp` replicas |
+| `tp` | integer, at least 1, or null | Tensor parallelism degree: the number of ranks that split each layer's weight matrices, and the layer's computation, between them |
+| `sp` | integer, at least 1, or null | Sequence parallelism degree: the number of ranks that split each input sequence along its length |
+| `ep` | integer, at least 1, or null | Expert parallelism degree: the number of ranks a mixture-of-experts (MoE) model's experts are distributed across, each rank holding a subset of the experts and exchanging tokens with the others |
+| `pp` | integer, at least 1, or null | Pipeline parallelism degree: the number of pipeline stages, each a contiguous group of the model's layers on its own ranks, that microbatches pass through in turn |
 
-Other members of `parallelism`, such as `cp` and `fsdp`, are stored and returned as given. Upload does not check them; promotion checks `cp` and `fsdp`.
+Other members of `parallelism`, such as `cp` and `fsdp`, are stored and returned as given. Upload does not check them; promotion checks `cp` and `fsdp`. Neither is a factor of the product:
+
+- **`cp`**, the context parallelism degree: the number of ranks that split the attention computation over a long sequence's context.
+- **`fsdp`**, the fully sharded data parallel (FSDP) degree: the number of data-parallel ranks the model's parameters, gradients and optimizer state are sharded across. It divides `dp` rather than adding ranks.
 
 ## Descriptive members
 

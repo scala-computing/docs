@@ -219,7 +219,7 @@ Runs validation checks on a traceset including file integrity and metadata compl
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `topologyId` | string | No | - |
+| `topologyId` | string (nullable) | No | - |
 
 ```json
 {
@@ -274,13 +274,21 @@ Creates a traceset record and returns presigned S3 multipart upload URLs for eac
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `workspaceId` | string | No | Workspace ID. If not provided, uses the universal traceset workspace. |
+| `workspaceId` | string (nullable) | No | Workspace ID. If not provided, uses the universal traceset workspace. |
 | `name` | string | Yes | - |
-| `description` | string | No | - |
-| `tags` | array[string] | No | - |
-| `ttlDays` | integer | No | Custom TTL in days (1-365). Uses server default if omitted. |
+| `description` | string (nullable) | No | - |
+| `tags` | array[string] (nullable) | No | - |
+| `ttlDays` | integer (nullable) | No | Custom TTL in days (1-365). Uses server default if omitted. |
 | `files` | array[UploadFileSpec] | Yes | - |
 | `workloadMetadata` | UploadWorkloadMetadata | No | Workload characterization metadata, stored on the traceset as given. It declares the traceset's rank count, which an upload with primary files must declare: either shape.rankCount, or the parallelism degrees parallelism.dp, tp, sp, ep and pp, multiplied together, with an absent degree counting as 1 (cp and fsdp are not factors). When both are given they must be equal. Each value must be a whole number of at least 1. The traceset reports that count as rankCountDerived, and attaching the traceset to a configuration uses it; it cannot be changed after upload. UploadWorkloadMetadata describes the rank-count members; this field accepts any JSON object of at most 65,536 bytes when serialized whose rank-count members are valid, including members UploadWorkloadMetadata does not describe. |
+| `workloadMetadata.shape` | WorkloadShape (nullable) | No | Workload scale. `shape.rankCount` declares the rank count. JSON null counts as absent. |
+| `workloadMetadata.shape.rankCount` | integer (nullable) | No | Total rank count: a whole number from 1 to 2,147,483,647. Declaring it alone is enough; parallelism degrees are optional. When parallelism degrees are also given, their product must equal it. JSON null counts as absent. |
+| `workloadMetadata.parallelism` | WorkloadParallelism (nullable) | No | Parallelism degrees. When at least one of `dp`, `tp`, `sp`, `ep` and `pp` is given, their product declares the rank count. JSON null counts as absent. |
+| `workloadMetadata.parallelism.dp` | integer (nullable) | No | Data parallelism degree: the number of data-parallel ranks, each processing its own share of the global batch and synchronizing gradients with the others. Without FSDP each holds a full replica of the model; with `fsdp`, each group of `fsdp` of them holds one replica between them, so there are `dp` ÷ `fsdp` replicas. |
+| `workloadMetadata.parallelism.tp` | integer (nullable) | No | Tensor parallelism degree: the number of ranks that split each layer's weight matrices, and the layer's computation, between them. |
+| `workloadMetadata.parallelism.sp` | integer (nullable) | No | Sequence parallelism degree: the number of ranks that split each input sequence along its length. |
+| `workloadMetadata.parallelism.ep` | integer (nullable) | No | Expert parallelism degree: the number of ranks a mixture-of-experts (MoE) model's experts are distributed across, each rank holding a subset of the experts and exchanging tokens with the others. |
+| `workloadMetadata.parallelism.pp` | integer (nullable) | No | Pipeline parallelism degree: the number of pipeline stages, each a contiguous group of the model's layers on its own ranks, that microbatches pass through in turn. |
 
 ```json
 {

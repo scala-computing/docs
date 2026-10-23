@@ -49,16 +49,16 @@ Response:
 {
   "workspaces": [
     {
-      "id": "ws_abc123",
+      "id": "workspace_abc123",
       "name": "My First Workspace",
       "description": "Testing network configurations",
       "owner": "user@example.com",
-      "created": "2024-01-15T10:30:00Z",
-      "modified": "2024-01-15T10:30:00Z"
+      "createdAt": "2024-01-15T10:30:00Z",
+      "modifiedAt": "2024-01-15T10:30:00Z"
     }
   ],
   "pagination": {
-    "limit": 100,
+    "count": 1,
     "hasMore": false
   }
 }

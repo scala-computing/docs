@@ -109,8 +109,18 @@ Workload configuration management
 | `applications` | array[ApplicationDefinition] | Yes | Traffic generator and workload applications |
 | `links` | array[ComponentDeclaration] | Yes | Layer components defining spine plane linking configuration (type='layer') |
 | `topology` | TopologyDefinition | Yes | Active network topology definition |
+| `topology.name` | string (nullable) | No | Topology instance name (e.g., 'TestTopology') |
+| `topology.type` | TopologyType | Yes, within `topology` | Network topology architecture type |
+| `topology.topologyTiers` | integer | Yes, within `topology` | Number of tiers in CLOS topology (e.g., 3 for spine-fabric-rack) |
+| `topology.allowedComponents` | array[string] | Yes, within `topology` | Component types allowed at topology level (e.g., ['switch', 'layer', 'pod']) |
+| `topology.components` | array[ComponentReference] | Yes, within `topology` | Top-level component references (spine switches, pods). Containers are referenced by name with type='rack' or type='pod'. |
+| `topology.appDistribution` | AppDistribution | No | Application distribution settings for random placement |
+| `topology.appDistribution.description` | string (nullable) | No | Human-readable description of the distribution strategy |
+| `topology.appDistribution.randomApplicationDistribution` | array[RandomApplicationDistribution] | Yes, within `topology.appDistribution` | List of applications with their distribution percentages |
 | `globalParameters` | TypedParameters | Yes | Hierarchical parameters structure. Leaf nodes are ParameterValue objects, branch nodes are nested TypedParameters representing ModelComponents. |
-| `activeTraceset` | any | No | Active traceset for chakra-based simulations. Required when any application has trafficType 'chakra'. |
+| `activeTraceset` | ActiveTraceset (nullable) | No | Active traceset for chakra-based simulations. Required when any application has trafficType 'chakra'. |
+| `activeTraceset.name` | string | Yes, within `activeTraceset` | Human-readable traceset name, used for V1 WorkloadName |
+| `activeTraceset.id` | string | Yes, within `activeTraceset` | Unique traceset identifier (format: ts_xxx) |
 
 ```json
 {
@@ -423,14 +433,24 @@ Workload configuration management
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `name` | ['string', 'null'] | No | Configuration name |
+| `name` | string (nullable) | No | Configuration name |
 | `components` | array[ComponentDeclaration] | No | Component declarations |
 | `containers` | array[ContainerDefinition] | No | Container definitions |
 | `applications` | array[ApplicationDefinition] | No | Traffic generator and workload applications |
 | `links` | array[ComponentDeclaration] | No | Layer components defining spine plane linking configuration (type='layer') |
 | `topology` | TopologyDefinition | No | Active network topology definition |
+| `topology.name` | string (nullable) | No | Topology instance name (e.g., 'TestTopology') |
+| `topology.type` | TopologyType | Yes, within `topology` | Network topology architecture type |
+| `topology.topologyTiers` | integer | Yes, within `topology` | Number of tiers in CLOS topology (e.g., 3 for spine-fabric-rack) |
+| `topology.allowedComponents` | array[string] | Yes, within `topology` | Component types allowed at topology level (e.g., ['switch', 'layer', 'pod']) |
+| `topology.components` | array[ComponentReference] | Yes, within `topology` | Top-level component references (spine switches, pods). Containers are referenced by name with type='rack' or type='pod'. |
+| `topology.appDistribution` | AppDistribution | No | Application distribution settings for random placement |
+| `topology.appDistribution.description` | string (nullable) | No | Human-readable description of the distribution strategy |
+| `topology.appDistribution.randomApplicationDistribution` | array[RandomApplicationDistribution] | Yes, within `topology.appDistribution` | List of applications with their distribution percentages |
 | `globalParameters` | TypedParameters | No | Hierarchical parameters structure. Leaf nodes are ParameterValue objects, branch nodes are nested TypedParameters representing ModelComponents. |
-| `activeTraceset` | any | No | Active traceset for chakra-based simulations. Required when any application has trafficType 'chakra'. |
+| `activeTraceset` | ActiveTraceset (nullable) | No | Active traceset for chakra-based simulations. Required when any application has trafficType 'chakra'. |
+| `activeTraceset.name` | string | Yes, within `activeTraceset` | Human-readable traceset name, used for V1 WorkloadName |
+| `activeTraceset.id` | string | Yes, within `activeTraceset` | Unique traceset identifier (format: ts_xxx) |
 
 ```json
 {
