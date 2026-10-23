@@ -9,16 +9,21 @@
 
 ## Source of truth
 
-Pages listed in `.sync-owned-paths` are **owned by the `scala-computing/scala` repository**
-and are rewritten by its customer-docs sync (`docs/api/src` for the Documentation tab,
-`docs/models` for the Models group inside it). Files under `api-reference/` are generated there from the
-OpenAPI spec by `docs/scripts/generate-api-reference.py` and carry a generated-content marker.
-The sync also owns `navigation.tabs` in `docs.json`. Everything else in this repository
-(branding, theme, `README.md`, this file, any page not in `.sync-owned-paths`) is owned here.
+The site is versioned: `unreleased/` holds the latest merge and each `v0.1.<build>/` folder a
+platform release. Every path listed in a version folder's ledger, `<folder>/.sync-owned-paths`,
+is **owned by the `scala-computing/scala` repository** and is rewritten by its customer-docs
+publication (`docs/api/src` for the Documentation tab, `docs/models` for the Models group inside
+it, `docs/release-notes` for Release Notes). Files under `<folder>/api-reference/` are generated
+there from the OpenAPI spec by `docs/scripts/generate-api-reference.py` and carry a
+generated-content marker. The publication also owns, in `docs.json`, each version's
+`navigation.versions[]` entry, the order of those entries, their `default` and `tag` keys, and
+the `redirects` entries for pre-versioning page addresses. Everything else in this repository
+(branding, theme, `index.md`, `README.md`, this file, any other redirect, any page in no
+ledger) is owned here.
 
 Do not hand-edit an owned page: the next sync overwrites it. Fix the source page or the
 OpenAPI spec in the source repository; the sync opens a pull request here on
-`sync/from-monorepo` for review.
+`sync/from-monorepo` for Unreleased, and a release publication on `sync/release-v<version>`.
 
 ## Markdown constraints
 
