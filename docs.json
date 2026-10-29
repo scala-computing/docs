@@ -247,6 +247,62 @@
             ]
           }
         ]
+      },
+      {
+        "version": "Scala-Platform-0.1.1828",
+        "tabs": [
+          {
+            "tab": "Documentation",
+            "groups": [
+              {
+                "group": "Getting Started",
+                "pages": [
+                  "v0.1.1828/introduction",
+                  "v0.1.1828/authentication",
+                  "v0.1.1828/examples/quickstart"
+                ]
+              },
+              {
+                "group": "API Reference",
+                "pages": [
+                  "v0.1.1828/api-reference/index",
+                  "v0.1.1828/api-reference/components",
+                  "v0.1.1828/api-reference/configurations",
+                  "v0.1.1828/api-reference/models",
+                  "v0.1.1828/api-reference/simulations",
+                  "v0.1.1828/api-reference/simple",
+                  "v0.1.1828/api-reference/templates",
+                  "v0.1.1828/api-reference/topology",
+                  "v0.1.1828/api-reference/tracesets",
+                  "v0.1.1828/api-reference/mapping-files",
+                  "v0.1.1828/api-reference/workspaces",
+                  "v0.1.1828/api-reference/charts"
+                ]
+              },
+              {
+                "group": "Reference",
+                "pages": [
+                  "v0.1.1828/simulation-output-files",
+                  "v0.1.1828/api-changelog"
+                ]
+              },
+              {
+                "group": "Examples",
+                "pages": [
+                  "v0.1.1828/examples/run-simulation"
+                ]
+              },
+              {
+                "group": "Release Notes",
+                "pages": [
+                  "v0.1.1828/release-notes/0.1.1828",
+                  "v0.1.1828/release-notes/0.1.1427",
+                  "v0.1.1828/release-notes/0.1.1292"
+                ]
+              }
+            ]
+          }
+        ]
       }
     ]
   },
