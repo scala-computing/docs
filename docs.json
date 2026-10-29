@@ -9,7 +9,143 @@
   },
   "favicon": "/favicon.svg",
   "navigation": {
-    "versions": []
+    "versions": [
+      {
+        "version": "Scala-Platform-0.1.2544",
+        "default": true,
+        "tag": "Latest",
+        "tabs": [
+          {
+            "tab": "Documentation",
+            "groups": [
+              {
+                "group": "Getting Started",
+                "pages": [
+                  "v0.1.2544/introduction",
+                  "v0.1.2544/authentication",
+                  "v0.1.2544/examples/quickstart"
+                ]
+              },
+              {
+                "group": "API Reference",
+                "pages": [
+                  "v0.1.2544/api-reference/index",
+                  "v0.1.2544/api-reference/components",
+                  "v0.1.2544/api-reference/configurations",
+                  "v0.1.2544/api-reference/models",
+                  "v0.1.2544/api-reference/simulations",
+                  "v0.1.2544/api-reference/simple",
+                  "v0.1.2544/api-reference/templates",
+                  "v0.1.2544/api-reference/topology",
+                  "v0.1.2544/api-reference/tracesets",
+                  "v0.1.2544/api-reference/mapping-files",
+                  "v0.1.2544/api-reference/workspaces",
+                  "v0.1.2544/api-reference/charts"
+                ]
+              },
+              {
+                "group": "Models",
+                "pages": [
+                  {
+                    "group": "Scala Switch",
+                    "pages": [
+                      "v0.1.2544/models/scala-switch/index",
+                      "v0.1.2544/models/scala-switch/packet-handling",
+                      "v0.1.2544/models/scala-switch/shared-buffer",
+                      "v0.1.2544/models/scala-switch/configuration"
+                    ]
+                  },
+                  {
+                    "group": "Scala RoCE NIC",
+                    "pages": [
+                      "v0.1.2544/models/scala-roce-nic/index",
+                      "v0.1.2544/models/scala-roce-nic/transport",
+                      "v0.1.2544/models/scala-roce-nic/buffers-and-pfc",
+                      "v0.1.2544/models/scala-roce-nic/congestion-control",
+                      "v0.1.2544/models/scala-roce-nic/configuration"
+                    ]
+                  },
+                  {
+                    "group": "Scala UET NIC",
+                    "pages": [
+                      "v0.1.2544/models/scala-uet-nic/index",
+                      "v0.1.2544/models/scala-uet-nic/transport",
+                      "v0.1.2544/models/scala-uet-nic/multipath",
+                      "v0.1.2544/models/scala-uet-nic/congestion-control",
+                      "v0.1.2544/models/scala-uet-nic/buffers-and-pfc",
+                      "v0.1.2544/models/scala-uet-nic/records",
+                      "v0.1.2544/models/scala-uet-nic/configuration"
+                    ]
+                  },
+                  {
+                    "group": "Scala MRC NIC",
+                    "pages": [
+                      "v0.1.2544/models/scala-mrc-nic/index",
+                      "v0.1.2544/models/scala-mrc-nic/transport",
+                      "v0.1.2544/models/scala-mrc-nic/multipath",
+                      "v0.1.2544/models/scala-mrc-nic/congestion-control",
+                      "v0.1.2544/models/scala-mrc-nic/buffers-and-pcie",
+                      "v0.1.2544/models/scala-mrc-nic/records",
+                      "v0.1.2544/models/scala-mrc-nic/configuration"
+                    ]
+                  },
+                  {
+                    "group": "Chakra Workload",
+                    "pages": [
+                      "v0.1.2544/models/chakra-workload/index",
+                      "v0.1.2544/models/chakra-workload/workload-execution",
+                      "v0.1.2544/models/chakra-workload/records",
+                      "v0.1.2544/models/chakra-workload/configuration"
+                    ]
+                  },
+                  {
+                    "group": "Scala RDMA Application",
+                    "pages": [
+                      "v0.1.2544/models/scala-rdma-application/index",
+                      "v0.1.2544/models/scala-rdma-application/traffic-generation",
+                      "v0.1.2544/models/scala-rdma-application/configuration"
+                    ]
+                  },
+                  {
+                    "group": "Scala Traffic Generator",
+                    "pages": [
+                      "v0.1.2544/models/scala-traffic-generator/index",
+                      "v0.1.2544/models/scala-traffic-generator/traffic-generation",
+                      "v0.1.2544/models/scala-traffic-generator/configuration"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Reference",
+                "pages": [
+                  "v0.1.2544/simulation-output-files",
+                  "v0.1.2544/chakra-mapping-files",
+                  "v0.1.2544/workload-metadata",
+                  "v0.1.2544/api-changelog"
+                ]
+              },
+              {
+                "group": "Examples",
+                "pages": [
+                  "v0.1.2544/examples/run-simulation"
+                ]
+              },
+              {
+                "group": "Release Notes",
+                "pages": [
+                  "v0.1.2544/release-notes/0.1.2544",
+                  "v0.1.2544/release-notes/0.1.2376",
+                  "v0.1.2544/release-notes/0.1.1828",
+                  "v0.1.2544/release-notes/0.1.1427",
+                  "v0.1.2544/release-notes/0.1.1292"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
   },
   "logo": {
     "light": "/logo/light.svg",
@@ -25,5 +161,317 @@
       "cursor",
       "vscode"
     ]
-  }
+  },
+  "redirects": [
+    {
+      "source": "/api-changelog",
+      "destination": "/v0.1.2544/api-changelog",
+      "permanent": false
+    },
+    {
+      "source": "/api-reference",
+      "destination": "/v0.1.2544/api-reference",
+      "permanent": false
+    },
+    {
+      "source": "/api-reference/charts",
+      "destination": "/v0.1.2544/api-reference/charts",
+      "permanent": false
+    },
+    {
+      "source": "/api-reference/components",
+      "destination": "/v0.1.2544/api-reference/components",
+      "permanent": false
+    },
+    {
+      "source": "/api-reference/configurations",
+      "destination": "/v0.1.2544/api-reference/configurations",
+      "permanent": false
+    },
+    {
+      "source": "/api-reference/index",
+      "destination": "/v0.1.2544/api-reference/index",
+      "permanent": false
+    },
+    {
+      "source": "/api-reference/mapping-files",
+      "destination": "/v0.1.2544/api-reference/mapping-files",
+      "permanent": false
+    },
+    {
+      "source": "/api-reference/models",
+      "destination": "/v0.1.2544/api-reference/models",
+      "permanent": false
+    },
+    {
+      "source": "/api-reference/openapi.json",
+      "destination": "/v0.1.2544/api-reference/openapi.json",
+      "permanent": false
+    },
+    {
+      "source": "/api-reference/simple",
+      "destination": "/v0.1.2544/api-reference/simple",
+      "permanent": false
+    },
+    {
+      "source": "/api-reference/simulations",
+      "destination": "/v0.1.2544/api-reference/simulations",
+      "permanent": false
+    },
+    {
+      "source": "/api-reference/templates",
+      "destination": "/v0.1.2544/api-reference/templates",
+      "permanent": false
+    },
+    {
+      "source": "/api-reference/topology",
+      "destination": "/v0.1.2544/api-reference/topology",
+      "permanent": false
+    },
+    {
+      "source": "/api-reference/tracesets",
+      "destination": "/v0.1.2544/api-reference/tracesets",
+      "permanent": false
+    },
+    {
+      "source": "/api-reference/workspaces",
+      "destination": "/v0.1.2544/api-reference/workspaces",
+      "permanent": false
+    },
+    {
+      "source": "/authentication",
+      "destination": "/v0.1.2544/authentication",
+      "permanent": false
+    },
+    {
+      "source": "/chakra-mapping-files",
+      "destination": "/v0.1.2544/chakra-mapping-files",
+      "permanent": false
+    },
+    {
+      "source": "/examples/quickstart",
+      "destination": "/v0.1.2544/examples/quickstart",
+      "permanent": false
+    },
+    {
+      "source": "/examples/run-simulation",
+      "destination": "/v0.1.2544/examples/run-simulation",
+      "permanent": false
+    },
+    {
+      "source": "/introduction",
+      "destination": "/v0.1.2544/introduction",
+      "permanent": false
+    },
+    {
+      "source": "/models/chakra-workload",
+      "destination": "/v0.1.2544/models/chakra-workload",
+      "permanent": false
+    },
+    {
+      "source": "/models/chakra-workload/configuration",
+      "destination": "/v0.1.2544/models/chakra-workload/configuration",
+      "permanent": false
+    },
+    {
+      "source": "/models/chakra-workload/index",
+      "destination": "/v0.1.2544/models/chakra-workload/index",
+      "permanent": false
+    },
+    {
+      "source": "/models/chakra-workload/records",
+      "destination": "/v0.1.2544/models/chakra-workload/records",
+      "permanent": false
+    },
+    {
+      "source": "/models/chakra-workload/workload-execution",
+      "destination": "/v0.1.2544/models/chakra-workload/workload-execution",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-mrc-nic",
+      "destination": "/v0.1.2544/models/scala-mrc-nic",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-mrc-nic/buffers-and-pcie",
+      "destination": "/v0.1.2544/models/scala-mrc-nic/buffers-and-pcie",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-mrc-nic/configuration",
+      "destination": "/v0.1.2544/models/scala-mrc-nic/configuration",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-mrc-nic/congestion-control",
+      "destination": "/v0.1.2544/models/scala-mrc-nic/congestion-control",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-mrc-nic/index",
+      "destination": "/v0.1.2544/models/scala-mrc-nic/index",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-mrc-nic/multipath",
+      "destination": "/v0.1.2544/models/scala-mrc-nic/multipath",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-mrc-nic/records",
+      "destination": "/v0.1.2544/models/scala-mrc-nic/records",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-mrc-nic/transport",
+      "destination": "/v0.1.2544/models/scala-mrc-nic/transport",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-rdma-application",
+      "destination": "/v0.1.2544/models/scala-rdma-application",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-rdma-application/configuration",
+      "destination": "/v0.1.2544/models/scala-rdma-application/configuration",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-rdma-application/index",
+      "destination": "/v0.1.2544/models/scala-rdma-application/index",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-rdma-application/traffic-generation",
+      "destination": "/v0.1.2544/models/scala-rdma-application/traffic-generation",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-roce-nic",
+      "destination": "/v0.1.2544/models/scala-roce-nic",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-roce-nic/buffers-and-pfc",
+      "destination": "/v0.1.2544/models/scala-roce-nic/buffers-and-pfc",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-roce-nic/configuration",
+      "destination": "/v0.1.2544/models/scala-roce-nic/configuration",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-roce-nic/congestion-control",
+      "destination": "/v0.1.2544/models/scala-roce-nic/congestion-control",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-roce-nic/index",
+      "destination": "/v0.1.2544/models/scala-roce-nic/index",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-roce-nic/transport",
+      "destination": "/v0.1.2544/models/scala-roce-nic/transport",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-switch",
+      "destination": "/v0.1.2544/models/scala-switch",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-switch/configuration",
+      "destination": "/v0.1.2544/models/scala-switch/configuration",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-switch/index",
+      "destination": "/v0.1.2544/models/scala-switch/index",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-switch/packet-handling",
+      "destination": "/v0.1.2544/models/scala-switch/packet-handling",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-switch/shared-buffer",
+      "destination": "/v0.1.2544/models/scala-switch/shared-buffer",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-traffic-generator",
+      "destination": "/v0.1.2544/models/scala-traffic-generator",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-traffic-generator/configuration",
+      "destination": "/v0.1.2544/models/scala-traffic-generator/configuration",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-traffic-generator/index",
+      "destination": "/v0.1.2544/models/scala-traffic-generator/index",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-traffic-generator/traffic-generation",
+      "destination": "/v0.1.2544/models/scala-traffic-generator/traffic-generation",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-uet-nic",
+      "destination": "/v0.1.2544/models/scala-uet-nic",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-uet-nic/buffers-and-pfc",
+      "destination": "/v0.1.2544/models/scala-uet-nic/buffers-and-pfc",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-uet-nic/configuration",
+      "destination": "/v0.1.2544/models/scala-uet-nic/configuration",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-uet-nic/congestion-control",
+      "destination": "/v0.1.2544/models/scala-uet-nic/congestion-control",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-uet-nic/index",
+      "destination": "/v0.1.2544/models/scala-uet-nic/index",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-uet-nic/multipath",
+      "destination": "/v0.1.2544/models/scala-uet-nic/multipath",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-uet-nic/records",
+      "destination": "/v0.1.2544/models/scala-uet-nic/records",
+      "permanent": false
+    },
+    {
+      "source": "/models/scala-uet-nic/transport",
+      "destination": "/v0.1.2544/models/scala-uet-nic/transport",
+      "permanent": false
+    },
+    {
+      "source": "/simulation-output-files",
+      "destination": "/v0.1.2544/simulation-output-files",
+      "permanent": false
+    },
+    {
+      "source": "/workload-metadata",
+      "destination": "/v0.1.2544/workload-metadata",
+      "permanent": false
+    }
+  ]
 }
