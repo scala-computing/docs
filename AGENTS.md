@@ -9,16 +9,27 @@
 
 ## Source of truth
 
-Pages listed in `.sync-owned-paths` are **owned by the `scala-computing/scala` repository**
-and are rewritten by its customer-docs sync (`docs/api/src` for the Documentation tab,
-`docs/models` for the Models group inside it). Files under `api-reference/` are generated there from the
-OpenAPI spec by `docs/scripts/generate-api-reference.py` and carry a generated-content marker.
-The sync also owns `navigation.tabs` in `docs.json`. Everything else in this repository
-(branding, theme, `README.md`, this file, any page not in `.sync-owned-paths`) is owned here.
+The site is versioned. Each `v0.1.<build>/` folder holds one platform release. An
+`unreleased/` folder holds the latest merge while the source repository shows Unreleased (its
+`DOCS_SHOW_UNRELEASED` setting); hiding it again has the sync propose the folder's removal
+here. Each version folder's ledger, `<folder>/.sync-owned-paths`, and every path it lists are
+**owned by the `scala-computing/scala` repository** and written by its customer-docs
+publication (`docs/api/src` for the Documentation tab, `docs/models` for the Models group
+inside it, `docs/release-notes` for Release Notes). Pages under `<folder>/api-reference/` are
+generated there from the OpenAPI spec by `docs/scripts/generate-api-reference.py` and carry a
+generated-content marker; the `openapi.json` beside them is the public API description itself.
+The publication also owns, in `docs.json`, each version's `navigation.versions[]` entry, the
+order of those entries, their `default` and `tag` keys, and the `redirects` entries for
+pre-versioning page addresses. Everything else in this repository (branding, theme,
+`index.md`, `README.md`, this file, any other redirect, any file in no ledger) is owned here.
 
-Do not hand-edit an owned page: the next sync overwrites it. Fix the source page or the
-OpenAPI spec in the source repository; the sync opens a pull request here on
-`sync/from-monorepo` for review.
+Do not hand-edit an owned file, ledgers included. No automatic run restores a release's page:
+a hand edit stays until the release engineer next publishes that release, and a ledger that no
+longer parses stops every later publication. Route the correction to the source repository
+instead. While Unreleased is shown, a merged fix reaches `unreleased/` through the sync's pull
+request on `sync/from-monorepo`. A released version changes only when the release engineer
+publishes it again, which opens a pull request here on `sync/release-v<version>`; a
+republication from a later merge carries documentation only.
 
 ## Markdown constraints
 

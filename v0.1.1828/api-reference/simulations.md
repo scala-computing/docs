@@ -17,7 +17,7 @@ Simulation execution and results
 | POST | `/api/v1/simulations/compare` | Compare simulations |
 | GET | `/api/v1/simulations/{sim_id}` | Get simulation status |
 | DELETE | `/api/v1/simulations/{sim_id}` | Delete simulation and free storage |
-| POST | `/api/v1/simulations/{sim_id}/terminate` | Terminate simulation |
+| POST | `/api/v1/simulations/{sim_id}/terminate` | Terminate running simulation |
 | GET | `/api/v1/simulations/{sim_id}/results` | Get simulation results |
 | GET | `/api/v1/simulations/{sim_id}/results/download-url` | Generate presigned download URL for result file |
 | GET | `/api/v1/simulations/{sim_id}/results/data` | Get computed summary data for simulation results |
@@ -42,7 +42,7 @@ Retrieves a paginated list of simulations with optional filtering by workspace, 
 | `search` | query | string | No | Full-text search on simulation name (case-insensitive, max 100 characters) |
 | `createdAfter` | query | string | No | Filter by creation date - items created on or after this time (ISO 8601, inclusive) |
 | `createdBefore` | query | string | No | Filter by creation date - items created before this time (ISO 8601, exclusive) |
-| `sort` | query | string | No | Sort order: a single `field:direction` pair (e.g., `created_at:desc`). Sortable fields: `name`, `created_at`, `status`. Default: `created_at:desc`. Compound (multi-field) sorts are not supported and return 400, because a cursor cannot express them. |
+| `sort` | query | string | No | Sort order: comma-separated list of `field:direction` pairs (e.g., `created:desc,name:asc`). Default: `created:desc` |
 
 ### Responses
 
@@ -69,7 +69,7 @@ Retrieves a paginated list of simulations with optional filtering by workspace, 
 }
 ```
 
-**400** - Bad Request - Invalid query parameters (e.g., malformed cursor, invalid workspaceId format, search query too long, a compound sort, or a cursor minted under a different sort)
+**400** - Bad Request - Invalid query parameters (e.g., malformed cursor, invalid workspaceId format, search query too long)
 
 ```json
 {
@@ -85,7 +85,7 @@ Retrieves a paginated list of simulations with optional filtering by workspace, 
 
 <span class="api-method api-method-post">POST</span> `/api/v1/simulations`
 
-Creates and starts a new simulation based on the specified configuration. The simulation begins in `validating` status, or in `provisioning` for simulations that skip that status, then progresses to `running`. Poll the GET endpoint to monitor progress. `checkpointing` is accepted but not yet supported.
+Creates and starts a new simulation based on the specified configuration. The simulation will begin in `validating` status, then progress through `provisioning` to `running`. Poll the GET endpoint to monitor progress.
 
 ### Request Body
 
@@ -105,7 +105,11 @@ Creates and starts a new simulation based on the specified configuration. The si
   "configurationId": "config_def456",
   "configurationVersion": 1,
   "name": "production-network-test",
-  "duration": "1h"
+  "duration": "1h",
+  "checkpointing": {
+    "enabled": true,
+    "interval": "10m"
+  }
 }
 ```
 
@@ -125,7 +129,6 @@ Creates and starts a new simulation based on the specified configuration. The si
   "startedAt": "2024-01-15T10:30:00Z",
   "completedAt": "2024-01-15T10:30:00Z",
   "failureReason": "string",
-  "terminationRequestedAt": "2024-01-15T10:30:00Z",
   "metrics": {
     "simulatedTime": "string",
     "eventsProcessed": 1,
@@ -133,29 +136,17 @@ Creates and starts a new simulation based on the specified configuration. The si
   },
   "transportStats": [
     "uet"
-  ],
-  "networkTiers": [
-    "ssw"
-  ],
-  "appliedMappingFile": {
-    "id": "string",
-    "name": "string",
-    "deleted": true
-  }
+  ]
 }
 ```
 
-**400** - Bad Request; no simulation is created. Code VALIDATION_ERROR when the simulation parameters are invalid. Code LAUNCH_CONFIG_INVALID when the configuration could not be prepared for the simulator: the message says why, and resubmitting it unchanged fails again.
+**400** - Bad Request - Invalid simulation parameters
 
 **402** - Payment Required - the platform's credit balance is exhausted. Add credits before launching simulations.
 
 **404** - Configuration or workspace not found
 
-**409** - Conflict; no simulation is created. Code CONFLICT when a simulation with this name already exists in the workspace: choose another name. Code MAPPING_FILE_DELETED_REFERENCE when the Chakra mapping file attached to the configuration has been deleted: the message names the file. Detach it, or attach another mapping file, and create the simulation again.
-
-**422** - No simulation is created. Code UNPROCESSABLE_ENTITY when the configuration is not validated: it must have status `validated` before starting a simulation. Code LAUNCH_REJECTED when the simulator rejected the configuration: resubmitting it unchanged fails again.
-
-**503** - Service Unavailable - the simulation service could not start the simulation. No simulation is created, so the request can be retried.
+**422** - Configuration is not validated — must have status `validated` before starting a simulation
 
 ---
 
@@ -254,7 +245,6 @@ Retrieves detailed information about a specific simulation, including its curren
   "startedAt": "2024-01-15T10:30:00Z",
   "completedAt": "2024-01-15T10:30:00Z",
   "failureReason": "string",
-  "terminationRequestedAt": "2024-01-15T10:30:00Z",
   "metrics": {
     "simulatedTime": "string",
     "eventsProcessed": 1,
@@ -262,15 +252,7 @@ Retrieves detailed information about a specific simulation, including its curren
   },
   "transportStats": [
     "uet"
-  ],
-  "networkTiers": [
-    "ssw"
-  ],
-  "appliedMappingFile": {
-    "id": "string",
-    "name": "string",
-    "deleted": true
-  }
+  ]
 }
 ```
 
@@ -308,11 +290,11 @@ Retrieves detailed information about a specific simulation, including its curren
 
 ---
 
-## Terminate simulation
+## Terminate running simulation
 
 <span class="api-method api-method-post">POST</span> `/api/v1/simulations/{sim_id}/terminate`
 
-Initiates termination of a simulation. There is no status pre-check: a simulation that has already finished is accepted and keeps its status; otherwise it transitions to `terminated`. Results generated up to the termination point will be available.
+Initiates graceful termination of a running simulation. The simulation will transition to `terminated` status. Results generated up to the termination point will be available.
 
 ### Parameters
 
@@ -336,7 +318,6 @@ Initiates termination of a simulation. There is no status pre-check: a simulatio
   "startedAt": "2024-01-15T10:30:00Z",
   "completedAt": "2024-01-15T10:30:00Z",
   "failureReason": "string",
-  "terminationRequestedAt": "2024-01-15T10:30:00Z",
   "metrics": {
     "simulatedTime": "string",
     "eventsProcessed": 1,
@@ -344,25 +325,19 @@ Initiates termination of a simulation. There is no status pre-check: a simulatio
   },
   "transportStats": [
     "uet"
-  ],
-  "networkTiers": [
-    "ssw"
-  ],
-  "appliedMappingFile": {
-    "id": "string",
-    "name": "string",
-    "deleted": true
-  }
+  ]
 }
 ```
 
 **202** - Termination dispatched for a simulation whose workspace has been deleted. Returned without a body: workspace deletion revokes the simulation's details, so the acknowledgement carries no SimulationDetails payload. Also returned when the backend refuses the request with a 4xx, whose message would describe the revoked simulation; a backend 5xx is reported as itself.
 
-**400** - Bad Request - Invalid simulation ID format, or a scala-go simulation has no platform link and cannot be terminated. An orchestrator-backed simulation carries no link and is terminated through the gateway, so it never reaches this refusal
+**400** - Bad Request - Invalid simulation ID format, or the simulation has no platform link and cannot be terminated
 
 **404** - Simulation not found
 
-**500** - Internal Server Error - A fault a retry cannot clear: the gateway or scala-go refused central's own request or credentials, or answered in a form central could not read
+**409** - Conflict - Simulation is not in a running state
+
+**501** - Not Implemented - Termination is not yet supported for this simulation's backend
 
 **503** - Service Unavailable - The termination transport is unavailable
 
@@ -372,7 +347,7 @@ Initiates termination of a simulation. There is no status pre-check: a simulatio
 
 <span class="api-method api-method-get">GET</span> `/api/v1/simulations/{sim_id}/results`
 
-Retrieves results for a completed simulation including the run's duration and downloadable result files (pcap, traces, etc.).
+Retrieves results for a completed simulation including summary metrics, dashboard URL, and downloadable result files (pcap, traces, etc.).
 
 ### Parameters
 
@@ -394,6 +369,13 @@ Retrieves results for a completed simulation including the run's duration and do
 {
   "simulationId": "string",
   "duration": "string",
+  "summary": {
+    "totalPackets": 1,
+    "avgLatency": "string",
+    "throughput": "string",
+    "dropRate": 1.0
+  },
+  "dashboardUrl": "https://example.com",
   "files": [
     {
       "type": "pcap",
@@ -415,10 +397,6 @@ Retrieves results for a completed simulation including the run's duration and do
 **404** - Simulation not found or results not yet available
 
 **500** - Internal server error
-
-**503** - Service Unavailable - The simulation's state could not be read from its backend: the backend's database is not configured, or it gave the read no connection within the read's time budget. The first persists until the backend is configured; the second usually clears on its own. The response body does not distinguish them, so a client should retry with backoff under a bounded attempt count rather than indefinitely.
-
-**504** - Gateway Timeout - Reading the simulation's state from its backend's database exceeded the read's time budget. The request may be retried.
 
 ---
 
@@ -457,25 +435,21 @@ Retrieves results for a completed simulation including the run's duration and do
 
 **500** - Internal server error
 
-**503** - Service Unavailable - The simulation's state could not be read from its backend: the backend's database is not configured, or it gave the read no connection within the read's time budget. The first persists until the backend is configured; the second usually clears on its own. The response body does not distinguish them, so a client should retry with backoff under a bounded attempt count rather than indefinitely.
-
-**504** - Gateway Timeout - Reading the simulation's state from its backend's database exceeded the read's time budget. The request may be retried.
-
 ---
 
 ## Get computed summary data for simulation results
 
 <span class="api-method api-method-get">GET</span> `/api/v1/simulations/{sim_id}/results/data`
 
-Computes or retrieves cached summary statistics for simulation result CSV files using Polars. Returns a presigned URL to download the zstd-compressed JSON summary. For a run whose status is `completed`, `failed` or `terminated` and whose `completedAt` is at least 60 minutes old, and that has no rows for the requested metric (no data file for it, or only a header-only one), the response is 200 with a summary whose `totalRowsProcessed` is 0 and whose projection fields are absent. The one exception is a `completed` run whose only data for the PFC metric is a header-only shard: its `pfc` projection is present with five zero totals (`totalXoffRx`, `totalXoffTx`, `totalXonRx`, `totalXonTx`, `totalTimePausedUsec`) and `byTier` omitted. A run that is not yet settled, or whose status is `invalid`, keeps 404.
+Computes or retrieves cached summary statistics for simulation result CSV files using Polars. Returns a presigned URL to download the zstd-compressed JSON summary.
 
 ### Parameters
 
 | Name | In | Type | Required | Description |
 |------|-----|------|----------|-------------|
 | `sim_id` | path | string | Yes | Simulation ID in sim_xxx format (base32-encoded UUID with prefix) |
-| `metric` | query | string (enum) | Yes | Metric type to summarize. `rank-analysis` is published but returns 501 Not Implemented until its compute path ships. `uet-transport-stats` and `roce-transport-stats` serve `summary`, which carries the whole-run `transport` projection, and `timeSeries`. Both return 501 for `sampled` until that compute path ships. `scala-switch-agg-buff-stats` serves `summary`, which carries the whole-run `bufferPools` projection unless the run settled with no buffer rows, and `timeSeries`, one group per buffer pool. It returns 501 for `sampled` until that compute path ships. |
-| `mode` | query | string (enum) | No | Output mode (default: summary). `timeSeries` is served for `nd-stats`, `pfc`, `uet-transport-stats`, `roce-transport-stats` and `scala-switch-agg-buff-stats` and returns 501 Not Implemented for the other metrics; `sampled` is published but returns 501 Not Implemented until its compute path ships. `utilizationBins` (a binned distribution of link utilization over time) is offered for `nd-stats` only: every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, a permanent answer that must not be retried, and for `nd-stats` the response's `file` presigns a `UtilizationBinsDocument`. `uplinkFairness` (uplink port fairness per switch over time) is offered for `nd-stats` only in the same way: every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, and for `nd-stats` the response's `file` presigns an `UplinkFairnessDocument`. `completionTimeBins` (a binned distribution of completion times over time) is offered on the Performance projection: `perf` returns the envelope whose presigned URL serves a `CompletionTimeBinsDocument`; `chakra-perf` returns 404 Not Found, as a run with no result shards does, because this shape does not bin its completions; and every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, a permanent answer that must not be retried. |
+| `metric` | query | string (enum) | Yes | Metric type to summarize. `rank-analysis` is published but returns 501 Not Implemented until its compute path ships. |
+| `mode` | query | string (enum) | No | Output mode (default: summary). `timeSeries` and `sampled` are published but return 501 Not Implemented until their compute paths ship. |
 | `tier` | query | string (enum) | No | Tier filter for network device results (default: all) |
 | `nodeId` | query | array | No | Filter to these node ids. Comma-separated on the wire. An empty list is not accepted — omit the parameter instead. |
 | `ifid` | query | array | No | Filter to these interface ids. Comma-separated on the wire. An empty list is not accepted — omit the parameter instead. |
@@ -490,7 +464,7 @@ Computes or retrieves cached summary statistics for simulation result CSV files 
 
 ### Responses
 
-**200** - Summary data with presigned download URL. For a run whose status is `completed`, `failed` or `terminated` and whose `completedAt` is at least 60 minutes old, and that has no rows for the requested metric (no data file for it, or only a header-only one), this is a summary whose `totalRowsProcessed` is 0 and whose projection fields are absent. The one exception is a `completed` run whose only data for the PFC metric is a header-only shard: its `pfc` projection is present with five zero totals (`totalXoffRx`, `totalXoffTx`, `totalXonRx`, `totalXonTx`, `totalTimePausedUsec`) and `byTier` omitted. A run that is not yet settled, or whose status is `invalid`, keeps 404.
+**200** - Summary data with presigned download URL
 
 ```json
 {
@@ -514,11 +488,11 @@ Computes or retrieves cached summary statistics for simulation result CSV files 
 }
 ```
 
-**400** - Invalid parameters (bad metric, mode, or tier value), with error code `VALIDATION_ERROR`; or, with error code `UNSUPPORTED_COMBINATION`, a result shape the requested projection does not offer (`mode=utilizationBins` or `mode=uplinkFairness` on any metric but `nd-stats`, or `mode=completionTimeBins` on any metric but `perf` and `chakra-perf`). `UNSUPPORTED_COMBINATION` is permanent for the request and must not be retried; its message names the result shape and the projection, and only it carries `X-Ignored-Params`.
+**400** - Invalid parameters (bad metric, mode, or tier value)
 
-**404** - Simulation not found or no data files available for the specified metric for a simulation that is not yet settled, or is invalid. For `mode=utilizationBins` and `mode=uplinkFairness`, no data files answers 404 whether or not the simulation is settled. For `mode=completionTimeBins`, also a run with no perf result shards, settled or not, and every `metric=chakra-perf` request
+**404** - Simulation not found or no data files available for the specified metric
 
-**413** - Payload Too Large - The summarized result set exceeds one of the server's size limits: its row count is over the ceiling, summarizing it would exceed the memory budget, or, for `mode=utilizationBins` or `mode=uplinkFairness`, it spans more distinct sample times or more data files than that mode accepts, or, for `mode=uplinkFairness`, its switch uplinks hold more samples than the fold accepts, or, for `mode=completionTimeBins`, it lists more data files than that mode accepts. This condition is permanent for the request and must not be retried.
+**413** - Payload Too Large - The summarized result set exceeds the server's size limit (its row count is over the ceiling, or summarizing it would exceed the memory budget). This condition is permanent for the request and must not be retried.
 
 **500** - Internal server error
 
@@ -526,7 +500,7 @@ Computes or retrieves cached summary statistics for simulation result CSV files 
 
 **503** - Service Unavailable - Several conditions render this status and they differ in whether a retry resolves them; the ones named here are the known ones rather than a closed set. The common one is a transient fault against the results object store on any mode - a network error, throttling, or a 5xx from the dependency - which is retriable: a client that backs off and retries will usually succeed. A second retriable one is a lost cache-write race the server could not recover from: a concurrent request stored the summary object first, and when this request went back to read it the object was no longer there, so a later attempt normally succeeds against the object the next writer stores. The last is a required backend dependency that is not available or not configured, so the simulation's artifact location could not be resolved. Retrying does not help if the dependency is unconfigured. The response body does not distinguish them, so a client should retry with backoff under a bounded attempt count rather than indefinitely.
 
-**504** - Gateway Timeout - Summary computation, or reading the simulation's state from its backend's database, exceeded the server's time budget. The request may be retried.
+**504** - Gateway Timeout - Summary computation exceeded the server's time budget. The request may be retried.
 
 ---
 
@@ -544,7 +518,7 @@ Retrieves paginated logs from a simulation with optional filtering by log level 
 | `level` | query | string (enum) | No | Filter logs by minimum severity level |
 | `component` | query | string | No | Filter logs by component name (e.g., `simulator`, `flownizer`, `annotator`) |
 | `since` | query | string | No | Filter logs to entries at or after this time (ISO 8601 / RFC 3339) |
-| `limit` | query | integer | No | Maximum number of log entries to return (default: 100, max: 1000). A page may return up to two entries more than `limit`: the in-band truncation notice and the in-progress-log notice do not count against it. |
+| `limit` | query | integer | No | Maximum number of log entries to return (default: 100, max: 1000). A truncated read may return one entry more than `limit`: the in-band truncation notice does not count against it. |
 | `next` | query | string | No | Opaque cursor token from previous response's `nextCursor` for pagination |
 
 ### Responses
@@ -575,8 +549,6 @@ Retrieves paginated logs from a simulation with optional filtering by log level 
 
 **500** - Internal server error
 
-**503** - Service Unavailable - The simulation's state could not be read from its backend: the backend's database is not configured, or it gave the read no connection within the read's time budget. The first persists until the backend is configured; the second usually clears on its own. The response body does not distinguish them, so a client should retry with backoff under a bounded attempt count rather than indefinitely.
-
-**504** - Gateway Timeout - Reading the simulation's state from its backend's database exceeded the read's time budget. The request may be retried.
+**503** - Orchestrator database not configured
 
 ---

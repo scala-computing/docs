@@ -4160,26 +4160,6 @@
                 }
               }
             }
-          },
-          "503": {
-            "description": "Service Unavailable - The simulation's state could not be read from its backend: the backend's database is not configured, or it gave the read no connection within the read's time budget. The first persists until the backend is configured; the second usually clears on its own. The response body does not distinguish them, so a client should retry with backoff under a bounded attempt count rather than indefinitely.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "504": {
-            "description": "Gateway Timeout - Reading the simulation's state from its backend's database exceeded the read's time budget. The request may be retried.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
           }
         },
         "security": [
@@ -4272,26 +4252,6 @@
                 }
               }
             }
-          },
-          "503": {
-            "description": "Service Unavailable - The simulation's state could not be read from its backend: the backend's database is not configured, or it gave the read no connection within the read's time budget. The first persists until the backend is configured; the second usually clears on its own. The response body does not distinguish them, so a client should retry with backoff under a bounded attempt count rather than indefinitely.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "504": {
-            "description": "Gateway Timeout - Reading the simulation's state from its backend's database exceeded the read's time budget. The request may be retried.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
           }
         },
         "security": [
@@ -4323,7 +4283,7 @@
             "name": "metric",
             "in": "query",
             "required": true,
-            "description": "Metric type to summarize. `rank-analysis` is published but returns 501 Not Implemented until its compute path ships. `uet-transport-stats` and `roce-transport-stats` serve `summary`, which carries the whole-run `transport` projection, and `timeSeries`. Both return 501 for `sampled` until that compute path ships. `scala-switch-agg-buff-stats` serves `summary`, which carries the whole-run `bufferPools` projection unless the run settled with no buffer rows, and `timeSeries`, one group per buffer pool. It returns 501 for `sampled` until that compute path ships.",
+            "description": "Metric type to summarize. `rank-analysis` is published but returns 501 Not Implemented until its compute path ships. `uet-transport-stats` and `roce-transport-stats` serve `summary`, which carries the whole-run `transport` projection, and `timeSeries`. Both return 501 for `sampled` until that compute path ships.",
             "schema": {
               "type": "string",
               "enum": [
@@ -4336,15 +4296,14 @@
                 "cdf",
                 "rank-analysis",
                 "uet-transport-stats",
-                "roce-transport-stats",
-                "scala-switch-agg-buff-stats"
+                "roce-transport-stats"
               ]
             }
           },
           {
             "name": "mode",
             "in": "query",
-            "description": "Output mode (default: summary). `timeSeries` is served for `nd-stats`, `pfc`, `uet-transport-stats`, `roce-transport-stats` and `scala-switch-agg-buff-stats` and returns 501 Not Implemented for the other metrics; `sampled` is published but returns 501 Not Implemented until its compute path ships. `utilizationBins` (a binned distribution of link utilization over time) is offered for `nd-stats` only: every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, a permanent answer that must not be retried, and for `nd-stats` the response's `file` presigns a `UtilizationBinsDocument`. `uplinkFairness` (uplink port fairness per switch over time) is offered for `nd-stats` only in the same way: every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, and for `nd-stats` the response's `file` presigns an `UplinkFairnessDocument`. `completionTimeBins` (a binned distribution of completion times over time) is offered on the Performance projection: `perf` returns the envelope whose presigned URL serves a `CompletionTimeBinsDocument`; `chakra-perf` returns 404 Not Found, as a run with no result shards does, because this shape does not bin its completions; and every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, a permanent answer that must not be retried.",
+            "description": "Output mode (default: summary). `timeSeries` is served for `nd-stats`, `pfc`, `uet-transport-stats` and `roce-transport-stats` and returns 501 Not Implemented for the other metrics; `sampled` is published but returns 501 Not Implemented until its compute path ships. `utilizationBins` (a binned distribution of link utilization over time) is offered for `nd-stats` only: every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, a permanent answer that must not be retried, and for `nd-stats` the response's `file` presigns a `UtilizationBinsDocument`. `uplinkFairness` (uplink port fairness per switch over time) is offered for `nd-stats` only in the same way: every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, and for `nd-stats` the response's `file` presigns an `UplinkFairnessDocument`. `completionTimeBins` (a binned distribution of completion times over time) is offered on the Performance projection: `perf` returns the envelope whose presigned URL serves a `CompletionTimeBinsDocument`; `chakra-perf` returns 404 Not Found, as a run with no result shards does, because this shape does not bin its completions; and every other metric returns 400 with error code `UNSUPPORTED_COMBINATION`, a permanent answer that must not be retried.",
             "schema": {
               "type": "string",
               "enum": [
@@ -4616,7 +4575,7 @@
             }
           },
           "504": {
-            "description": "Gateway Timeout - Summary computation, or reading the simulation's state from its backend's database, exceeded the server's time budget. The request may be retried.",
+            "description": "Gateway Timeout - Summary computation exceeded the server's time budget. The request may be retried.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4743,17 +4702,7 @@
             }
           },
           "503": {
-            "description": "Service Unavailable - The simulation's state could not be read from its backend: the backend's database is not configured, or it gave the read no connection within the read's time budget. The first persists until the backend is configured; the second usually clears on its own. The response body does not distinguish them, so a client should retry with backoff under a bounded attempt count rather than indefinitely.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "504": {
-            "description": "Gateway Timeout - Reading the simulation's state from its backend's database exceeded the read's time budget. The request may be retried.",
+            "description": "Orchestrator database not configured",
             "content": {
               "application/json": {
                 "schema": {
@@ -9668,8 +9617,7 @@
               "collectives",
               "cdf",
               "uet-transport-stats",
-              "roce-transport-stats",
-              "scala-switch-agg-buff-stats"
+              "roce-transport-stats"
             ]
           },
           "mode": {
@@ -9903,10 +9851,6 @@
           "transport": {
             "description": "Whole-run transport statistics (for the uet-transport-stats and roce-transport-stats metrics). Omitted when the summary carries no transport projection.",
             "$ref": "#/components/schemas/TransportSummary"
-          },
-          "bufferPools": {
-            "description": "Aggregate switch buffer pool statistics (for the scala-switch-agg-buff-stats metric). Omitted when the summary carries no buffer pool projection.",
-            "$ref": "#/components/schemas/BufferPoolSummary"
           },
           "computedAt": {
             "type": "string",
@@ -10657,7 +10601,7 @@
       },
       "TransportSummary": {
         "type": "object",
-        "description": "Whole-run transport statistics: one cross-NIC aggregate per whole-run column of the writer's row, reduced over each NIC's final row, and on RoCE one more, numPktsRcvdSum, the received-packet total the service sums from the writer's seven per-type received counters (connection packets, ACKs, SACKs, NACKs, writes, sends and CNPs), because the RoCE writer records no received total. Counters are summed, maxima maxed, minima minned, and means averaged unweighted over NICs, an idle NIC's 0.0 included.",
+        "description": "Whole-run transport statistics: one cross-NIC aggregate per whole-run column of the writer's row, reduced over each NIC's final row. Counters are summed, maxima maxed, minima minned, and means averaged unweighted over NICs, an idle NIC's 0.0 included.",
         "additionalProperties": false,
         "properties": {
           "nicCount": {
@@ -10682,119 +10626,6 @@
           "type": "number",
           "format": "double"
         }
-      },
-      "BufferPoolSummary": {
-        "type": "object",
-        "description": "Aggregate switch buffer pool statistics.",
-        "additionalProperties": false,
-        "properties": {
-          "pools": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BufferPoolStats"
-            },
-            "description": "Pool groups sorted by tier, buffer class, direction and pool number."
-          }
-        },
-        "required": [
-          "pools"
-        ]
-      },
-      "BufferPoolStats": {
-        "type": "object",
-        "description": "Statistics over rows for one tier, buffer class, direction and pool.",
-        "additionalProperties": false,
-        "properties": {
-          "tier": {
-            "type": "string",
-            "description": "Network tier name."
-          },
-          "bufferClass": {
-            "$ref": "#/components/schemas/BufferClass",
-            "description": "Buffer class emitted by the switch writer."
-          },
-          "direction": {
-            "$ref": "#/components/schemas/BufferDirection",
-            "description": "Uplink or downlink; omitted for shared buffers."
-          },
-          "pool": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Pool number."
-          },
-          "peakBytes": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Maximum interval peak occupancy, bytes."
-          },
-          "minBytes": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Minimum interval occupancy, bytes."
-          },
-          "meanBytes": {
-            "type": "number",
-            "format": "double",
-            "description": "Arithmetic mean of interval mean occupancy, bytes."
-          },
-          "peakUtilPct": {
-            "type": "number",
-            "format": "double",
-            "description": "Maximum interval peak utilization, percent of the pool's buffer limit, computed from bytes and not clamped; a lossless egress pool can exceed 100."
-          },
-          "meanUtilPct": {
-            "type": "number",
-            "format": "double",
-            "description": "Arithmetic mean interval utilization, percent of the pool's buffer limit, computed from bytes and not clamped; a lossless egress pool can exceed 100."
-          },
-          "bufferLimitBytes": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Maximum buffer limit, bytes."
-          },
-          "switchCount": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0,
-            "description": "Number of distinct switch component names."
-          },
-          "rowCount": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0,
-            "description": "Number of source rows in the pool group."
-          }
-        },
-        "required": [
-          "tier",
-          "bufferClass",
-          "pool",
-          "peakBytes",
-          "minBytes",
-          "meanBytes",
-          "peakUtilPct",
-          "meanUtilPct",
-          "bufferLimitBytes",
-          "switchCount",
-          "rowCount"
-        ]
-      },
-      "BufferClass": {
-        "type": "string",
-        "description": "Aggregate switch buffer class.",
-        "enum": [
-          "sharedBuffer",
-          "ingressUsage",
-          "egressQueue"
-        ]
-      },
-      "BufferDirection": {
-        "type": "string",
-        "description": "Direction of an ingress or egress pool.",
-        "enum": [
-          "ul",
-          "dl"
-        ]
       },
       "AlignedSummaryMap": {
         "type": "object",
