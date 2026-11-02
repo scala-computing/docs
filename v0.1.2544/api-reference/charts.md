@@ -26,7 +26,7 @@ Returns every chart definition stored on this platform as a bare body, ordered b
 
 | Name | In | Type | Required | Description |
 |------|-----|------|----------|-------------|
-| `schemaVersion` | query | string | No | The newest chart-definition schema version the reader parses, as chart-definition/v<N> with N a positive integer and no leading zero. Absent, the response is chart-definition/v1. Versions compare as integers, and a version newer than any body stored for a chart is served that chart's newest stored body. A value outside that grammar, or the parameter given more than once, is refused with 400. |
+| `schemaVersion` | query | string | No | The newest chart-definition schema version the reader parses, as chart-definition/v\<N> with N a positive integer and no leading zero. Absent, the response is chart-definition/v1. Versions compare as integers, and a version newer than any body stored for a chart is served that chart's newest stored body. A value outside that grammar, or the parameter given more than once, is refused with 400. |
 
 ### Responses
 
