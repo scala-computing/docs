@@ -1271,7 +1271,7 @@ Updates count and/or group on an existing component reference in the specified c
 }
 ```
 
-**400** - Invalid request (empty patch, count < 1)
+**400** - Invalid request (empty patch, count \< 1)
 
 **404** - Configuration, container, or component not found
 
@@ -1577,7 +1577,7 @@ Updates the count on an existing component reference in the topology.
 }
 ```
 
-**400** - Invalid request (count < 1)
+**400** - Invalid request (count \< 1)
 
 **404** - Configuration or component not found in topology
 
@@ -1943,7 +1943,7 @@ Updates count and/or group on an existing child component reference within the s
 }
 ```
 
-**400** - Invalid request (empty patch, count < 1)
+**400** - Invalid request (empty patch, count \< 1)
 
 **404** - Configuration, component, or child not found
 
